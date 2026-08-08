@@ -8,5 +8,6 @@ venv/
 .pytest_cache/
 .ruff_cache/
 
-# generated per-run output from the edaitor skill
-findings/
+# Per-run output is regenerable; the brief and phase state are not, and
+# belong with the manuscript they describe.
+.edaitor/findings/

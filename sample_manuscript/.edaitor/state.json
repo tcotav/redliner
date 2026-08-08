@@ -1,0 +1,17 @@
+{
+  "manuscript_dir": "sample_manuscript",
+  "phase": "developmental",
+  "developmental_round": 1,
+  "chapter_fingerprints": {
+    "chapter_01": {
+      "sha256": "3e441ea69387d0825df6f6b6a62918bbda0b8fedcd53e3e4485d38316d74620c",
+      "words": 207
+    },
+    "chapter_02": {
+      "sha256": "40026bb31a1420f2e6b85e122ab40c02e932c4692fe31b35f9ad73409a6e6d76",
+      "words": 281
+    }
+  },
+  "created_at": "2026-08-08T22:55:47.125803+00:00",
+  "updated_at": "2026-08-08T23:07:03.637787+00:00"
+}
