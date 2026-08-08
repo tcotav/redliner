@@ -15,6 +15,7 @@ import json
 import sys
 from pathlib import Path
 
+from schemas.canon_schema import validate_continuity_report, validate_observations
 from schemas.findings_schema import (
     validate_developmental_report,
     validate_editorial_letter,
@@ -32,13 +33,43 @@ def _check(path: Path, errors: list) -> bool:
     return True
 
 
-def main(findings_dir: str) -> int:
-    findings_path = Path(findings_dir)
-    if not findings_path.exists():
-        print(f"No such directory: {findings_path}")
+def _validate_canon(edaitor_path: Path, ok: bool) -> bool:
+    """Validate the continuity layer's files, if any exist yet."""
+    canon_path = edaitor_path / "canon"
+    if not canon_path.is_dir():
+        return ok
+
+    for obs_file in sorted((canon_path / "observations").glob("*.json")):
+        errors = validate_observations(json.loads(obs_file.read_text()))
+        ok = _check(obs_file, errors) and ok
+
+    continuity_file = canon_path / "continuity.json"
+    if continuity_file.exists():
+        errors = validate_continuity_report(json.loads(continuity_file.read_text()))
+        ok = _check(continuity_file, errors) and ok
+
+    return ok
+
+
+def main(target_dir: str) -> int:
+    target_path = Path(target_dir)
+    if not target_path.exists():
+        print(f"No such directory: {target_path}")
         return 1
 
-    ok = True
+    # Accept either a manuscript directory (validate everything under
+    # .edaitor/) or a findings directory directly.
+    if (target_path / ".edaitor").is_dir():
+        edaitor_path = target_path / ".edaitor"
+        findings_path = edaitor_path / "findings"
+    else:
+        findings_path = target_path
+        edaitor_path = target_path.parent
+
+    ok = _validate_canon(edaitor_path, True)
+
+    if not findings_path.is_dir():
+        return 0 if ok else 1
 
     dev_file = findings_path / "developmental.json"
     if dev_file.exists():

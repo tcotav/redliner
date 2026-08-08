@@ -1,0 +1,687 @@
+{
+  "entities": {
+    "Selkirk": {
+      "entity_type": "place",
+      "attributes": {
+        "settlement_type": [
+          {
+            "value": "harbor town",
+            "chapter": "chapter_01",
+            "fact_id": "fact-chapter_01-001",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "street_surface": [
+          {
+            "value": "cobblestones",
+            "chapter": "chapter_01",
+            "fact_id": "fact-chapter_01-005",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "weather": [
+          {
+            "value": "wet",
+            "chapter": "chapter_01",
+            "fact_id": "fact-chapter_01-006",
+            "source": "narration",
+            "confidence": "implied"
+          }
+        ],
+        "has_alleys": [
+          {
+            "value": "yes",
+            "chapter": "chapter_01",
+            "fact_id": "fact-chapter_01-007",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "time_of_day": [
+          {
+            "value": "before morning",
+            "chapter": "chapter_01",
+            "fact_id": "fact-chapter_01-021",
+            "source": "character_thought",
+            "confidence": "implied"
+          },
+          {
+            "value": "dawn",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-002",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "founded_years_ago": [
+          {
+            "value": "three hundred years",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-007",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "founded_by": [
+          {
+            "value": "a fleet of refugees fleeing the Ashport wars",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-008",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "original_settlement_type": [
+          {
+            "value": "fishing camp",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-010",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "port_status": [
+          {
+            "value": "busiest smuggling port on the western coast",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-011",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "region": [
+          {
+            "value": "the western coast",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-012",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "harbor_feature": [
+          {
+            "value": "a harbor mouth",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-039",
+            "source": "dialogue",
+            "confidence": "implied"
+          }
+        ]
+      }
+    },
+    "Mira": {
+      "entity_type": "character",
+      "attributes": {
+        "home_town": [
+          {
+            "value": "Selkirk",
+            "chapter": "chapter_01",
+            "fact_id": "fact-chapter_01-002",
+            "source": "narration",
+            "confidence": "implied"
+          }
+        ],
+        "gender": [
+          {
+            "value": "female",
+            "chapter": "chapter_01",
+            "fact_id": "fact-chapter_01-003",
+            "source": "narration",
+            "confidence": "implied"
+          }
+        ],
+        "eye_color": [
+          {
+            "value": "green",
+            "chapter": "chapter_01",
+            "fact_id": "fact-chapter_01-004",
+            "source": "narration",
+            "confidence": "explicit"
+          },
+          {
+            "value": "blue",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-003",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "relative": [
+          {
+            "value": "an uncle",
+            "chapter": "chapter_01",
+            "fact_id": "fact-chapter_01-013",
+            "source": "narration",
+            "confidence": "explicit"
+          },
+          {
+            "value": "an uncle",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-027",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "location": [
+          {
+            "value": "the docks",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-001",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "arrival_timing": [
+          {
+            "value": "late",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-034",
+            "source": "dialogue",
+            "confidence": "explicit"
+          }
+        ],
+        "age_range": [
+          {
+            "value": "young woman",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-036",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "boards": [
+          {
+            "value": "the Gray Gull",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-037",
+            "source": "dialogue",
+            "confidence": "implied"
+          }
+        ]
+      }
+    },
+    "harbor bell": {
+      "entity_type": "object",
+      "attributes": {
+        "location": [
+          {
+            "value": "Selkirk harbor",
+            "chapter": "chapter_01",
+            "fact_id": "fact-chapter_01-008",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ]
+      }
+    },
+    "Selkirk alarm signal": {
+      "entity_type": "world_rule",
+      "attributes": {
+        "signal_meaning": [
+          {
+            "value": "ringing the harbor bell raises the alarm",
+            "chapter": "chapter_01",
+            "fact_id": "fact-chapter_01-009",
+            "source": "narration",
+            "confidence": "implied"
+          }
+        ]
+      }
+    },
+    "customs officers": {
+      "entity_type": "organization",
+      "attributes": {
+        "found": [
+          {
+            "value": "the ledger Mira stole",
+            "chapter": "chapter_01",
+            "fact_id": "fact-chapter_01-010",
+            "source": "character_thought",
+            "confidence": "implied"
+          }
+        ]
+      }
+    },
+    "ledger": {
+      "entity_type": "object",
+      "attributes": {
+        "stolen_by": [
+          {
+            "value": "Mira",
+            "chapter": "chapter_01",
+            "fact_id": "fact-chapter_01-011",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "original_location": [
+          {
+            "value": "Mira's uncle's shop",
+            "chapter": "chapter_01",
+            "fact_id": "fact-chapter_01-012",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "contents": [
+          {
+            "value": "names every smuggler in Selkirk",
+            "chapter": "chapter_01",
+            "fact_id": "fact-chapter_01-017",
+            "source": "character_thought",
+            "confidence": "explicit"
+          }
+        ],
+        "current_possessor": [
+          {
+            "value": "not yet in Mira's possession",
+            "chapter": "chapter_01",
+            "fact_id": "fact-chapter_01-020",
+            "source": "character_thought",
+            "confidence": "implied"
+          }
+        ],
+        "value": [
+          {
+            "value": "worth more than Renne knew",
+            "chapter": "chapter_01",
+            "fact_id": "fact-chapter_01-029",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "kept_by": [
+          {
+            "value": "Mira's uncle",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-028",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "purpose": [
+          {
+            "value": "insurance in case the Voss family came for Mira's uncle",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-029",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ]
+      }
+    },
+    "Mira's uncle": {
+      "entity_type": "character",
+      "attributes": {
+        "owns": [
+          {
+            "value": "a shop",
+            "chapter": "chapter_01",
+            "fact_id": "fact-chapter_01-014",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "is_smuggler": [
+          {
+            "value": "yes",
+            "chapter": "chapter_01",
+            "fact_id": "fact-chapter_01-018",
+            "source": "character_thought",
+            "confidence": "explicit"
+          }
+        ],
+        "runs": [
+          {
+            "value": "a smuggling ring",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-026",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ]
+      }
+    },
+    "fish stall": {
+      "entity_type": "place",
+      "attributes": {
+        "contents": [
+          {
+            "value": "a crate of herring",
+            "chapter": "chapter_01",
+            "fact_id": "fact-chapter_01-015",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ]
+      }
+    },
+    "Mira's flight from the customs officers": {
+      "entity_type": "event",
+      "attributes": {
+        "elapsed_time": [
+          {
+            "value": "about an hour",
+            "chapter": "chapter_01",
+            "fact_id": "fact-chapter_01-016",
+            "source": "narration",
+            "confidence": "implied"
+          }
+        ]
+      }
+    },
+    "customs office": {
+      "entity_type": "organization",
+      "attributes": {
+        "location": [
+          {
+            "value": "Selkirk",
+            "chapter": "chapter_01",
+            "fact_id": "fact-chapter_01-019",
+            "source": "character_thought",
+            "confidence": "implied"
+          }
+        ],
+        "established_years_ago": [
+          {
+            "value": "forty years",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-013",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "staffed_by": [
+          {
+            "value": "officials from the capital",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-014",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "number_of_chiefs": [
+          {
+            "value": "six in forty years",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-015",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ]
+      }
+    },
+    "Gray Gull": {
+      "entity_type": "object",
+      "attributes": {
+        "type": [
+          {
+            "value": "ship",
+            "chapter": "chapter_01",
+            "fact_id": "fact-chapter_01-023",
+            "source": "narration",
+            "confidence": "implied"
+          }
+        ],
+        "status": [
+          {
+            "value": "not yet sailed",
+            "chapter": "chapter_01",
+            "fact_id": "fact-chapter_01-024",
+            "source": "narration",
+            "confidence": "implied"
+          },
+          {
+            "value": "not yet sailed",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-006",
+            "source": "narration",
+            "confidence": "implied"
+          }
+        ],
+        "location": [
+          {
+            "value": "the docks",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-004",
+            "source": "narration",
+            "confidence": "implied"
+          }
+        ],
+        "sail_state": [
+          {
+            "value": "furled",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-005",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "has_gangplank": [
+          {
+            "value": "yes",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-032",
+            "source": "narration",
+            "confidence": "implied"
+          }
+        ]
+      }
+    },
+    "Renne": {
+      "entity_type": "character",
+      "attributes": {
+        "title": [
+          {
+            "value": "Captain",
+            "chapter": "chapter_01",
+            "fact_id": "fact-chapter_01-025",
+            "source": "narration",
+            "confidence": "explicit"
+          },
+          {
+            "value": "Captain",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-030",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "commands": [
+          {
+            "value": "the Gray Gull",
+            "chapter": "chapter_01",
+            "fact_id": "fact-chapter_01-026",
+            "source": "narration",
+            "confidence": "implied"
+          }
+        ],
+        "promised_passage_to": [
+          {
+            "value": "Mira",
+            "chapter": "chapter_01",
+            "fact_id": "fact-chapter_01-027",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "passage_condition": [
+          {
+            "value": "she must bring something worth the risk",
+            "chapter": "chapter_01",
+            "fact_id": "fact-chapter_01-028",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "location": [
+          {
+            "value": "the gangplank of the Gray Gull",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-031",
+            "source": "narration",
+            "confidence": "implied"
+          }
+        ],
+        "experience": [
+          {
+            "value": "has taken a hundred desperate people aboard",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-033",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "gender": [
+          {
+            "value": "female",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-035",
+            "source": "narration",
+            "confidence": "implied"
+          }
+        ],
+        "payment_arrangement": [
+          {
+            "value": "payment to be discussed once clear of the harbor mouth",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-038",
+            "source": "dialogue",
+            "confidence": "explicit"
+          }
+        ]
+      }
+    },
+    "Ashport wars": {
+      "entity_type": "event",
+      "attributes": {
+        "consequence": [
+          {
+            "value": "refugees fled and founded Selkirk",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-009",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ]
+      }
+    },
+    "Halvard Voss": {
+      "entity_type": "character",
+      "attributes": {
+        "title": [
+          {
+            "value": "current customs chief",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-016",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "gender": [
+          {
+            "value": "male",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-017",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "relative": [
+          {
+            "value": "a father",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-018",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "inherited_position_from": [
+          {
+            "value": "his father",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-019",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ]
+      }
+    },
+    "Halvard Voss's father": {
+      "entity_type": "character",
+      "attributes": {
+        "inherited_position_from": [
+          {
+            "value": "an uncle",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-020",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "relative": [
+          {
+            "value": "an uncle",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-021",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ]
+      }
+    },
+    "Voss family": {
+      "entity_type": "organization",
+      "attributes": {
+        "controls": [
+          {
+            "value": "the customs house",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-022",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "control_duration": [
+          {
+            "value": "two generations",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-023",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ],
+        "takes_bribes_from": [
+          {
+            "value": "every smuggling ring in the harbor except Mira's uncle's",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-025",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ]
+      }
+    },
+    "customs house": {
+      "entity_type": "organization",
+      "attributes": {
+        "controlled_by": [
+          {
+            "value": "the Voss family",
+            "chapter": "chapter_02",
+            "fact_id": "fact-chapter_02-024",
+            "source": "narration",
+            "confidence": "explicit"
+          }
+        ]
+      }
+    }
+  },
+  "fact_count": 67,
+  "chapters_covered": [
+    "chapter_01",
+    "chapter_02"
+  ]
+}
