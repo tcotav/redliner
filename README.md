@@ -1,116 +1,147 @@
 # edaitor
 
-A layered fiction-editing agent, built as an intro project to Google's
-[Agent Development Kit (ADK)](https://adk.dev/). The goal isn't a
-production editing tool — it's a small, real system to learn agentic
-design patterns against: multi-agent orchestration, structured output,
-session state, and custom control flow.
+A layered fiction-editing agent, built as an intro project to agentic
+system design. Not a production editing tool — a small, real system to
+learn multi-agent design patterns against: orchestration, structured
+output under uncertainty, subagent specialization, and validation.
+
+## Why this version exists
+
+The original plan was to build this on Google's Agent Development Kit
+(ADK), which is a declarative multi-agent-graph framework: `SequentialAgent`,
+`LoopAgent`, typed sub-agent composition, API-enforced `output_schema`.
+That version got scaffolded first (see git history) and is still a good
+reference for that style of framework.
+
+It got scrapped for a concrete reason, not a preference: ADK bills per
+API call, and the only Claude access available for this project is a
+Pro/Max subscription — no separate `ANTHROPIC_API_KEY`. Anthropic's own
+Agent SDK has the same requirement (verified against their quickstart
+docs directly: subscription login is explicitly not permitted for
+SDK-built agents). So this version runs entirely on Claude Code —
+subagents plus a skill, invoked interactively, billed as ordinary
+subscription usage, the same way this conversation itself runs.
+
+That's a different substrate from ADK, not just a different vendor:
+there's no declarative workflow-agent class hierarchy here, no
+API-enforced schema, no session-state object. Orchestration is written
+out as procedure (a skill's instructions), agents are markdown + a
+system prompt, and structure is enforced by validation after the fact
+rather than by the API. Where that tradeoff shows up is called out below
+and in `schemas/findings_schema.py`.
 
 ## What it does
 
-Runs a manuscript through two editing layers, then synthesizes the results
-into one editorial letter:
+Runs a manuscript through two editing layers, then synthesizes the
+results into one editorial letter:
 
 1. **Developmental editor** — reads the *whole* manuscript at once, flags
    story-level issues (plot, pacing, character arcs, structure, stakes,
    theme).
 2. **Line editor** — reads *one chapter at a time*, flags prose-level
    issues (rhythm, voice, show-vs-tell, dialogue, POV, word choice).
-3. **Aggregator** — takes the structured findings from both layers (never
-   the raw manuscript) and writes a human-readable editorial letter.
+3. **Editorial aggregator** — takes the saved findings from both layers
+   (never the raw manuscript) and writes a human-readable editorial
+   letter.
 
 Every finding is tagged with a `category` and a `severity`
-(minor/moderate/major/critical) — see `edaitor_agent/schemas.py`. That's
-what makes the aggregation step synthesis-over-data instead of another
-read-everything-and-summarize pass, and it's what a future evaluation
-harness would grade against.
+(minor/moderate/major/critical) — that was a non-negotiable design
+decision from the start, not something to loosen later.
 
 ## Architecture
 
 ```
-run_pipeline.py                     # loads chapters -> session state, drives the Runner
+/edaitor [manuscript_dir]           # .claude/skills/edaitor/SKILL.md — the orchestrator
         │
-        ▼
-root_agent (SequentialAgent)        # edaitor_agent/agent.py
+        ├── Task: developmental-editor        # .claude/agents/developmental-editor.md
+        │     reads all chapters, writes findings/developmental.json
         │
-        ├── developmental_editor    # LlmAgent, sees full_manuscript_text
-        │     output_key: developmental_report
+        ├── Task: line-editor  (once per chapter)   # .claude/agents/line-editor.md
+        │     reads one chapter, writes findings/line_<chapter>.json
         │
-        ├── ChapterLineEditLoop     # custom BaseAgent (not LoopAgent — see below)
-        │     └── line_editor       # LlmAgent, sees one chapter at a time
-        │           output_key: current_line_report (collected into line_reports)
+        ├── validate_findings.py findings/    # plain script, not an agent
         │
-        └── editorial_letter_aggregator   # LlmAgent, sees only the structured
-              output_key: editorial_letter #   reports above, not raw text
+        └── Task: editorial-aggregator        # .claude/agents/editorial-aggregator.md
+              reads findings/*.json, writes findings/editorial_letter.{json,md}
 ```
 
 ### Design decisions worth calling out
 
-- **Different context per layer.** The developmental editor needs the
-  whole story's shape; the line editor deliberately only sees one chapter.
-  That's a real editing distinction (you can't judge pacing from one
-  chapter, or prose rhythm from a synopsis), and it's also what forces
-  actual use of session state to pass data between agents instead of
-  cramming everything into one prompt.
+- **Different context per layer, same as before.** The developmental
+  editor needs the whole story's shape; the line editor deliberately only
+  sees one chapter. This is the one piece of the design that's identical
+  to the ADK version — it's an editing-practice distinction, not a
+  framework artifact.
 
-- **Custom agent instead of `LoopAgent` for the chapter loop.** ADK's
-  `LoopAgent` is built for "repeat until a stop condition" (iterative
-  refinement). What we need is "run this agent once per item in a known
-  list" — plain, deterministic control flow. Per ADK's own guidance, that
-  belongs in a custom `BaseAgent` subclass, not bent into `LoopAgent`'s
-  `exit_loop`/`max_iterations` mechanism. See
-  `edaitor_agent/sub_agents/chapter_loop.py`.
+- **Findings are files, not just chat output.** Each subagent's
+  deliverable is a JSON file it writes with the `Write` tool, not text in
+  its final reply. That's what lets a plain Python script (not another
+  agent) validate the output between steps, and it's what makes a
+  `findings/` directory a durable, inspectable record of a run instead of
+  something that only exists in a transcript.
 
-- **No tools on the editor agents.** ADK only supports combining `tools`
-  and `output_schema` on the same `LlmAgent` for specific models (Gemini
-  3.0+ at time of writing). Structured output is non-negotiable here, so
-  the editor agents stay tool-free. If a later layer needs a tool (e.g. a
-  continuity/fact-tracking database for a future consistency-checking
-  layer), the pattern is a tool-calling agent feeding a separate
-  formatting agent — not one agent doing both.
+- **Prompt-enforced structure, checked after the fact.** ADK's
+  `output_schema` gets the model's structured-output machinery to
+  guarantee shape at the API layer. There's no equivalent here — a
+  subagent is *told* the JSON shape and could still get it wrong.
+  `validate_findings.py` (pure stdlib, no install needed) is how this
+  version buys back some of that guarantee: the skill runs it between the
+  editing steps and the aggregator, and stops rather than aggregating
+  bad data. Worth noticing empirically once this runs a few times: how
+  often validation actually catches something.
 
-- **A script, not `adk web`.** `adk web`/`adk run` are built around a
-  conversational loop. edaitor acts on manuscript files already on disk
-  with no back-and-forth needed, so `run_pipeline.py` wires the `Runner`
-  directly and seeds session state from disk before the first agent runs.
+- **Sequential by default, parallel as a deliberate variant.** The line
+  editor runs once per chapter, one at a time, so a first run is easy to
+  follow in the transcript. The skill notes where to fan them out
+  concurrently instead if you want to practice that pattern — chapters
+  don't share state, so nothing stops it.
 
 ## Setup
 
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env   # then fill in GOOGLE_API_KEY
-```
+Nothing to install. This runs inside Claude Code, using whatever
+subscription is already authenticated. `validate_findings.py` uses only
+the Python standard library.
 
 ## Run
 
-```bash
-python run_pipeline.py                  # uses sample_manuscript/
-python run_pipeline.py path/to/chapters  # or point it at real chapters
+From this directory, in Claude Code:
+
+```
+/edaitor
+```
+
+or, pointed at a real manuscript:
+
+```
+/edaitor path/to/real/chapters
 ```
 
 Manuscript directories are plain `.txt` files, one per chapter, read in
 sorted filename order (`chapter_01.txt`, `chapter_02.txt`, ...).
 
 `sample_manuscript/` holds two short placeholder chapters with a few
-deliberately seeded issues (an eye-color continuity slip, an info-dump
-paragraph, repetitive phrasing) to give the pipeline something to find
-before pointing it at real work.
+deliberately seeded issues (an eye-color continuity slip, a
+POV-inconsistent info-dump, repetitive "telling" prose) to give the
+pipeline something real to find before pointing it at actual work.
+
+You can also run the validator standalone against any findings directory:
+
+```
+python3 validate_findings.py findings/
+```
 
 ## Status / next steps
 
-This is a first working scaffold, not yet run end-to-end against a live
-model — some ADK API details (`BaseAgent` field declarations, `Runner`/
-session constructor signatures) were pieced together from current docs and
-should be treated as provisional until we run it and see what breaks.
-Likely next steps, roughly in order:
+Scaffolded, not yet run end to end — next actual step is running `/edaitor`
+against `sample_manuscript/` and seeing what breaks or reads wrong.
+Likely next steps after that, roughly in order:
 
-1. Run it, fix whatever the actual installed `google-adk` API disagrees
-   with.
-2. Look at real output against `sample_manuscript/` — does severity
-   tagging actually track what a human editor would flag as severe?
-3. Consider a continuity/consistency layer (needs persistent state across
-   the whole manuscript, and is a natural place to finally exercise
-   tool-calling within an agent, per the constraint above).
+1. Run it, see whether the seeded issues in `sample_manuscript/` actually
+   get caught, and at what severity.
+2. Check how often `validate_findings.py` actually catches a malformed
+   subagent output — that's the real signal on whether prompt-enforced
+   structure was good enough here.
+3. Consider a continuity/consistency layer — needs state that persists
+   across the whole manuscript (a running character/fact list), which
+   this architecture doesn't have yet.
 4. Point it at a real manuscript.
