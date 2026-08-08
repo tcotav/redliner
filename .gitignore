@@ -8,6 +8,8 @@ venv/
 .pytest_cache/
 .ruff_cache/
 
-# Per-run output is regenerable; the brief and phase state are not, and
-# belong with the manuscript they describe.
-.edaitor/findings/
+# Per-run output is regenerable; the brief and phase state (state.json)
+# are not, and belong with the manuscript they describe. Unanchored (**/)
+# so this matches under any manuscript directory, not just the repo root.
+**/.edaitor/findings/
+**/.edaitor/canon/

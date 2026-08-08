@@ -56,6 +56,13 @@ commentary in the file):
 {
   "scope": "Full manuscript (chapters 1-2)",
   "round": 1,
+  "assumptions": [
+    {
+      "assumption": "Treated this as a standalone rather than book 1 of a series.",
+      "because": "The brief doesn't say, and unresolved threads read as flaws in one and setup in the other.",
+      "affects": ["dev-004", "dev-007"]
+    }
+  ],
   "findings": [
     {
       "id": "dev-001",
@@ -70,6 +77,13 @@ commentary in the file):
 }
 ```
 
+- `assumptions`: **you run unattended and cannot ask the author
+  anything.** When the brief leaves something ambiguous that changes your
+  read, pick the more likely reading, proceed, and record it here with
+  what it affects. Never stall, and never guess silently — an unrecorded
+  assumption is a finding the author can't evaluate. An empty list is
+  correct when the brief covered everything; each entry is really a gap
+  to fix in the brief.
 - `id`: `dev-NNN`, zero-padded, unique within the file. On a re-check,
   preserve the ids of findings you're carrying forward.
 - `status`: `open` for new or still-unresolved findings. On a re-check,

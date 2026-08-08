@@ -117,6 +117,29 @@ def validate_developmental_report(report: dict) -> list:
     if not isinstance(report.get("round"), int) or report.get("round", 0) < 1:
         errors.append("'round' must be an integer >= 1")
 
+    # A developmental pass runs unattended -- subagents have no channel to
+    # ask the author anything mid-read, and interrupting a whole-manuscript
+    # read wouldn't improve it anyway. So ambiguity the brief didn't cover
+    # gets recorded here instead of guessed at silently. Each entry is a gap
+    # to fix in the brief, not a question to answer live.
+    assumptions = report.get("assumptions")
+    if not isinstance(assumptions, list):
+        errors.append(
+            "'assumptions' must be a list (empty if the brief covered everything)"
+        )
+    else:
+        for i, item in enumerate(assumptions):
+            if not isinstance(item, dict):
+                errors.append(f"assumptions[{i}]: not an object")
+                continue
+            for key in ("assumption", "because", "affects"):
+                if key not in item:
+                    errors.append(f"assumptions[{i}]: missing {key!r}")
+            if "affects" in item and not isinstance(item["affects"], list):
+                errors.append(
+                    f"assumptions[{i}]: 'affects' must be a list of finding ids"
+                )
+
     findings = report.get("findings")
     if not isinstance(findings, list):
         errors.append("'findings' is not a list")
