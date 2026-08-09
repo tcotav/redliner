@@ -79,6 +79,14 @@ category: one-line note, no rewrite suggestions, no detailed analysis. It
 gets picked up in the line phase. Do not let this become a back door for
 doing line-level editing early.
 
+One thing that looks like a detail-level issue but isn't: **a fact
+contradicted elsewhere in the document** (a name, date, number, or
+other checkable detail stated one way here and a different way in
+another section). That's the continuity layer's job, not yours or the
+line editor's — it's already being extracted and cross-checked
+independently. Don't record it as a `deferred_to_line` finding; that
+just reports the same problem twice under two different ids.
+
 ## Output format
 
 <!-- FIXED skeleton; only the example finding's category/location/note

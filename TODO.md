@@ -105,15 +105,111 @@ fixture through `validate_findings.py` (no model calls), and a live
 `claude --plugin-dir` check that all five generated `design-doc` agents
 actually register and respond under their expected ids.
 
-**New gap surfaced, deliberately not fixed here:**
-`agents/*-continuity-extractor.md` and `*-continuity-adjudicator.md` are
-never Tasked from any step in `run/SKILL.md`, for either domain — the
-continuity layer's sample data in this repo was produced by hand or
-direct script testing, not through the orchestrated pipeline. Wiring the
-continuity layer into `/edaitor:run` (probably a new subcommand, or a
-flag on `assess`/`recheck`) is real, scoped work and out of scope for
-domain generalization specifically — it's a pre-existing gap this work
-happened to notice, not something domain generalization caused.
+**Gap surfaced here, since fixed** — see "Wire the continuity layer into
+`/edaitor:run`" below.
+
+## Wire the continuity layer into `/edaitor:run` (DONE)
+
+**Raised:** 2026-08-09 (surfaced while closing out domain
+generalization). **Completed:** 2026-08-09.
+
+`agents/*-continuity-extractor.md` and `*-continuity-adjudicator.md`
+were never Tasked from any step in `run/SKILL.md`, for either domain —
+the continuity layer's sample data in this repo had been produced by
+hand or direct script testing, not through the orchestrated pipeline.
+
+**What got built:** `/edaitor:run continuity` — callable standalone, and
+run automatically at the end of both `assess` and `recheck`. Steps:
+`edaitor_canon.py stale` (extended to report each stale section's
+current hash, so the orchestrator doesn't need a second round trip or to
+hash sections itself) → Task the extractor per stale section → validate
+→ `edaitor_canon.py reconcile` → if `collisions.json` is empty, write
+`.edaitor/canon/continuity.json` as `{"contradictions": []}` directly,
+no model call; otherwise Task the adjudicator → validate → summarize.
+Not phase-gated — extraction is judgment-free and tracks its own
+per-section staleness independent of the developmental round counter, so
+it's safe to run any time after intake.
+
+Verified live, three times, against real agents rather than hand-built
+fixtures (the thing hand-built fixtures specifically couldn't prove: a
+real agent choosing its own `excerpt` text and that text surviving the
+verbatim check):
+- A two-section fixture with a planted contradiction (Mira's eyes:
+  green in section_01, blue in section_02) — extraction, reconciliation,
+  and adjudication all ran for real, produced a correctly-categorized
+  `character_attribute` contradiction at `moderate` severity, and passed
+  `validate_findings.py` including the excerpt check.
+- A matching clean fixture with no contradictions — confirmed the
+  adjudicator is genuinely skipped (zero Task calls for it) and
+  `continuity.json` is written directly as `{"contradictions": []}`.
+- A real `assess` → edit one section → `recheck` cycle, which caught a
+  real ordering bug before it shipped: the first draft of this wiring
+  ran `edaitor_state.py snapshot` *before* continuity's `reconcile`.
+  `reconcile` computes `likely_unpropagated_revision` by diffing against
+  whatever baseline currently sits in `state.json` — snapshotting first
+  moves that baseline to match the current text, so the diff always came
+  back empty and the flag could never fire, silently. Invisible on a
+  first `assess` (baseline's empty either way, so it happened to look
+  right), and only visible once a real prior baseline existed and got
+  overwritten too early — exactly the case a synthetic fixture with no
+  history couldn't surface. Fixed by moving continuity's steps (through
+  `reconcile`) to run before `snapshot` in both `assess` and `recheck`;
+  reconfirmed live afterward that the edited-section collision correctly
+  came back `likely_unpropagated_revision: true`.
+
+**Deliberately deferred, not built in this pass** (see advisor guidance
+at the time: design this after seeing real pipeline output once, not
+against zero observed data): **contradiction id/status carry-forward
+across `recheck` runs.** Right now every `continuity` run adjudicates
+the full fresh collision set from scratch — a contradiction that's
+`open`, gets fixed, then a *different* pair of sections develops the
+same kind of contradiction later gets a brand-new id rather than reusing
+the old one. Developmental findings don't have this problem because the
+model is explicitly handed the prior findings file and told to preserve
+ids; collisions don't have a stable identity the same way (they're
+recomputed fresh each `reconcile` from an (entity, attribute) key, not
+carried as objects).
+
+The fix sketched (not built): extend `edaitor_canon.py reconcile` to
+optionally read the existing `continuity.json` and emit a `carry_forward`
+block matching prior contradiction ids to fresh collisions by (entity,
+attribute), with `addressed`/`stale` computed the same way
+`likely_unpropagated_revision` already is — script-computed, not model
+guesswork:
+- Prior contradiction's (entity, attribute) absent from fresh
+  collisions, but still present with a single value in `canon.json` →
+  `addressed` (genuinely fixed).
+- Prior contradiction's (entity, attribute) absent from `canon.json`
+  entirely → `stale` (the section(s) carrying it were cut).
+- Otherwise → still `open`, same id.
+
+Then the adjudicator's instruction becomes one line: reuse ids handed to
+you in `carry_forward`, don't renumber. Keeps model judgment scoped to
+what a script can't do — matching prior/fresh collisions and inferring
+addressed-vs-stale from absence is exactly computable, the same
+principle behind `diff_manuscript` and `likely_unpropagated_revision`.
+
+**Bug caught and fixed by the same live testing, not part of the
+original plan:** the first real `assess` run showed the developmental
+editor double-reporting the planted contradiction — once as `cont-001`
+via continuity (correct), and again as a `deferred_to_line` finding
+(wrong; `deferred_to_line` is for genuinely structural prose
+observations, not continuity errors, and the continuity layer already
+owns those independently). Fixed with a one-line scope exclusion in
+`agents/fiction-developmental-editor.md`,
+`agents/design-doc-developmental-editor.md`, and the FIXED scope block
+in `skills/new-domain/reference/templates/developmental-editor.md` (so
+future-generated domains don't reintroduce it); reconfirmed live that a
+fresh `assess` no longer reports the duplicate.
+
+**Small gap noticed, not addressed:** `/edaitor:run work <id>` and
+`/edaitor:run resolve <id>` only operate on `developmental.json` — there's
+no equivalent for talking through or resolving a `continuity.json`
+contradiction directly. Today the workaround is real (fix the text,
+`/edaitor:run recheck` re-derives continuity from scratch since there's
+no persistent id to resolve yet anyway — see the carry-forward item
+above, which is a prerequisite for this actually mattering) but worth
+revisiting once carry-forward exists.
 
 ## Port to a compiled language for distributable binaries?
 

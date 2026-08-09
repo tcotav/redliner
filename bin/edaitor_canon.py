@@ -73,17 +73,28 @@ def cmd_stale(manuscript_dir: Path) -> int:
 
     Extraction cost scales with section count; re-reading 40 sections to
     catch one edit is how a layer becomes something you avoid running.
+
+    Also reports each such section's *current* hash, in `current_hashes`.
+    The continuity-extractor agent needs to be given its section's hash
+    verbatim (it copies it into `section_sha256` rather than computing it
+    itself) -- surfacing it here means the orchestrating skill can read
+    one JSON blob instead of hashing sections itself or making a second
+    round trip.
     """
     observations = load_observations(manuscript_dir)
     stale, missing = [], []
+    current_hashes = {}
 
     for path in section_files(manuscript_dir):
         recorded = observations.get(path.stem)
+        section_hash = fingerprint_section(path)["sha256"]
         if recorded is None:
             missing.append(path.stem)
+            current_hashes[path.stem] = section_hash
             continue
-        if recorded.get("section_sha256") != fingerprint_section(path)["sha256"]:
+        if recorded.get("section_sha256") != section_hash:
             stale.append(path.stem)
+            current_hashes[path.stem] = section_hash
 
     orphaned = sorted(
         set(observations) - {p.stem for p in section_files(manuscript_dir)}
@@ -95,6 +106,7 @@ def cmd_stale(manuscript_dir: Path) -> int:
                 "needs_extraction": sorted(missing + stale),
                 "never_extracted": missing,
                 "changed_since_extraction": stale,
+                "current_hashes": current_hashes,
                 "orphaned_observations": orphaned,
             },
             indent=2,

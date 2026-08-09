@@ -67,11 +67,12 @@ the `--plugin-dir` flag with a one-time `/plugin install`.)
 
 ```
 /edaitor:intake                 # first time only, or to revise the brief (asks which domain, if more than one)
-/edaitor:run assess             # developmental pass
+/edaitor:run assess             # developmental pass (also runs continuity at the end)
 /edaitor:run work dev-003       # talk through one finding
 /edaitor:run resolve dev-003    # mark it addressed (your claim)
-/edaitor:run recheck            # verify claims after revision
+/edaitor:run recheck            # verify claims after revision (also re-runs continuity)
 /edaitor:run line               # line-editing phase (soft-gated on open major/critical findings)
+/edaitor:run continuity         # extract facts, find collisions, adjudicate — standalone or automatic
 /edaitor:run status             # where things stand
 /edaitor:new-domain             # design a new kind of document to edit (see "Domains" below)
 ```
@@ -276,13 +277,35 @@ generated agents were confirmed live (`claude --plugin-dir`) to actually
 register and respond under their expected `edaitor:design-doc-*` ids —
 not just read back as plausible-looking files.
 
-One gap this work surfaced, deliberately left open (see `TODO.md`):
-`agents/*-continuity-extractor.md` and `*-continuity-adjudicator.md` are
-never actually Tasked from `/edaitor:run` for either domain — the
-continuity layer's sample data was produced by hand/direct testing, not
-through the orchestrated pipeline. (Separately, the pre-existing
-permission-allowlist gap below now also needs `edaitor_domain.py` added
-wherever it's copied — not new, just one more script name.)
+**The continuity layer is wired into `/edaitor:run`.** `/edaitor:run
+continuity` (standalone, and run automatically by both `assess` and
+`recheck`, its summary shown after their developmental letter) extracts
+facts from whatever sections changed, reconciles deterministically, and
+adjudicates only if a collision was actually found — skipping the
+adjudicator entirely (no model call) when there's nothing to judge.
+Verified live end to end, not against a hand-built fixture: a real
+two-section manuscript with a deliberately planted contradiction (an eye
+color stated two ways) went through extraction and adjudication by the
+actual agents, `validate_findings.py` passed including the
+excerpt-verbatim check against text the agents chose themselves (not
+text a fixture author copied by hand), a matching clean manuscript
+confirmed the zero-collision path writes `{"contradictions": []}`
+directly without invoking the adjudicator, and a real `assess` → edit →
+`recheck` cycle confirmed `likely_unpropagated_revision` fires correctly
+— which also caught a real ordering bug before it shipped (continuity's
+`reconcile` has to run *before* `snapshot`, not after, or the
+revision-detection diff always comes back empty; see `TODO.md`).
+
+Known limitation, not an oversight: contradiction ids and `status` don't
+carry forward across `recheck` runs the way developmental findings do —
+a fixed-then-recurring collision gets a new id rather than reusing the
+old one. Deferred deliberately; see `TODO.md` for the design already
+sketched for it (a script-computed carry-forward, not a model guessing
+at a diff).
+
+(Separately, the pre-existing permission-allowlist gap below also needs
+`edaitor_domain.py` added wherever it's copied — not new, just one more
+script name.)
 
 Other open items in `TODO.md`: a compiled-binary port, read-only
 Obsidian vault integration as a second source of canon.

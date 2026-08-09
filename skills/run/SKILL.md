@@ -15,6 +15,7 @@ Phase-aware editing pipeline. Subcommands:
 | `/edaitor:run resolve <id>` | Mark a finding addressed (author's claim) |
 | `/edaitor:run recheck` | Re-read after revision; verify claims, find new issues |
 | `/edaitor:run line` | Line-editing phase (gated — see below) |
+| `/edaitor:run continuity` | Extract facts, find collisions, adjudicate — see below |
 
 Default with no subcommand: run `status` and recommend the next step.
 
@@ -71,10 +72,20 @@ first — every pass depends on the brief.
    rather than aggregating bad data. (Takes the manuscript directory
    itself, not a findings/ or canon/ subpath — it checks everything
    under `<manuscript_dir>/.edaitor/` in one pass.)
-5. `edaitor_state.py snapshot <manuscript_dir>` — records what the text
+5. Run the **continuity** steps below now — **before the snapshot in the
+   next step**, not after. Continuity's `reconcile` diffs against
+   whatever baseline is currently in `state.json` to decide
+   `likely_unpropagated_revision`; if `snapshot` runs first, that
+   baseline already matches the current text and the diff always comes
+   back empty, silently disabling the flag. This only looks harmless on
+   a first-ever assess (empty baseline either way); it breaks the moment
+   `assess` is re-run later as "a fresh full read" with a real prior
+   baseline. Don't reorder this.
+6. `edaitor_state.py snapshot <manuscript_dir>` — records what the text
    looked like when assessed, so `recheck` can tell what changed.
-6. Task `edaitor:<domain>-editorial-aggregator` for the **developmental** letter.
-7. Validate again, then read and show the letter.
+7. Task `edaitor:<domain>-editorial-aggregator` for the **developmental** letter.
+8. Validate again, then read and show the developmental letter, then the
+   continuity summary from step 5.
 
 Do **not** run line editing here, whatever the author asked for.
 
@@ -118,8 +129,24 @@ that `/edaitor:run recheck` will verify it.
      didn't fix them, the text moved. Tell the author which findings went
      stale and why; that's the case they can't assess themselves.
 
-2. Validate, snapshot, aggregate a fresh developmental letter, show it.
-3. Then say plainly whether structure looks settled enough for line
+2. Validate.
+3. Run the **continuity** steps below now — **before the snapshot in the
+   next step, not after.** This ordering matters more here than anywhere
+   else: revision is exactly when facts get out of sync (an edit in one
+   section not yet propagated to another), and `likely_unpropagated_
+   revision` is *the* signal continuity exists to surface on a recheck.
+   That signal comes from diffing against the baseline still sitting in
+   `state.json` from the last assessment — if `snapshot` (next step) runs
+   first, the baseline already matches the current text, the diff comes
+   back empty, and every collision looks like a standing issue instead of
+   fresh fallout from this revision. `edaitor_canon.py stale` figures out
+   which sections actually need re-extraction; a `targeted` developmental
+   verdict usually means continuity only has one or two sections to redo,
+   not the whole manuscript.
+4. `edaitor_state.py snapshot <manuscript_dir>`, aggregate a fresh
+   developmental letter, show it, then show the continuity summary from
+   step 3.
+5. Then say plainly whether structure looks settled enough for line
    editing — count open `major`/`critical` findings and give a real
    recommendation, not a hedge.
 
@@ -143,8 +170,68 @@ that `/edaitor:run recheck` will verify it.
 6. Task `edaitor:<domain>-editorial-aggregator` for the **line** letter.
 7. Validate, then read and show the letter.
 
+## `/edaitor:run continuity`
+
+Callable directly, and also what `assess` and `recheck` run at the end
+of their own flow (see above) — this section is the one definition both
+refer to.
+
+Unlike the other two layers, this one is not phase-gated: extraction is
+judgment-free (it doesn't need the developmental pass to have run first)
+and it tracks its own staleness per section, independent of the
+developmental round counter. It's safe to run any time after intake.
+
+1. `edaitor_canon.py stale <manuscript_dir>`. Its JSON output drives
+   everything below:
+   - `needs_extraction` — sections to (re-)extract this run.
+   - `current_hashes` — each of those sections' current SHA-256, keyed by
+     stem. The extractor needs this exact value; don't compute it
+     yourself or reuse a stale one from `state.json`.
+   - `orphaned_observations` — observation files whose section no longer
+     exists (deleted or renamed). Delete
+     `.edaitor/canon/observations/<stem>.json` for each before
+     reconciling — a cut section's facts shouldn't still count toward
+     canon or collisions.
+2. If `needs_extraction` is empty, skip to step 5 — nothing changed
+   since the last extraction.
+3. For each section in `needs_extraction`, Task the
+   `edaitor:<domain>-continuity-extractor` subagent with: the manuscript
+   directory, that section's file path, its hash from `current_hashes`,
+   and output path `.edaitor/canon/observations/<section_stem>.json`.
+   Sections share no state — parallel is fine, sequential keeps the
+   transcript readable.
+4. `validate_findings.py <manuscript_dir>` — stop and report errors
+   rather than reconciling from bad extraction data.
+5. `edaitor_canon.py reconcile <manuscript_dir>` — deterministically
+   rebuilds `.edaitor/canon/canon.json` (merged facts) and
+   `.edaitor/canon/collisions.json` (entity+attribute pairs with more
+   than one asserted value) from every current observations file, not
+   just the ones just (re-)extracted.
+6. Read `collisions.json`.
+   - **Empty `collisions` list** — write
+     `.edaitor/canon/continuity.json` as `{"contradictions": []}`
+     yourself. There's nothing to adjudicate, so don't spend a Task call
+     on it.
+   - **Non-empty** — Task the `edaitor:<domain>-continuity-adjudicator`
+     subagent with the manuscript directory and output path
+     `.edaitor/canon/continuity.json`.
+7. `validate_findings.py <manuscript_dir>` again.
+8. Report a short summary: entity/fact counts from `canon.json`, and
+   contradiction counts from `continuity.json` broken out by `kind`
+   (`contradiction` vs. `unverified`) and by `severity`. Name any
+   `likely_unpropagated_revision` collisions explicitly — those are the
+   ones the author can act on fastest ("section_02 changed since the
+   last pass, section_07 didn't").
+
+Contradiction ids and status don't yet carry forward across runs the way
+developmental findings do — a collision that was open, gets fixed, then
+recurs elsewhere will get a new id rather than reusing the old one. This
+is a known limitation, not an oversight; see `TODO.md`.
+
 ## `/edaitor:run status`
 
 Show phase, developmental round, open findings by severity, and the
-`diff` verdict if the text has moved since the last assessment. End with
-one concrete recommended next command.
+`diff` verdict if the text has moved since the last assessment. Also
+show open contradiction counts from `.edaitor/canon/continuity.json` (if
+it exists) and whether `edaitor_canon.py stale` reports any sections
+needing re-extraction. End with one concrete recommended next command.
