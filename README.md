@@ -77,9 +77,10 @@ the `--plugin-dir` flag with a one-time `/plugin install`.)
 /edaitor:new-domain             # design a new kind of document to edit (see "Domains" below)
 ```
 
-Manuscript directories are plain `.txt` files, one per section, read in
-sorted filename order (`section_01.txt`, `section_02.txt`, ...). Defaults
-to the current directory if no path is given.
+Manuscript directories are one file per section, named `section_01`,
+`section_02`, ... and read in sorted filename order. Either plain `.txt`
+or `.md` — pick one per section; the same stem can't exist as both.
+Defaults to the current directory if no path is given.
 
 Validate a manuscript's `.edaitor/` output directly, without running a
 full pass:
@@ -99,16 +100,18 @@ edaitor/                          (plugin root)
 │   ├── fiction-editorial-aggregator.md
 │   ├── fiction-continuity-extractor.md
 │   ├── fiction-continuity-adjudicator.md
-│   └── design-doc-*.md           (same five roles, design-doc's own vocabulary)
+│   ├── design-doc-*.md           (same five roles, design-doc's own vocabulary)
+│   └── serial-fiction-*.md       (same five roles, episodic-fiction vocabulary)
 ├── skills/
-│   ├── run/SKILL.md              /edaitor:run <status|assess|work|resolve|recheck|line>
+│   ├── run/SKILL.md              /edaitor:run <status|assess|work|resolve|recheck|line|continuity>
 │   ├── intake/SKILL.md           /edaitor:intake
 │   └── new-domain/
 │       ├── SKILL.md              /edaitor:new-domain — design + generate a domain
 │       └── reference/templates/  FIXED/AUTHORED templates for the five agent roles
 ├── domains/                      vocabulary per kind of document (see below)
 │   ├── fiction/domain.json
-│   └── design-doc/domain.json
+│   ├── design-doc/domain.json
+│   └── serial-fiction/domain.json
 └── bin/                          on PATH while the plugin is enabled
     ├── edaitor_state.py          phase, rounds, section fingerprinting/diff
     ├── edaitor_canon.py          merges per-section facts, finds collisions mechanically
@@ -135,11 +138,15 @@ continuity layer's entity types/sources/categories, `/edaitor:intake`'s
 questions, which phase tracks revision rounds) comes from that file
 rather than being hardcoded.
 
-Two domains exist today: `fiction` and `design-doc` (design docs /
-product proposals). Each domain also has its own five agent files in
-`agents/` (`agents/fiction-*.md`, `agents/design-doc-*.md`) — a domain is
-config plus a matching set of generated prompts, not config alone; see
-"Why this is static, not runtime-injected" below.
+Three domains exist today: `fiction`, `design-doc` (design docs /
+product proposals), and `serial-fiction` (fiction released in
+installments — a web serial, a Substack/Patreon serial — where a
+chapter is read both on its own and as part of an ongoing whole). Each
+domain also has its own five agent files in `agents/`
+(`agents/fiction-*.md`, `agents/design-doc-*.md`,
+`agents/serial-fiction-*.md`) — a domain is config plus a matching set
+of generated prompts, not config alone; see "Why this is static, not
+runtime-injected" below.
 
 **To add a domain, run `/edaitor:new-domain`.** It interviews you
 through the design (category vocabulary for both editing phases, the
@@ -164,7 +171,7 @@ missing if not:
 | `display_name` | string | Shown when `/edaitor:intake` offers a choice of domains. |
 | `description` | string | One sentence; also shown in that choice. |
 | `round_tracked_phase` | string | Fixed to `"developmental"` for every domain — see `TODO.md` for why this isn't domain-configurable. |
-| `unit_name` | string | Fixed to `"section"` — descriptive only today; the `section_*.txt` file convention is still hardcoded in `bin/schemas/project_state.py`. |
+| `unit_name` | string | Fixed to `"section"` — descriptive only today; the `section_<NNN>` naming convention is still hardcoded in `bin/schemas/project_state.py` (the file extension isn't — `.txt` and `.md` are both supported). |
 | `developmental_categories` | list of strings | Allowed `category` values for whole-document findings. 4–7, each independently disputable, none a severity in disguise. |
 | `line_categories` | list of strings | Same rules, for single-section findings. |
 | `continuity.entity_types` | list of strings | What kinds of things get checkable facts extracted about them. |
@@ -268,14 +275,57 @@ manuscript.
 loads category vocabulary from `domains/<name>/domain.json` instead of
 hardcoding fiction's; `/edaitor:new-domain` designs and generates a new
 domain's config and agent files; `/edaitor:intake` reads its questions
-from whichever domain is active instead of hardcoding fiction's. A
-second real domain (`design-doc`) exists and was verified two ways: its
-`domain.json` and a hand-built findings/canon fixture (the concrete "the
-summary says Q3, the timeline section says Q4" test case) both pass
-`validate_findings.py` with zero model calls, and all five of its
-generated agents were confirmed live (`claude --plugin-dir`) to actually
-register and respond under their expected `edaitor:design-doc-*` ids —
-not just read back as plausible-looking files.
+from whichever domain is active instead of hardcoding fiction's. Two
+more real domains exist beyond fiction: `design-doc`, verified two ways
+— its `domain.json` and a hand-built findings/canon fixture (the
+concrete "the summary says Q3, the timeline section says Q4" test case)
+both pass `validate_findings.py` with zero model calls — and
+`serial-fiction`. Every domain's five generated agents (fifteen total
+across the three) were confirmed live (`claude --plugin-dir`) to
+actually register and respond under their expected `edaitor:<domain>-*`
+ids — not just read back as plausible-looking files.
+
+**Three smaller things added alongside the domain work, each verified
+live, each catching a real bug in the process:**
+
+- **`.md` section files, alongside `.txt`.** Extension is picked per
+  manuscript (mixing across *different* section stems is fine; the same
+  stem existing as both is rejected as ambiguous). Live testing against
+  a real `.md` fixture caught a genuine gap: the excerpt-verbatim check
+  only normalized whitespace, so an agent quoting `**relentless**` as
+  `relentless` (correct — the words are what's verbatim, not the
+  markup) failed the check on a technicality. Fixed by stripping
+  markdown emphasis/code delimiters symmetrically from both sides of the
+  comparison before matching — a change that can only make a genuine
+  quote match, never make a fabricated one match, since that still
+  requires the wording itself to differ.
+- **Optional required-structure checking for `design-doc`.** A
+  `required_structure` brief field plus a `structure_compliance`
+  developmental category (only fires when the field is non-empty — it
+  never invents a template the author didn't specify). Confirmed live
+  against a doc deliberately missing half its team's required sections:
+  correctly flagged the three missing sections under
+  `structure_compliance`, distinct from `alternatives_considered`
+  (missing *content*) reported separately — the two didn't collapse into
+  one vague finding. The blank-field path (no findings when no structure
+  was given) is a direct read of an explicit prompt instruction, not
+  separately live-tested — lower risk than the positive case, but worth
+  being honest that only one branch was actually run.
+- **A `release_format` brief field on the base `fiction` domain**
+  (standalone / series / serialized). This exists because it was missed
+  once for real: a developmental pass, without this context, flagged a
+  serialized manuscript's intentionally-open chapter endings as
+  structural gaps. Verified with a controlled live test — identical
+  two-section text assessed twice, differing only in this one brief
+  field: the `serialized` run raised nothing about the unresolved
+  thread; the `standalone` run explicitly reasoned that, since the brief
+  ruled out serial/episodic format, the same unresolved setup "reads as
+  an unfinished fragment rather than an intentional hook," and folded
+  that into a `critical` finding about the manuscript's length and
+  completeness. The field changed the reasoning, demonstrably — the
+  fixture (two ~50-word sections) was too short for that to be the only
+  variable in play, so treat this as strong evidence the field works as
+  intended, not as an isolated clean A/B result.
 
 **The continuity layer is wired into `/edaitor:run`.** `/edaitor:run
 continuity` (standalone, and run automatically by both `assess` and

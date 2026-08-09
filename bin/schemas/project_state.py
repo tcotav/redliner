@@ -5,10 +5,14 @@ State lives in `<manuscript_dir>/.edaitor/state.json` — with the
 manuscript, not with the tool — so each manuscript carries its own
 editing history and edaitor stays a reusable tool.
 
-A manuscript is a directory of `section_*.txt` files, read in sorted
-filename order. "Section" is deliberately generic — a fiction manuscript
-calls these chapters, but the engine doesn't need to know that; only the
-domain-specific agent prompts and vocabulary do.
+A manuscript is a directory of `section_*.txt` or `section_*.md` files,
+read in sorted filename order. "Section" is deliberately generic — a
+fiction manuscript calls these chapters, but the engine doesn't need to
+know that; only the domain-specific agent prompts and vocabulary do.
+Extension is per-manuscript, not per-section: a manuscript can mix
+`.txt` and `.md` across *different* section stems (no reason to forbid
+it), but the same stem existing as both is ambiguous and rejected —
+there'd be no way to say which one is "the" section.
 
 ## Why hashes
 
@@ -43,6 +47,12 @@ DEFAULT_DOMAIN = "fiction"
 # constant you can tune after watching real revisions, not a model judgment.
 MAJOR_WORDCOUNT_DELTA = 0.25
 
+SECTION_EXTENSIONS = (".txt", ".md")
+
+
+class SectionCollisionError(Exception):
+    """A section stem exists under more than one supported extension."""
+
 
 def state_dir(manuscript_dir: Path) -> Path:
     return Path(manuscript_dir) / STATE_DIRNAME
@@ -53,7 +63,21 @@ def state_path(manuscript_dir: Path) -> Path:
 
 
 def section_files(manuscript_dir: Path) -> list:
-    return sorted(Path(manuscript_dir).glob("section_*.txt"))
+    manuscript_dir = Path(manuscript_dir)
+    by_stem: dict = {}
+    collisions = set()
+    for ext in SECTION_EXTENSIONS:
+        for path in manuscript_dir.glob(f"section_*{ext}"):
+            if path.stem in by_stem:
+                collisions.add(path.stem)
+            by_stem[path.stem] = path
+    if collisions:
+        raise SectionCollisionError(
+            "Ambiguous section files (same stem under more than one "
+            f"extension): {', '.join(sorted(collisions))}. Each section "
+            "must exist as exactly one of " + " or ".join(SECTION_EXTENSIONS) + "."
+        )
+    return [by_stem[stem] for stem in sorted(by_stem)]
 
 
 def fingerprint_section(path: Path) -> dict:

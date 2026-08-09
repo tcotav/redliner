@@ -1,0 +1,60 @@
+{
+  "name": "serial-fiction",
+  "display_name": "Serial / Episodic Fiction",
+  "description": "Fiction released in installments over time (a web serial, a Substack/Patreon serial, an episodic series) rather than as a single complete work — each chapter is read both on its own and as part of an ongoing whole.",
+  "round_tracked_phase": "developmental",
+  "unit_name": "section",
+  "developmental_categories": [
+    "arc_plot",
+    "episodic_pacing",
+    "character_arc",
+    "chapter_hook",
+    "stakes",
+    "reader_reorientation"
+  ],
+  "line_categories": [
+    "prose_rhythm",
+    "voice_consistency",
+    "show_dont_tell",
+    "dialogue",
+    "pov",
+    "word_choice"
+  ],
+  "continuity": {
+    "entity_types": [
+      "character",
+      "place",
+      "object",
+      "organization",
+      "event",
+      "world_rule"
+    ],
+    "sources": ["narration", "dialogue", "character_thought"],
+    "categories": [
+      "character_attribute",
+      "timeline",
+      "geography",
+      "world_rule",
+      "naming",
+      "relationship",
+      "object"
+    ]
+  },
+  "brief_fields": [
+    {"name": "logline", "label": "Logline", "prompt": "What's the serial, in one or two sentences?"},
+    {"name": "release_cadence", "label": "Release cadence", "prompt": "How often do new chapters/episodes go out — weekly, biweekly, irregular?"},
+    {"name": "episode_length_target", "label": "Episode length target", "prompt": "Typical length per chapter/episode?"},
+    {"name": "genre_subgenre", "label": "Genre / subgenre", "prompt": "Genre and subgenre?"},
+    {"name": "audience", "label": "Audience", "prompt": "Who's the target audience, and where do they read this (platform)?"},
+    {"name": "comps", "label": "Comps", "prompt": "A couple of comparable serials or published books it sits beside?"},
+    {"name": "pov", "label": "POV", "prompt": "POV?"},
+    {"name": "tense", "label": "Tense", "prompt": "Tense?"},
+    {"name": "hook_expectation", "label": "Hook expectation", "prompt": "How strict should the \"ends on a hook or compelling beat\" convention be — every chapter, most chapters, or only when it fits naturally? Chapters not fully resolving is expected craft here, not a defect."}
+  ],
+  "draft_stages": [
+    {"name": "exploratory / partial", "implication": "Structure only. No line-level findings at all — the prose isn't real yet."},
+    {"name": "first complete draft", "implication": "Developmental focus. Line findings only if major+ or a manuscript-wide pattern."},
+    {"name": "revised", "implication": "Both layers in full, normal severity calibration."},
+    {"name": "ready to post", "implication": "Both layers, and minor findings become worth reporting — this is the version that goes live."}
+  ]
+}

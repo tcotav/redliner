@@ -42,6 +42,7 @@
   },
   "brief_fields": [
     {"name": "logline", "label": "Logline", "prompt": "What's the book, in one or two sentences?"},
+    {"name": "release_format", "label": "Release format", "prompt": "Standalone, part of a series, or serialized/episodic (chapters released individually over time, e.g. a web serial)? This changes what counts as a structural gap — a serialized chapter deliberately not resolving everything (a hook or open thread carrying to the next installment) is craft, not a defect, and shouldn't be flagged as one."},
     {"name": "genre_subgenre", "label": "Genre / subgenre", "prompt": "Genre and subgenre?"},
     {"name": "audience", "label": "Audience", "prompt": "Who's the target audience?"},
     {"name": "comps", "label": "Comps", "prompt": "A couple of published books it sits beside?"},

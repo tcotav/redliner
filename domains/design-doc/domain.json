@@ -10,7 +10,8 @@
     "risk_coverage",
     "scope_definition",
     "success_criteria",
-    "stakeholder_impact"
+    "stakeholder_impact",
+    "structure_compliance"
   ],
   "line_categories": [
     "clarity",
@@ -44,7 +45,8 @@
     {"name": "decision_authority", "label": "The ask", "prompt": "What decision or approval is this doc trying to get, and from whom?"},
     {"name": "prior_art", "label": "Prior art", "prompt": "Related docs, past decisions, or precedent this builds on or departs from?"},
     {"name": "constraints", "label": "Constraints", "prompt": "Budget, timeline, org, or technical constraints shaping the proposal?"},
-    {"name": "known_open_questions", "label": "Known open questions", "prompt": "What's deliberately left unresolved in this draft?"}
+    {"name": "known_open_questions", "label": "Known open questions", "prompt": "What's deliberately left unresolved in this draft?"},
+    {"name": "required_structure", "label": "Required structure", "prompt": "Does your org/team have a required structure or template for this kind of doc? If so, list the expected sections in order. Leave blank if there isn't one — don't invent a template to fill this in."}
   ],
   "draft_stages": [
     {"name": "early draft / brainstorm", "implication": "Structure only. No line-level findings — the argument isn't settled yet."},

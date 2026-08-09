@@ -43,10 +43,12 @@ Interview conversationally, not as a rigid form:
 `round_tracked_phase` stays `"developmental"` and `unit_name` stays
 `"section"` — **do not make these domain-configurable.** Phase names are
 fixed project-wide (see `TODO.md`); `unit_name` is currently descriptive
-only — no code reads it yet, the `section_*.txt` file convention is
-still hardcoded in `bin/schemas/project_state.py` — so setting it to
-anything but `"section"` would promise something the plumbing doesn't
-deliver yet. Don't ask the author about either.
+only — no code reads it yet, the `section_<NNN>` naming convention is
+still hardcoded in `bin/schemas/project_state.py` (the file *extension*
+is flexible — `.txt` or `.md` — but the `section_` stem prefix isn't) —
+so setting `unit_name` to anything but `"section"` would promise
+something the plumbing doesn't deliver yet. Don't ask the author about
+either.
 
 ## Step 2: Design the two category vocabularies
 
@@ -114,9 +116,22 @@ don't contort the example.
 - **`brief_fields`** — what does `/edaitor:intake` need to ask before any
   pass can judge this document fairly? Each entry needs `name` (snake_
   case), `label` (for the brief template), and `prompt` (the actual
-  question). Fiction has 8 (logline, genre, audience, comps, length,
-  POV, tense, structure) — there's no fixed count here, just "what does
-  an editor need to know that isn't on the page."
+  question). Fiction has 9 (logline, release format, genre, audience,
+  comps, length, POV, tense, structure) — there's no fixed count here,
+  just "what does an editor need to know that isn't on the page."
+  Two recurring patterns worth reusing rather than reinventing:
+  - **A closure/format field** (fiction's "release format": standalone
+    vs. series vs. serialized) — any domain where a unit's ending gets
+    judged for completeness needs to know whether incompleteness is
+    intentional at that scale. This exists because it was missed once:
+    the developmental editor flagged a serialized manuscript's
+    intentionally-open chapter endings as structural gaps, because
+    nothing had told it chapters weren't meant to resolve individually.
+  - **An optional required-structure field** (design-doc's "required
+    structure": paste your org's template if you have one) — paired
+    with a `structure_compliance`-style developmental category that
+    only fires when the field is non-empty. Don't have the category
+    invent an expected structure when the author didn't give one.
 - **`draft_stages`** — an ordered list of `{name, implication}`, where
   `implication` states what each stage means for finding severity.
   Fiction's four stages run exploratory → first-complete → revised →

@@ -18,15 +18,27 @@ listed under "Deliberate choices" is intentional; flagging it means you
 misunderstood the book, not that you caught something. Respect the draft
 stage's severity guidance.
 
+**Check "Release format" specifically before judging closure.** If it
+says serialized/episodic, a chapter ending on an open thread, an
+unresolved beat, or a hook into the next installment is the intended
+craft of that format, not a structural gap — don't raise it as a `plot`
+or `structure` finding just because something "doesn't tie out" by the
+end of a section. Only flag it if the *overall arc* never resolves
+threads it should, or if the brief itself says otherwise. This
+distinction matters: a real prior run of this kind of pass, without this
+context, flagged exactly this as a defect on a serialized manuscript.
+
 If the brief is missing, say so and stop. Reviewing without it produces
 confident, wrong notes.
 
 ## What to do
 
 1. Read the brief.
-2. Use Glob to find `section_*.txt` in the manuscript directory and Read
-   every one, in filename order, before forming any opinion. Story-level
-   judgment requires the whole shape.
+2. Use Glob to find `section_*.txt` and `section_*.md` in the manuscript
+   directory (a manuscript uses one or the other, or mixes them across
+   different sections — but never both for the same section stem) and
+   Read every one, in filename order, before forming any opinion.
+   Story-level judgment requires the whole shape.
 3. If you're given a prior findings file (a re-check), read it too, and
    carry forward any finding still unresolved — reuse its exact `id`
    rather than renumbering.

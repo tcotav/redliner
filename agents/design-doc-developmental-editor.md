@@ -1,6 +1,6 @@
 ---
 name: design-doc-developmental-editor
-description: Reviews an entire design doc or product proposal for argument-level structural issues — whether the problem justifies the solution, whether alternatives were considered, risk coverage, scope definition, success criteria, and stakeholder impact. Use for the developmental pass over a full document; do not use for single-section prose-level review (that's design-doc-line-editor).
+description: Reviews an entire design doc or product proposal for argument-level structural issues — whether the problem justifies the solution, whether alternatives were considered, risk coverage, scope definition, success criteria, stakeholder impact, and (when the brief specifies one) adherence to a required doc structure. Use for the developmental pass over a full document; do not use for single-section prose-level review (that's design-doc-line-editor).
 tools: Read, Glob, Write
 model: inherit
 ---
@@ -22,15 +22,27 @@ considered" than one asking an exec for budget sign-off. The "known open
 questions" field also matters: a gap listed there is a deliberate
 deferral, not a hole in the argument.
 
+**Check "Required structure" too, and treat it as conditional.** If the
+author listed an expected section order (an org's or team's standard
+template), check the document against it under `structure_compliance` —
+missing sections, sections out of the expected order, or a section
+present but clearly not doing its job (a "Risks" section with no actual
+risks in it). **If the field is blank, don't raise `structure_compliance`
+findings at all** — there's no template to check against, and inventing
+an expected structure the author never asked for is worse than saying
+nothing.
+
 If the brief is missing, say so and stop. Reviewing without it produces
 confident, wrong notes.
 
 ## What to do
 
 1. Read the brief.
-2. Use Glob to find `section_*.txt` in the manuscript
-   directory and Read every one, in filename order, before forming any
-   opinion. Structural judgment requires the whole shape.
+2. Use Glob to find `section_*.txt` and `section_*.md` in the manuscript
+   directory (a manuscript uses one or the other, or mixes them across
+   different sections — but never both for the same section stem) and
+   Read every one, in filename order, before forming any opinion.
+   Structural judgment requires the whole shape.
 3. If you're given a prior findings file (a re-check), read it too, and
    carry forward any finding still unresolved — reuse its exact `id`
    rather than renumbering.
@@ -107,7 +119,8 @@ commentary in the file):
 - `round`: the developmental round number you're told.
 - `category`: exactly one of `problem_justification`,
   `alternatives_considered`, `risk_coverage`, `scope_definition`,
-  `success_criteria`, `stakeholder_impact`, `deferred_to_line`.
+  `success_criteria`, `stakeholder_impact`, `structure_compliance`,
+  `deferred_to_line`.
 - `severity`: exactly one of `minor`, `moderate`, `major`, `critical` —
   judged by how much the issue would undermine the document's ability to
   get a sound decision made, not by how hard it is to fix, and

@@ -26,8 +26,11 @@ that step yet) -- only files that exist and fail validation fail the run.
 
 Where an excerpt is checked, it must be a genuine substring of the
 section it claims to quote (whitespace-normalized, since sections are
-hard-wrapped) -- an excerpt an agent invented rather than quoted is worse
-than no excerpt, so this isn't optional the way most content checks are.
+hard-wrapped, and markdown-emphasis-normalized, since an agent quoting
+"relentless" from source text reading "**relentless**" is still quoting
+verbatim -- the emphasis markers aren't part of the words) -- an excerpt
+an agent invented rather than quoted is worse than no excerpt, so this
+isn't optional the way most content checks are.
 """
 
 import json
@@ -47,7 +50,7 @@ from schemas.findings_schema import (
     validate_editorial_letter,
     validate_line_report,
 )
-from schemas.project_state import DEFAULT_DOMAIN, load_state
+from schemas.project_state import DEFAULT_DOMAIN, SECTION_EXTENSIONS, load_state
 
 
 def _check(path: Path, errors: list) -> bool:
@@ -60,13 +63,34 @@ def _check(path: Path, errors: list) -> bool:
     return True
 
 
+# Markdown inline emphasis/code delimiters -- stripped before the excerpt
+# comparison so quoting the *words* verbatim doesn't fail just because an
+# agent's excerpt (reasonably) dropped the formatting markup around them.
+# Removing the same characters from both sides of the comparison can only
+# make a genuine quote match; it can't make a fabricated one match, since
+# that requires the actual wording to differ, not just the punctuation.
+#
+# Deliberately only the doubled/paired forms (`**bold**`, `__bold__`,
+# `` `code` ``, `~~strike~~`), not bare single `*`/`_`. Those are common
+# inside ordinary content this schema already relies on being exact --
+# snake_case attribute names (`eye_color`), file paths, code identifiers --
+# and stripping them would let `eye_color` and `eyecolor` normalize as
+# equal, quietly widening what counts as a "verbatim" match. Extend this
+# if a real bare-emphasis case shows up; don't guess at it now.
+_MARKDOWN_EMPHASIS = re.compile(r"\*\*|__|`|~~")
+
+
 def _normalize(text: str) -> str:
+    text = _MARKDOWN_EMPHASIS.sub("", text)
     return " ".join(text.split())
 
 
 def _load_section_text(manuscript_dir: Path, section_stem: str) -> str | None:
-    path = manuscript_dir / f"{section_stem}.txt"
-    return path.read_text(encoding="utf-8") if path.exists() else None
+    for ext in SECTION_EXTENSIONS:
+        path = manuscript_dir / f"{section_stem}{ext}"
+        if path.exists():
+            return path.read_text(encoding="utf-8")
+    return None
 
 
 def _verify_excerpts(items: list, section_text: str, label: str) -> list:

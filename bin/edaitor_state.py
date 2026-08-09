@@ -36,6 +36,7 @@ from schemas.domain_loader import DomainError, load_domain
 from schemas.project_state import (
     DEFAULT_DOMAIN,
     PHASES,
+    SectionCollisionError,
     diff_manuscript,
     fingerprint_manuscript,
     load_state,
@@ -78,13 +79,21 @@ def cmd_status(manuscript_dir: Path) -> int:
 
 def cmd_diff(manuscript_dir: Path) -> int:
     state = _require_state(manuscript_dir)
-    print(json.dumps(diff_manuscript(manuscript_dir, state), indent=2))
+    try:
+        print(json.dumps(diff_manuscript(manuscript_dir, state), indent=2))
+    except SectionCollisionError as e:
+        print(f"Section file error: {e}")
+        return 1
     return 0
 
 
 def cmd_snapshot(manuscript_dir: Path) -> int:
     state = _require_state(manuscript_dir)
-    state["section_fingerprints"] = fingerprint_manuscript(manuscript_dir)
+    try:
+        state["section_fingerprints"] = fingerprint_manuscript(manuscript_dir)
+    except SectionCollisionError as e:
+        print(f"Section file error: {e}")
+        return 1
     save_state(manuscript_dir, state)
     print(f"Snapshotted {len(state['section_fingerprints'])} sections as assessed.")
     return 0

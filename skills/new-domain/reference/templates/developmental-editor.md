@@ -54,9 +54,11 @@ confident, wrong notes.
 
 <!-- FIXED, except section/manuscript substitution -->
 1. Read the brief.
-2. Use Glob to find `section_*.txt` in the manuscript
-   directory and Read every one, in filename order, before forming any
-   opinion. Structural judgment requires the whole shape.
+2. Use Glob to find `section_*.txt` and `section_*.md` in the manuscript
+   directory (a manuscript uses one or the other, or mixes them across
+   different sections — but never both for the same section stem) and
+   Read every one, in filename order, before forming any opinion.
+   Structural judgment requires the whole shape.
 3. If you're given a prior findings file (a re-check), read it too, and
    carry forward any finding still unresolved — reuse its exact `id`
    rather than renumbering.

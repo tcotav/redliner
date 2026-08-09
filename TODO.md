@@ -211,6 +211,104 @@ no persistent id to resolve yet anyway — see the carry-forward item
 above, which is a prerequisite for this actually mattering) but worth
 revisiting once carry-forward exists.
 
+## Markdown support, structure templates, and a serial-fiction domain (DONE)
+
+**Raised:** 2026-08-09, from the user reading the README with fresh
+eyes. **Completed:** 2026-08-09.
+
+Three ideas raised together, which turned out to be three different
+mechanisms rather than one feature:
+
+1. **`.md` section files, alongside `.txt`.** Small and mechanical —
+   `section_files()` in `project_state.py` now globs both extensions,
+   erroring (`SectionCollisionError`) only if the same stem exists under
+   both, which would be genuinely ambiguous. Scrivener specifically was
+   raised too, and deliberately **not** designed against: "Scrivener
+   markdown" isn't one fixed format (depends on the author's own
+   compile/sync settings, and can leak synopsis/notes into the exported
+   text if compile settings include them) — same discipline already
+   applied to the Obsidian idea below: design against a real exported
+   sample when there is one, not an imagined format.
+2. **Design-doc template compliance** — mechanically checkable, given
+   markdown headers, but built as brief-level content (an optional
+   `required_structure` field checked by a `structure_compliance`
+   category that only fires when the field is non-empty) rather than a
+   header-parsing script. Deliberately the smaller version: a real
+   deterministic header-presence checker is a legitimate upgrade path
+   later, once it's clear presence/order matters more than the
+   section's actual adequacy (which still needs judgment either way).
+3. **Serial-fiction chapter-ending pull** — not a template at all, a
+   judgment call, so it became a proper domain (`serial-fiction`) rather
+   than a mechanism bolted onto fiction. See below.
+
+**Two real bugs caught by live testing, not by inspection** (same
+methodology as everywhere else in this project — a script compiling or
+a fixture validating is not the same claim as a live agent producing
+correct behavior):
+
+- **Markdown emphasis broke excerpt verification.** An agent extracting
+  a fact from `**relentless**` correctly quoted the words
+  (`relentless`), not the markup — and `validate_findings.py`'s
+  whitespace-only normalizer treated that as a failed verbatim match.
+  Fixed by stripping markdown emphasis/code delimiters from both sides
+  of the comparison before matching, which can only make a genuine quote
+  match (a fabricated one still fails, since the actual wording would
+  differ, not just the punctuation around it).
+- **The `SectionCollisionError` import got silently dropped from both
+  `edaitor_state.py` and `edaitor_canon.py`** between the edit that
+  added it and the edit that used it — the third occurrence of this
+  exact bug class in this project (see the domain-generalization and
+  earlier sections). `py_compile` doesn't catch it (a `NameError` only
+  fires when the code path actually executes); only running the script
+  against the real failure case does. Both fixed, reverified by
+  execution, not just by reading the diff back.
+
+**The `fiction` domain's most important addition this round:**
+`release_format` (standalone / series / serialized), added directly to
+the base domain, not gated behind switching to `serial-fiction`. This
+exists because the user hit the actual failure once, outside this
+plugin: a developmental pass flagged a serialized manuscript's
+intentionally-open chapter endings as structural defects, because
+nothing had told it chapters weren't meant to resolve individually.
+Verified with a controlled pair, not just a single run: identical
+two-section text, assessed twice, differing only in this one field —
+the serialized run raised nothing about the unresolved thread; the
+standalone run explicitly reasoned that the same unresolved setup "reads
+as an unfinished fragment rather than an intentional hook" given the
+brief ruled out serial format, folding that into a `critical` finding
+about the manuscript's completeness. The field demonstrably changed the
+reasoning; the fixture (two ~50-word sections) was too short to call
+this a clean isolated A/B result on its own, so hold it as strong
+evidence, not proof by elimination.
+
+**`serial-fiction` domain** — hand-designed the same way `design-doc`
+was (categories with the same 4–7/disputable/not-a-severity guardrails,
+then generated via the templates, then verified). Reuses fiction's
+`line_categories` and entire `continuity` block verbatim — sentence-level
+craft and what counts as a checkable fact don't change with release
+cadence, so there was no reason to invent different ones just to look
+distinct. What's actually different is `developmental_categories`:
+`arc_plot`, `episodic_pacing`, `character_arc`, `chapter_hook`, `stakes`,
+`reader_reorientation`. `chapter_hook` is calibrated entirely by a new
+`hook_expectation` brief field (every chapter / most chapters / only
+when it fits) — the prompt explicitly warns against treating "must end
+on a hook" as a blanket genre rule regardless of what the brief says,
+which is the same category of mistake `release_format` fixes for
+fiction generally. All five of `serial-fiction`'s new agents were
+confirmed live to register and respond under their
+`edaitor:serial-fiction-<role>` ids (fifteen total across all three
+domains now carry that same live confirmation, `fiction`'s and
+`design-doc`'s from earlier work). `serial-fiction`'s `chapter_hook`
+category was further confirmed against a live
+two-chapter fixture (chapter 1 deliberately ending flat and fully
+resolved, chapter 2 ending on a real reveal, `hook_expectation` set to
+"every chapter"): the developmental pass correctly raised `chapter_hook`
+(`major`) against chapter 1's flat ending and raised nothing against
+chapter 2's — while also surfacing real `episodic_pacing`,
+`reader_reorientation`, and `character_arc` findings on the same
+fixture, unprompted, confirming the other five categories aren't just
+schema entries nobody's prompt actually uses.
+
 ## Port to a compiled language for distributable binaries?
 
 **Raised:** 2026-08-08. **Updated:** 2026-08-08, after the plugin conversion.

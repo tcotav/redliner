@@ -42,6 +42,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from schemas.project_state import (
+    SectionCollisionError,
     diff_manuscript,
     fingerprint_section,
     load_state,
@@ -85,7 +86,13 @@ def cmd_stale(manuscript_dir: Path) -> int:
     stale, missing = [], []
     current_hashes = {}
 
-    for path in section_files(manuscript_dir):
+    try:
+        sections = section_files(manuscript_dir)
+    except SectionCollisionError as e:
+        print(f"Section file error: {e}")
+        return 1
+
+    for path in sections:
         recorded = observations.get(path.stem)
         section_hash = fingerprint_section(path)["sha256"]
         if recorded is None:
@@ -96,9 +103,7 @@ def cmd_stale(manuscript_dir: Path) -> int:
             stale.append(path.stem)
             current_hashes[path.stem] = section_hash
 
-    orphaned = sorted(
-        set(observations) - {p.stem for p in section_files(manuscript_dir)}
-    )
+    orphaned = sorted(set(observations) - {p.stem for p in sections})
 
     print(
         json.dumps(
@@ -126,7 +131,11 @@ def cmd_reconcile(manuscript_dir: Path) -> int:
     state = load_state(manuscript_dir) or {}
     changed_since_snapshot = set()
     if state.get("section_fingerprints"):
-        verdict = diff_manuscript(manuscript_dir, state)
+        try:
+            verdict = diff_manuscript(manuscript_dir, state)
+        except SectionCollisionError as e:
+            print(f"Section file error: {e}")
+            return 1
         changed_since_snapshot = set(verdict["changed"]) | set(verdict["added"])
 
     facts_by_id = {}

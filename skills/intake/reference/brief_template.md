@@ -19,6 +19,7 @@ to any kind of document and doesn't vary by domain.
      "label". Example, for fiction: -->
 
 - **Logline:**
+- **Release format:**
 - **Genre / subgenre:**
 - **Audience:**
 - **Comps:**
