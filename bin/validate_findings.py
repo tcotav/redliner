@@ -20,7 +20,7 @@ files are not errors by themselves (the pipeline may not have reached
 that step yet) -- only files that exist and fail validation fail the run.
 
 Where an excerpt is checked, it must be a genuine substring of the
-chapter it claims to quote (whitespace-normalized, since chapters are
+section it claims to quote (whitespace-normalized, since sections are
 hard-wrapped) -- an excerpt an agent invented rather than quoted is worse
 than no excerpt, so this isn't optional the way most content checks are.
 """
@@ -57,26 +57,26 @@ def _normalize(text: str) -> str:
     return " ".join(text.split())
 
 
-def _load_chapter_text(manuscript_dir: Path, chapter_stem: str) -> str | None:
-    path = manuscript_dir / f"{chapter_stem}.txt"
+def _load_section_text(manuscript_dir: Path, section_stem: str) -> str | None:
+    path = manuscript_dir / f"{section_stem}.txt"
     return path.read_text(encoding="utf-8") if path.exists() else None
 
 
-def _verify_excerpts(items: list, chapter_text: str, label: str) -> list:
+def _verify_excerpts(items: list, section_text: str, label: str) -> list:
     """Check each item's `excerpt` (if present) is a real substring of the
-    chapter it claims to quote. Returns error strings; empty if clean."""
+    section it claims to quote. Returns error strings; empty if clean."""
     errors = []
-    normalized_chapter = _normalize(chapter_text)
+    normalized_section = _normalize(section_text)
     for i, item in enumerate(items):
         excerpt = item.get("excerpt") if isinstance(item, dict) else None
         if not excerpt:
             continue
-        if _normalize(excerpt) not in normalized_chapter:
+        if _normalize(excerpt) not in normalized_section:
             item_id = (
                 item.get("id", f"index {i}") if isinstance(item, dict) else f"index {i}"
             )
             errors.append(
-                f"{label}[{item_id}]: excerpt not found verbatim in chapter text: {excerpt!r}"
+                f"{label}[{item_id}]: excerpt not found verbatim in section text: {excerpt!r}"
             )
     return errors
 
@@ -90,10 +90,10 @@ def _validate_canon(manuscript_dir: Path, edaitor_path: Path, ok: bool) -> bool:
     for obs_file in sorted((canon_path / "observations").glob("*.json")):
         report = json.loads(obs_file.read_text())
         errors = validate_observations(report)
-        chapter_text = _load_chapter_text(manuscript_dir, obs_file.stem)
-        if chapter_text is not None:
+        section_text = _load_section_text(manuscript_dir, obs_file.stem)
+        if section_text is not None:
             errors += _verify_excerpts(
-                report.get("facts", []), chapter_text, obs_file.name
+                report.get("facts", []), section_text, obs_file.name
             )
         ok = _check(obs_file, errors) and ok
 
@@ -136,10 +136,10 @@ def main(manuscript_dir_arg: str) -> int:
         errors = validate_line_report(report)
         match = line_pattern.match(line_file.name)
         if match:
-            chapter_text = _load_chapter_text(manuscript_dir, match.group(1))
-            if chapter_text is not None:
+            section_text = _load_section_text(manuscript_dir, match.group(1))
+            if section_text is not None:
                 errors += _verify_excerpts(
-                    report.get("findings", []), chapter_text, line_file.name
+                    report.get("findings", []), section_text, line_file.name
                 )
         ok = _check(line_file, errors) and ok
 

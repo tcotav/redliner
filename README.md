@@ -12,14 +12,14 @@ Three layers, run separately rather than as one pass:
    flags story-level issues (plot, pacing, character arcs, structure,
    stakes, theme). Iterative: runs in rounds, tracks which findings
    you've addressed, and re-checks after revision.
-2. **Line editing** — reads *one chapter at a time*, flags prose-level
+2. **Line editing** — reads *one section at a time*, flags prose-level
    issues (rhythm, voice, show-vs-tell, dialogue, POV, word choice).
    Gated behind developmental work settling — see below.
 3. **Continuity** — cross-cutting, runs alongside either phase. Extracts
-   checkable facts per chapter, finds contradictions mechanically
+   checkable facts per section, finds contradictions mechanically
    (same entity, same attribute, different value — computed exactly, not
    guessed at), then has an agent judge only the collisions found: real
-   error vs. a lying character vs. an edit you made in one chapter that
+   error vs. a lying character vs. an edit you made in one section that
    hasn't propagated to another yet.
 
 Every finding carries an `id`, a `status` (open/claimed/addressed/stale/
@@ -64,8 +64,8 @@ the `--plugin-dir` flag with a one-time `/plugin install`.)
 /edaitor:run status             # where things stand
 ```
 
-Manuscript directories are plain `.txt` files, one per chapter, read in
-sorted filename order (`chapter_01.txt`, `chapter_02.txt`, ...). Defaults
+Manuscript directories are plain `.txt` files, one per section, read in
+sorted filename order (`section_01.txt`, `section_02.txt`, ...). Defaults
 to the current directory if no path is given.
 
 Validate a manuscript's `.edaitor/` output directly, without running a
@@ -90,8 +90,8 @@ edaitor/                          (plugin root)
 │   ├── run/SKILL.md              /edaitor:run <status|assess|work|resolve|recheck|line>
 │   └── intake/SKILL.md           /edaitor:intake
 └── bin/                          on PATH while the plugin is enabled
-    ├── edaitor_state.py          phase, rounds, chapter fingerprinting/diff
-    ├── edaitor_canon.py          merges per-chapter facts, finds collisions mechanically
+    ├── edaitor_state.py          phase, rounds, section fingerprinting/diff
+    ├── edaitor_canon.py          merges per-section facts, finds collisions mechanically
     ├── validate_findings.py      schema + excerpt-verbatim checks
     └── schemas/                  shared vocabulary + validators, imported by all three
 ```
@@ -110,11 +110,11 @@ A few things worth knowing if you're debugging or extending this:
 - **Nothing here enforces JSON shape at the API level.** A subagent is
   *told* the schema and could still get it wrong, so
   `bin/validate_findings.py` checks after the fact — including verifying
-  that any `excerpt` field is a genuine verbatim substring of the chapter
+  that any `excerpt` field is a genuine verbatim substring of the section
   it claims to quote, not a paraphrase. That check has already caught a
   real fabricated excerpt in this repo's own sample data.
 - **Deterministic detection, model judgment — kept as two separate
-  steps.** Chapter-hash diffing and continuity-collision finding are both
+  steps.** Section-hash diffing and continuity-collision finding are both
   exactly computable, so they're plain scripts. Judgment (is this really
   a contradiction?) only happens after, on what the script already found.
 - **Developmental passes run unattended.** Subagents have no tool to ask
@@ -149,7 +149,7 @@ can't ship inside the plugin. Add this to your own project or user
 
 ## Status
 
-Working end to end against `sample_manuscript/` (a bundled two-chapter
+Working end to end against `sample_manuscript/` (a bundled two-section
 test fixture with deliberately seeded issues — not a model for where
 your own manuscript should live) through all three layers. The plugin
 structure itself has been verified with a real `claude --plugin-dir`

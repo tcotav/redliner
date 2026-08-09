@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Merge per-chapter observations into a canon, and find collisions.
+"""Merge per-section observations into a canon, and find collisions.
 
 Lives in the plugin's bin/ (on PATH while the plugin is enabled) -- runs
 as `edaitor_canon.py ...` from any working directory. See the sys.path
@@ -7,7 +7,7 @@ bootstrap below for how it finds its sibling `schemas` package.
 
 Two commands:
 
-    edaitor_canon.py stale     <manuscript_dir>   # which chapters need re-extraction
+    edaitor_canon.py stale     <manuscript_dir>   # which sections need re-extraction
     edaitor_canon.py reconcile <manuscript_dir>   # build canon + find collisions
 
 Finding a collision is a *computation*, not a judgment: two facts about
@@ -25,11 +25,11 @@ an in-world explanation. That needs judgment. Finding them does not.
 
 Most "contradictions" in a manuscript under active revision aren't
 continuity errors at all -- they're an edit the author hasn't propagated
-yet. Chapter 2 was rewritten; chapter 7 still says the old thing.
+yet. Section 2 was rewritten; section 7 still says the old thing.
 
-So each collision is annotated with whether its chapters have changed
+So each collision is annotated with whether its sections have changed
 since the last assessment snapshot. A collision between one recently
-edited chapter and one untouched chapter is probably unpropagated
+edited section and one untouched section is probably unpropagated
 revision, and saying so is far more useful to the author than "these
 contradict."
 """
@@ -42,10 +42,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from schemas.project_state import (
-    chapter_files,
     diff_manuscript,
-    fingerprint_chapter,
+    fingerprint_section,
     load_state,
+    section_files,
     state_dir,
 )
 
@@ -69,24 +69,24 @@ def load_observations(manuscript_dir: Path) -> dict:
 
 
 def cmd_stale(manuscript_dir: Path) -> int:
-    """Report chapters whose text has changed since their facts were extracted.
+    """Report sections whose text has changed since their facts were extracted.
 
-    Extraction cost scales with chapter count; re-reading 40 chapters to
+    Extraction cost scales with section count; re-reading 40 sections to
     catch one edit is how a layer becomes something you avoid running.
     """
     observations = load_observations(manuscript_dir)
     stale, missing = [], []
 
-    for path in chapter_files(manuscript_dir):
+    for path in section_files(manuscript_dir):
         recorded = observations.get(path.stem)
         if recorded is None:
             missing.append(path.stem)
             continue
-        if recorded.get("chapter_sha256") != fingerprint_chapter(path)["sha256"]:
+        if recorded.get("section_sha256") != fingerprint_section(path)["sha256"]:
             stale.append(path.stem)
 
     orphaned = sorted(
-        set(observations) - {p.stem for p in chapter_files(manuscript_dir)}
+        set(observations) - {p.stem for p in section_files(manuscript_dir)}
     )
 
     print(
@@ -113,15 +113,15 @@ def cmd_reconcile(manuscript_dir: Path) -> int:
 
     state = load_state(manuscript_dir) or {}
     changed_since_snapshot = set()
-    if state.get("chapter_fingerprints"):
+    if state.get("section_fingerprints"):
         verdict = diff_manuscript(manuscript_dir, state)
         changed_since_snapshot = set(verdict["changed"]) | set(verdict["added"])
 
     facts_by_id = {}
     grouped = defaultdict(list)
-    for chapter, report in observations.items():
+    for section, report in observations.items():
         for fact in report.get("facts", []):
-            facts_by_id[fact["id"]] = {**fact, "chapter": chapter}
+            facts_by_id[fact["id"]] = {**fact, "section": section}
             key = (fact["entity"].strip().lower(), fact["attribute"].strip().lower())
             grouped[key].append(fact["id"])
 
@@ -136,9 +136,9 @@ def cmd_reconcile(manuscript_dir: Path) -> int:
             continue
 
         involved = [facts_by_id[fid] for fid in fact_ids]
-        chapters = sorted({f["chapter"] for f in involved})
-        edited = sorted(c for c in chapters if c in changed_since_snapshot)
-        untouched = sorted(c for c in chapters if c not in changed_since_snapshot)
+        sections = sorted({f["section"] for f in involved})
+        edited = sorted(s for s in sections if s in changed_since_snapshot)
+        untouched = sorted(s for s in sections if s not in changed_since_snapshot)
 
         collisions.append(
             {
@@ -148,7 +148,7 @@ def cmd_reconcile(manuscript_dir: Path) -> int:
                 "facts": [
                     {
                         "id": f["id"],
-                        "chapter": f["chapter"],
+                        "section": f["section"],
                         "value": f["value"],
                         "excerpt": f["excerpt"],
                         "location": f["location"],
@@ -160,8 +160,8 @@ def cmd_reconcile(manuscript_dir: Path) -> int:
                 # Adjudication hints -- context for the model, not verdicts.
                 "all_narration": all(f["source"] == "narration" for f in involved),
                 "any_implied": any(f["confidence"] == "implied" for f in involved),
-                "chapters_edited_since_snapshot": edited,
-                "chapters_untouched_since_snapshot": untouched,
+                "sections_edited_since_snapshot": edited,
+                "sections_untouched_since_snapshot": untouched,
                 "likely_unpropagated_revision": bool(edited) and bool(untouched),
             }
         )
@@ -169,7 +169,7 @@ def cmd_reconcile(manuscript_dir: Path) -> int:
     canon = {
         "entities": {},
         "fact_count": len(facts_by_id),
-        "chapters_covered": sorted(observations),
+        "sections_covered": sorted(observations),
     }
     for fact in facts_by_id.values():
         entity = canon["entities"].setdefault(
@@ -178,7 +178,7 @@ def cmd_reconcile(manuscript_dir: Path) -> int:
         entity["attributes"].setdefault(fact["attribute"], []).append(
             {
                 "value": fact["value"],
-                "chapter": fact["chapter"],
+                "section": fact["section"],
                 "fact_id": fact["id"],
                 "source": fact["source"],
                 "confidence": fact["confidence"],

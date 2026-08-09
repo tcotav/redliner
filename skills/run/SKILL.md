@@ -69,7 +69,7 @@ Do **not** run line editing here, whatever the author asked for.
 Revision support — the conversational one. Do this **in the main session,
 not via a subagent**: it's a back-and-forth, not a batch job.
 
-1. Read the brief, the finding by id, and the chapters it touches.
+1. Read the brief, the finding by id, and the sections it touches.
 2. Talk it through with the author: why it's a problem, what options
    exist, what each would cost elsewhere in the book. Offer approaches
    rather than prescribing one; they're the author.
@@ -89,15 +89,15 @@ that `/edaitor:run recheck` will verify it.
    this is deterministic, so trust it over any impression of how much
    changed:
 
-   - **`unchanged`** — no chapter text differs from the last assessment.
+   - **`unchanged`** — no section text differs from the last assessment.
      Any `claimed` findings can't be verified; say so plainly and stop.
      Something's off: either the revision wasn't saved, or the author
      marked things resolved without revising.
-   - **`targeted`** — specific chapters edited, none added or removed,
+   - **`targeted`** — specific sections edited, none added or removed,
      no large swings. Task `edaitor:developmental-editor` to verify the `claimed`
-     findings against those chapters and check whether the edits created
+     findings against those sections and check whether the edits created
      new problems. Pass the existing findings file so ids carry forward.
-   - **`restructured`** — chapters added, removed, or heavily rewritten.
+   - **`restructured`** — sections added, removed, or heavily rewritten.
      A full re-read: task `edaitor:developmental-editor` over the whole
      manuscript with the prior findings file. Findings the restructure
      invalidated should come back `stale`, not `addressed` — the author
@@ -120,11 +120,11 @@ that `/edaitor:run recheck` will verify it.
    reasons to line-edit a section that's structurally settled even while
    other parts aren't.
 3. `edaitor_state.py phase <manuscript_dir> line`.
-4. For each chapter, task `edaitor:line-editor` with the manuscript directory,
-   that chapter's path, any `deferred_to_line` developmental findings for
-   it, and output path `.edaitor/findings/line_<chapter_stem>.json`.
+4. For each section, task `edaitor:line-editor` with the manuscript directory,
+   that section's path, any `deferred_to_line` developmental findings for
+   it, and output path `.edaitor/findings/line_<section_stem>.json`.
    Sequential keeps the transcript readable; parallel is fine too —
-   chapters share no state.
+   sections share no state.
 5. Validate.
 6. Task `edaitor:editorial-aggregator` for the **line** letter.
 7. Validate, then read and show the letter.

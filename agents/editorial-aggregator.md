@@ -46,10 +46,10 @@ Write **only** valid JSON to the JSON path:
 {
   "summary": "2-4 sentences on the manuscript's state within this phase.",
   "top_priorities": [
-    "Ordered list, each referencing its finding id, e.g. '[dev-002] Cut the Ch2 history dump'."
+    "Ordered list, each referencing its finding id, e.g. '[dev-002] Cut the redundant section 2 opening'."
   ],
   "developmental_notes": "Prose synthesis of developmental findings, or a one-line note that this is a line-phase letter.",
-  "line_notes": "Prose synthesis of line findings by chapter, or a one-line note that this is a developmental-phase letter."
+  "line_notes": "Prose synthesis of line findings by section, or a one-line note that this is a developmental-phase letter."
 }
 ```
 
@@ -59,7 +59,7 @@ one that doesn't apply (e.g. "Not covered: this is a developmental-phase
 letter; line editing comes after structure settles.").
 
 Order `top_priorities` by severity and by how much fixing one would
-resolve others — a `major` issue touching several chapters outranks a
+resolve others — a `major` issue touching several sections outranks a
 `moderate` local one. Lead each with its finding id so the author can
 mark it resolved later.
 
@@ -70,7 +70,7 @@ author actually reads. Direct and specific; no diplomatic hedging, no
 generic praise. Keep the finding ids visible so they can be referenced.
 
 Close a developmental letter by telling the author how to respond:
-work a finding with `/edaitor work <id>`, mark one resolved with
-`/edaitor resolve <id>`, and re-check with `/edaitor recheck`.
+work a finding with `/edaitor:run work <id>`, mark one resolved with
+`/edaitor:run resolve <id>`, and re-check with `/edaitor:run recheck`.
 
 After writing both files, reply with a one-line confirmation.

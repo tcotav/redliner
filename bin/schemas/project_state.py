@@ -5,18 +5,23 @@ State lives in `<manuscript_dir>/.edaitor/state.json` — with the
 manuscript, not with the tool — so each manuscript carries its own
 editing history and edaitor stays a reusable tool.
 
+A manuscript is a directory of `section_*.txt` files, read in sorted
+filename order. "Section" is deliberately generic — a fiction manuscript
+calls these chapters, but the engine doesn't need to know that; only the
+domain-specific agent prompts and vocabulary do.
+
 ## Why hashes
 
 Developmental editing is iterative, and the author marks findings
 resolved as they revise. But responding to a structural note sometimes
-means restructuring — cutting a subplot, merging chapters — and after
+means restructuring — cutting a subplot, merging sections — and after
 that, findings elsewhere may be invalidated rather than resolved. The
 author can't reliably know which.
 
 So rather than asking a model to guess whether "a lot" changed, we hash
-each chapter at assessment time and diff on re-check. The diff is
+each section at assessment time and diff on re-check. The diff is
 deterministic and cheap; model judgment enters *after* it, applied to the
-specific chapters the diff points at. Thresholds are config, not vibes.
+specific sections the diff points at. Thresholds are config, not vibes.
 """
 
 from __future__ import annotations
@@ -31,7 +36,9 @@ PHASES = ("intake", "developmental", "line", "complete")
 STATE_DIRNAME = ".edaitor"
 STATE_FILENAME = "state.json"
 
-# A chapter whose word count moves by more than this fraction is treated as
+DEFAULT_DOMAIN = "fiction"
+
+# A section whose word count moves by more than this fraction is treated as
 # rewritten rather than tweaked, which forces a full re-read. Deliberately a
 # constant you can tune after watching real revisions, not a model judgment.
 MAJOR_WORDCOUNT_DELTA = 0.25
@@ -45,11 +52,11 @@ def state_path(manuscript_dir: Path) -> Path:
     return state_dir(manuscript_dir) / STATE_FILENAME
 
 
-def chapter_files(manuscript_dir: Path) -> list:
-    return sorted(Path(manuscript_dir).glob("chapter_*.txt"))
+def section_files(manuscript_dir: Path) -> list:
+    return sorted(Path(manuscript_dir).glob("section_*.txt"))
 
 
-def fingerprint_chapter(path: Path) -> dict:
+def fingerprint_section(path: Path) -> dict:
     text = path.read_text(encoding="utf-8")
     return {
         "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
@@ -59,7 +66,7 @@ def fingerprint_chapter(path: Path) -> dict:
 
 def fingerprint_manuscript(manuscript_dir: Path) -> dict:
     return {
-        path.stem: fingerprint_chapter(path) for path in chapter_files(manuscript_dir)
+        path.stem: fingerprint_section(path) for path in section_files(manuscript_dir)
     }
 
 
@@ -79,12 +86,13 @@ def save_state(manuscript_dir: Path, state: dict) -> Path:
     return path
 
 
-def new_state(manuscript_dir: Path) -> dict:
+def new_state(manuscript_dir: Path, domain: str = DEFAULT_DOMAIN) -> dict:
     return {
         "manuscript_dir": str(manuscript_dir),
+        "domain": domain,
         "phase": "intake",
         "developmental_round": 0,
-        "chapter_fingerprints": {},
+        "section_fingerprints": {},
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -96,12 +104,12 @@ def diff_manuscript(manuscript_dir: Path, state: dict) -> dict:
     re-check actually needs:
 
       - `unchanged`     nothing changed; "resolved" claims are unverifiable
-      - `targeted`      some chapters edited, none added/removed, all deltas
-                        small -> verify claimed findings against those chapters
-      - `restructured`  chapters added/removed, or a large word-count swing ->
+      - `targeted`      some sections edited, none added/removed, all deltas
+                        small -> verify claimed findings against those sections
+      - `restructured`  sections added/removed, or a large word-count swing ->
                         full re-read; prior findings may be stale, not resolved
     """
-    previous = state.get("chapter_fingerprints") or {}
+    previous = state.get("section_fingerprints") or {}
     current = fingerprint_manuscript(manuscript_dir)
 
     added = sorted(set(current) - set(previous))

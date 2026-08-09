@@ -158,8 +158,8 @@ def validate_line_report(report: dict) -> list:
     if not isinstance(report, dict):
         return ["report is not a JSON object"]
 
-    if not report.get("chapter"):
-        errors.append("missing/empty 'chapter'")
+    if not report.get("section"):
+        errors.append("missing/empty 'section'")
 
     findings = report.get("findings")
     if not isinstance(findings, list):

@@ -2,7 +2,7 @@
 """CLI for reading and updating a manuscript's edaitor state.
 
 The skill shells out to this instead of reasoning about state itself.
-Phase transitions, chapter hashing, and change detection are deterministic
+Phase transitions, section hashing, and change detection are deterministic
 work — putting them in a script means they behave the same every run and
 can't be talked out of by a persuasive-sounding prompt.
 
@@ -77,9 +77,9 @@ def cmd_diff(manuscript_dir: Path) -> int:
 
 def cmd_snapshot(manuscript_dir: Path) -> int:
     state = _require_state(manuscript_dir)
-    state["chapter_fingerprints"] = fingerprint_manuscript(manuscript_dir)
+    state["section_fingerprints"] = fingerprint_manuscript(manuscript_dir)
     save_state(manuscript_dir, state)
-    print(f"Snapshotted {len(state['chapter_fingerprints'])} chapters as assessed.")
+    print(f"Snapshotted {len(state['section_fingerprints'])} sections as assessed.")
     return 0
 
 

@@ -21,7 +21,7 @@ Your job is the part a script can't do: deciding what each collision
 ## The three things a collision can be
 
 1. **A real contradiction.** Two narration facts that can't both be true.
-   Green eyes in chapter 1, blue in chapter 2. Report it.
+   Green eyes in section 1, blue in section 2. Report it.
 
 2. **Not an error at all.** Fiction is full of assertions that differ
    legitimately:
@@ -36,11 +36,11 @@ Your job is the part a script can't do: deciding what each collision
    what the author needs to confirm. Don't assert an error you can't
    establish.
 
-3. **An unpropagated revision.** The author edited one chapter and hasn't
+3. **An unpropagated revision.** The author edited one section and hasn't
    updated another yet. The collision data flags this as
-   `likely_unpropagated_revision` when one chapter changed since the last
-   assessment and the other didn't. **Say so explicitly** — "chapter_02
-   changed since the last pass, chapter_07 didn't" tells the author which
+   `likely_unpropagated_revision` when one section changed since the last
+   assessment and the other didn't. **Say so explicitly** — "section_02
+   changed since the last pass, section_07 didn't" tells the author which
    text is stale, which is far more actionable than "these disagree."
 
 ## Read first
@@ -49,7 +49,7 @@ Your job is the part a script can't do: deciding what each collision
    a collision outright. An unreliable narrator listed there turns a
    whole class of these into non-issues.
 2. `<manuscript_dir>/.edaitor/canon/collisions.json` — your work list.
-3. Chapters only if you need surrounding context to judge a specific
+3. Sections only if you need surrounding context to judge a specific
    collision. You don't need to read the manuscript to do this job.
 
 ## Signals in the collision data
@@ -76,8 +76,8 @@ commentary in the file):
       "severity": "moderate",
       "entity": "Mira",
       "attribute": "eye_color",
-      "fact_ids": ["fact-chapter_01-001", "fact-chapter_02-001"],
-      "note": "What conflicts, in which chapters, quoting both — and for an unverified item, exactly what the author needs to confirm."
+      "fact_ids": ["fact-section_01-001", "fact-section_02-001"],
+      "note": "What conflicts, in which sections, quoting both — and for an unverified item, exactly what the author needs to confirm."
     }
   ]
 }
@@ -92,7 +92,7 @@ commentary in the file):
   would break a reader's trust. A name spelled two ways is minor; a dead
   character reappearing is critical.
 - `fact_ids`: at least the two conflicting facts.
-- `note`: quote both assertions and their chapters. The author should be
+- `note`: quote both assertions and their sections. The author should be
   able to act without opening the canon files.
 
 A collision you judge to be a non-issue can be omitted entirely — but if

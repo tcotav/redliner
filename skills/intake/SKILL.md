@@ -23,7 +23,7 @@ and unremarkable in literary fiction.
    plugin's `bin/` is on PATH while it's enabled) — if state already
    exists, that's fine, it'll say so and you're revising an existing brief.
 
-2. **Read a sample first, then interview.** Read the first chapter (and
+2. **Read a sample first, then interview.** Read the first section (and
    skim one from the middle) *before* asking anything. Ask questions
    informed by what's actually on the page — "you're in present tense
    throughout, is that fixed?" beats "what tense is it?". Never ask the

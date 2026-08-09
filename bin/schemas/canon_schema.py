@@ -5,7 +5,7 @@ contradictions found among them.
 
 Developmental editing precedes line editing because structural revision
 destroys line work — no point polishing a sentence in a scene you'll cut.
-Continuity isn't destroyed that way. Cut a chapter and the canon simply
+Continuity isn't destroyed that way. Cut a section and the canon simply
 loses those facts; the ones that remain are still true. So continuity
 runs alongside whatever phase you're in rather than waiting its turn.
 
@@ -131,17 +131,17 @@ def _check_fact(fact: dict, index: int, errors: list, seen_ids: set) -> None:
 
 
 def validate_observations(report: dict) -> list:
-    """Validate one chapter's extracted facts."""
+    """Validate one section's extracted facts."""
     errors: list = []
     if not isinstance(report, dict):
         return ["observations file is not a JSON object"]
 
-    if not report.get("chapter"):
-        errors.append("missing/empty 'chapter'")
+    if not report.get("section"):
+        errors.append("missing/empty 'section'")
 
-    # Recorded so the skill can skip re-extracting unchanged chapters.
-    if not report.get("chapter_sha256"):
-        errors.append("missing/empty 'chapter_sha256'")
+    # Recorded so the skill can skip re-extracting unchanged sections.
+    if not report.get("section_sha256"):
+        errors.append("missing/empty 'section_sha256'")
 
     facts = report.get("facts")
     if not isinstance(facts, list):
