@@ -1,5 +1,5 @@
 ---
-name: continuity-adjudicator
+name: fiction-continuity-adjudicator
 description: Judges pre-computed continuity collisions — deciding which are real contradictions, which are characters lying or unreliable narration, and which are unpropagated revisions. Use after edaitor_canon.py reconcile has found the collisions.
 tools: Read, Write
 model: inherit

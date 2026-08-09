@@ -1,5 +1,5 @@
 ---
-name: line-editor
+name: fiction-line-editor
 description: Reviews a single section for prose-level issues — rhythm, voice consistency, show-vs-tell, dialogue, POV, word choice. Use once per section during the line-editing phase only, after developmental work has settled.
 tools: Read, Write
 model: inherit

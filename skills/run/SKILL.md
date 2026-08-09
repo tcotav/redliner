@@ -1,6 +1,6 @@
 ---
 name: run
-description: Runs layered fiction editing on a manuscript — developmental assessment, revision support, re-checks, then line editing. Use when the author asks to edit, assess, or review a manuscript, to work or resolve a finding, or types /edaitor:run.
+description: Runs layered editing on a manuscript (fiction, design docs, or any domain edaitor has been configured for) — developmental assessment, revision support, re-checks, then line editing. Use when the author asks to edit, assess, or review a manuscript, to work or resolve a finding, or types /edaitor:run.
 ---
 
 # edaitor:run
@@ -28,6 +28,20 @@ The scripts below (`edaitor_state.py`, `edaitor_canon.py`,
 plugin's `bin/` directory is on the Bash tool's PATH while this plugin is
 enabled, and each script is executable with its own shebang.
 
+## Which subagent to Task
+
+Agent files are named `agents/<domain>-<role>.md` and registered under
+the plugin namespace as `edaitor:<domain>-<role>` (e.g.
+`edaitor:fiction-developmental-editor`) — never a bare or undomained
+name. Get `<domain>` from `edaitor_state.py status <manuscript_dir>`'s
+`domain` field (fall back to `fiction` only if that key is somehow
+absent from old state) and substitute it into every `edaitor:<role>`
+reference below. So on a `design-doc` manuscript, "Task
+`edaitor:<domain>-developmental-editor`" means Task
+`edaitor:design-doc-developmental-editor`. This holds for all five
+roles: `developmental-editor`, `line-editor`, `editorial-aggregator`,
+`continuity-extractor`, `continuity-adjudicator`.
+
 ## Why phases are sequential
 
 Developmental editing comes first and iterates until structure settles;
@@ -51,7 +65,7 @@ first — every pass depends on the brief.
    increments the round counter).
 2. Prepare `<manuscript_dir>/.edaitor/findings/`; clear stale files from
    a previous round.
-3. Task the `edaitor:developmental-editor` subagent with the manuscript directory,
+3. Task the `edaitor:<domain>-developmental-editor` subagent with the manuscript directory,
    the round number, and output path `.edaitor/findings/developmental.json`.
 4. `validate_findings.py <manuscript_dir>` — stop and report errors
    rather than aggregating bad data. (Takes the manuscript directory
@@ -59,7 +73,7 @@ first — every pass depends on the brief.
    under `<manuscript_dir>/.edaitor/` in one pass.)
 5. `edaitor_state.py snapshot <manuscript_dir>` — records what the text
    looked like when assessed, so `recheck` can tell what changed.
-6. Task `edaitor:editorial-aggregator` for the **developmental** letter.
+6. Task `edaitor:<domain>-editorial-aggregator` for the **developmental** letter.
 7. Validate again, then read and show the letter.
 
 Do **not** run line editing here, whatever the author asked for.
@@ -94,11 +108,11 @@ that `/edaitor:run recheck` will verify it.
      Something's off: either the revision wasn't saved, or the author
      marked things resolved without revising.
    - **`targeted`** — specific sections edited, none added or removed,
-     no large swings. Task `edaitor:developmental-editor` to verify the `claimed`
+     no large swings. Task `edaitor:<domain>-developmental-editor` to verify the `claimed`
      findings against those sections and check whether the edits created
      new problems. Pass the existing findings file so ids carry forward.
    - **`restructured`** — sections added, removed, or heavily rewritten.
-     A full re-read: task `edaitor:developmental-editor` over the whole
+     A full re-read: task `edaitor:<domain>-developmental-editor` over the whole
      manuscript with the prior findings file. Findings the restructure
      invalidated should come back `stale`, not `addressed` — the author
      didn't fix them, the text moved. Tell the author which findings went
@@ -120,13 +134,13 @@ that `/edaitor:run recheck` will verify it.
    reasons to line-edit a section that's structurally settled even while
    other parts aren't.
 3. `edaitor_state.py phase <manuscript_dir> line`.
-4. For each section, task `edaitor:line-editor` with the manuscript directory,
+4. For each section, task `edaitor:<domain>-line-editor` with the manuscript directory,
    that section's path, any `deferred_to_line` developmental findings for
    it, and output path `.edaitor/findings/line_<section_stem>.json`.
    Sequential keeps the transcript readable; parallel is fine too —
    sections share no state.
 5. Validate.
-6. Task `edaitor:editorial-aggregator` for the **line** letter.
+6. Task `edaitor:<domain>-editorial-aggregator` for the **line** letter.
 7. Validate, then read and show the letter.
 
 ## `/edaitor:run status`

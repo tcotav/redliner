@@ -1,0 +1,55 @@
+{
+  "name": "design-doc",
+  "display_name": "Design Doc / Product Proposal",
+  "description": "Technical design docs, product proposals, and RFCs: a written argument for a decision, with a stated problem, a proposed approach, and consequences for people other than the author.",
+  "round_tracked_phase": "developmental",
+  "unit_name": "section",
+  "developmental_categories": [
+    "problem_justification",
+    "alternatives_considered",
+    "risk_coverage",
+    "scope_definition",
+    "success_criteria",
+    "stakeholder_impact"
+  ],
+  "line_categories": [
+    "clarity",
+    "jargon",
+    "passive_voice",
+    "redundancy",
+    "structure_flow"
+  ],
+  "continuity": {
+    "entity_types": [
+      "api_endpoint",
+      "metric",
+      "deadline",
+      "stakeholder",
+      "requirement",
+      "system_component"
+    ],
+    "sources": ["body", "summary", "appendix"],
+    "categories": [
+      "metric_value",
+      "timeline",
+      "ownership",
+      "terminology",
+      "requirement_scope",
+      "system_behavior"
+    ]
+  },
+  "brief_fields": [
+    {"name": "what_it_is", "label": "What it is", "prompt": "What's this doc proposing, in one or two sentences?"},
+    {"name": "audience", "label": "Audience", "prompt": "Who's this written for — engineers, execs, cross-functional reviewers?"},
+    {"name": "decision_authority", "label": "The ask", "prompt": "What decision or approval is this doc trying to get, and from whom?"},
+    {"name": "prior_art", "label": "Prior art", "prompt": "Related docs, past decisions, or precedent this builds on or departs from?"},
+    {"name": "constraints", "label": "Constraints", "prompt": "Budget, timeline, org, or technical constraints shaping the proposal?"},
+    {"name": "known_open_questions", "label": "Known open questions", "prompt": "What's deliberately left unresolved in this draft?"}
+  ],
+  "draft_stages": [
+    {"name": "early draft / brainstorm", "implication": "Structure only. No line-level findings — the argument isn't settled yet."},
+    {"name": "first complete draft", "implication": "Developmental focus. Line findings only if major+ or a pattern across sections."},
+    {"name": "under review", "implication": "Both layers in full, normal severity calibration."},
+    {"name": "final before submission", "implication": "Both layers, and minor findings become worth reporting."}
+  ]
+}

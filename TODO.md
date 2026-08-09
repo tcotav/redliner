@@ -3,13 +3,14 @@
 Design questions raised during development that we deliberately parked.
 Not a task tracker — the reasoning matters more than the checkbox.
 
-## Domain generalization: build the domain-creation skill (IN PROGRESS)
+## Domain generalization: build the domain-creation skill (DONE)
 
-**Raised:** 2026-08-09
+**Raised:** 2026-08-09. **Completed:** 2026-08-09.
 
 The user wants edaitor usable beyond fiction (product proposals, design
 docs) if it can be done without compromising the fiction use case, which
-stays the primary one. This was scoped as four steps; **three are done**:
+stays the primary one. This was scoped as four steps; **all four are
+done**:
 
 1. ✅ Renamed `chapter_*.txt` → `section_*.txt` and all associated field
    names everywhere (mechanical, no domain concept yet).
@@ -29,9 +30,9 @@ See git log around commits `95a25e5` and `51b33bb` for the detail and the
 verification each step went through (no regression against
 `sample_manuscript`, confirmed by direct testing, not assumed).
 
-**Step 4, not started: the domain-creation skill + docs.** Design
-decisions already made for it — don't re-litigate these, they came from
-a deliberate review, not a default:
+**Step 4, done: the domain-creation skill + docs.** Design decisions made
+for it before starting, held to throughout — recorded here so they don't
+get re-litigated by a future reader:
 
 - **Generate concrete per-domain agent files (B1), don't make agent
   prompts generic with runtime-injected vocabulary (B2).** The agent
@@ -69,6 +70,50 @@ a deliberate review, not a default:
   actual semantic difference) without needing the keys themselves to
   change. Revisit only if a domain genuinely doesn't fit a two-phase
   structural/detail split at all.
+
+**What actually got built:** `skills/new-domain/SKILL.md` plus
+FIXED/AUTHORED templates for all five agent roles in
+`skills/new-domain/reference/templates/`. Before writing the skill, two
+prerequisite gaps had to close first (found by trying to actually use
+the format, not by inspection):
+
+- `skills/intake/SKILL.md` hardcoded fiction's brief questions *and* its
+  draft-stage severity table directly in prose — `domain.json` having a
+  `brief_fields` list didn't matter if nothing read it. Fixed by adding
+  a `draft_stages` array (`{name, implication}`) to the domain schema
+  alongside `brief_fields`, and rewriting intake to read both from
+  whichever domain is active, asking which domain only when more than
+  one exists.
+- `agents/*.md` were renamed to `agents/<domain>-<role>.md`, but the
+  **filename rename alone did nothing** — Claude Code registers a
+  subagent's id from the `name:` field in its frontmatter, not the
+  filename. This was caught by an actual `claude --plugin-dir` load
+  test (bare renamed files kept resolving to the old unprefixed agent
+  id), the same methodology that already caught the bare-vs-namespaced
+  bug earlier in this project. Fixed by changing both. `run/SKILL.md`
+  now resolves `edaitor:<domain>-<role>` from the manuscript's `domain`
+  field at Task time rather than hardcoding fiction's names.
+
+The design-doc domain's `entity_types`/`sources`/`categories` were
+written by hand first, as planned, and the "summary says Q3, timeline
+says Q4" case mapped cleanly (`sources: body/summary/appendix`, with
+`summary` playing the same "can legitimately be an imprecise
+restatement" role fiction's `dialogue`/`character_thought` play) —
+confirming the format generalizes without contortion. Verified two ways,
+described in README's Status section: a hand-built findings/canon
+fixture through `validate_findings.py` (no model calls), and a live
+`claude --plugin-dir` check that all five generated `design-doc` agents
+actually register and respond under their expected ids.
+
+**New gap surfaced, deliberately not fixed here:**
+`agents/*-continuity-extractor.md` and `*-continuity-adjudicator.md` are
+never Tasked from any step in `run/SKILL.md`, for either domain — the
+continuity layer's sample data in this repo was produced by hand or
+direct script testing, not through the orchestrated pipeline. Wiring the
+continuity layer into `/edaitor:run` (probably a new subcommand, or a
+flag on `assess`/`recheck`) is real, scoped work and out of scope for
+domain generalization specifically — it's a pre-existing gap this work
+happened to notice, not something domain generalization caused.
 
 ## Port to a compiled language for distributable binaries?
 

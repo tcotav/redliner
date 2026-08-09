@@ -1,5 +1,5 @@
 ---
-name: developmental-editor
+name: fiction-developmental-editor
 description: Reviews an entire manuscript for story-level structural issues — plot, pacing, character arcs, structure, stakes, theme. Use for the developmental edit pass over a full manuscript; do not use for single-section prose-level review (that's line-editor).
 tools: Read, Glob, Write
 model: inherit

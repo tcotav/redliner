@@ -1,5 +1,5 @@
 ---
-name: continuity-extractor
+name: fiction-continuity-extractor
 description: Extracts asserted facts (characters, places, objects, timeline, world rules) from a single section into a structured observations file. Use during continuity passes, once per section. Records facts only — does not judge or flag contradictions.
 tools: Read, Write
 model: inherit

@@ -1,6 +1,6 @@
 ---
 name: intake
-description: Interviews the author about a manuscript's intent, genre, and deliberate craft choices, then writes the manuscript brief that edaitor's editing passes read. Use before the first edaitor run on a manuscript, or when the author wants to revise the brief.
+description: Interviews the author about a manuscript's intent, context, and deliberate choices (fields depend on the manuscript's domain), then writes the brief that edaitor's editing passes read. Use before the first edaitor run on a manuscript, or when the author wants to revise the brief.
 ---
 
 # edaitor:intake
@@ -15,57 +15,75 @@ slow literary open — all read as defects without intent. Genre also
 changes severity outright: a 40-word sentence is a problem in a thriller
 and unremarkable in literary fiction.
 
+This interview is **domain-driven, not fiction-specific**: what to ask,
+and what draft stages mean for severity, come from the manuscript's
+active domain config, not from this file. `edaitor_domain.py list` and
+`edaitor_domain.py show <name>` (both bare commands, no `python3` prefix
+— `bin/` is on PATH while the plugin is enabled) are how you read that
+config; don't hardcode fiction's fields here even as a fallback.
+
 ## Steps
 
-1. **Set up state.** Determine the manuscript directory (argument, or ask
-   — defaults to the current directory). Run
-   `edaitor_state.py init <manuscript_dir>` (no `python3` prefix; the
-   plugin's `bin/` is on PATH while it's enabled) — if state already
+1. **Determine the domain.** Run `edaitor_state.py status <manuscript_dir>`.
+   - If state already exists, use its `domain` field — you're revising an
+     existing brief for an already-chosen domain, don't re-ask.
+   - If no state exists, run `edaitor_domain.py list`. If it returns
+     exactly one domain, use it without asking. If more than one, show
+     the author each domain's `display_name`/`description` via
+     AskUserQuestion and let them pick. Never guess.
+
+2. **Set up state.** Run
+   `edaitor_state.py init <manuscript_dir> <domain>` — if state already
    exists, that's fine, it'll say so and you're revising an existing brief.
 
-2. **Read a sample first, then interview.** Read the first section (and
+3. **Load the domain config.** Run `edaitor_domain.py show <domain>` and
+   read its `brief_fields` and `draft_stages` — these drive everything
+   below. Don't ask about anything not listed in `brief_fields`, and use
+   `draft_stages`' `name` values verbatim as the draft-stage options.
+
+4. **Read a sample first, then interview.** Read the first section (and
    skim one from the middle) *before* asking anything. Ask questions
    informed by what's actually on the page — "you're in present tense
    throughout, is that fixed?" beats "what tense is it?". Never ask the
    author something the manuscript already answers.
 
-3. **Interview.** Use the AskUserQuestion tool where the options are
-   genuinely enumerable (draft stage, POV, how blunt they want feedback),
-   and plain conversation where they aren't (what the book is about, what
-   they're worried about). Cover:
+5. **Interview.** Use the AskUserQuestion tool where the options are
+   genuinely enumerable (draft stage, and any `brief_fields` entry with an
+   obvious small set of answers), and plain conversation where they
+   aren't (open-ended fields, what they're worried about). Cover:
 
-   - **What the book is** — logline, genre, subgenre, target audience
-   - **Comps** — a couple of published books it sits beside; this
-     communicates register faster than adjectives do
-   - **Draft stage** — exploratory / first complete draft / revised /
-     near-submission. This *gates severity*, see below.
-   - **Deliberate choices** — the critical field. Fragments, tense,
-     unreliable narration, dialect, head-hopping-as-style, non-linear
-     structure, an intentionally slow open. Ask directly: "what would look
+   - **Every field in the domain's `brief_fields`** — ask using that
+     field's `prompt` text.
+   - **Draft stage** — present the domain's `draft_stages` names as the
+     options. This *gates severity*, see below. Stage vocabulary and its
+     severity implication are domain data, not something to hardcode
+     here — a design doc's stages aren't a novel's.
+   - **Deliberate choices** — the critical field, and it isn't fiction-
+     specific: a design doc might deliberately leave a section
+     unresolved, use fragments in an executive summary, or assume
+     context this draft doesn't restate. Ask directly: "what would look
      like a mistake but isn't?"
    - **Known problem areas** — what the author already knows is broken;
      no value in reporting it back as news
    - **Off-limits** — anything they don't want touched
    - **What they want from this pass** — specific worries beat "make it good"
 
-4. **Write the brief** to `<manuscript_dir>/.edaitor/brief.md` using
-   `reference/brief_template.md` in this skill directory as the structure.
-   Write what the author actually said, in their framing — don't
-   editorialize their intent into something tidier.
+6. **Write the brief** to `<manuscript_dir>/.edaitor/brief.md` using
+   `reference/brief_template.md` in this skill directory as the structure
+   — it's written generically, looping over whatever `brief_fields` and
+   `draft_stages` the domain supplied. Write what the author actually
+   said, in their framing — don't editorialize their intent into
+   something tidier.
 
-5. **Confirm.** Show the brief and ask whether it reflects their intent.
+7. **Confirm.** Show the brief and ask whether it reflects their intent.
    Fix what's wrong. Then tell them the next step is `/edaitor:run assess`.
 
 ## Draft stage gates severity
 
-Put this explicitly in the brief, because it changes what the passes do:
-
-| Stage | Editing implication |
-|---|---|
-| Exploratory / partial | Structure only. No line-level findings at all — the prose isn't real yet. |
-| First complete draft | Developmental focus. Line findings only if `major`+ or a manuscript-wide pattern. |
-| Revised | Both layers in full, normal severity calibration. |
-| Near-submission | Both layers, and `minor` findings become worth reporting. |
-
-Reporting `minor` word-choice nits on an exploratory draft is noise that
-buries the structural notes that actually matter at that stage.
+Copy the matching `draft_stages` entry's `implication` into the brief
+verbatim (see the template) — every domain defines its own table via
+`domain.json`'s `draft_stages`, because what a stage implies for severity
+is domain calibration, not something this skill should know on its own.
+The reason a stage-gate exists at all is universal, though: reporting
+`minor` nits on an early draft is noise that buries the structural notes
+that actually matter at that stage, whatever the domain.

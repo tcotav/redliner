@@ -41,14 +41,19 @@
     ]
   },
   "brief_fields": [
-    {"name": "logline", "prompt": "What's the book, in one or two sentences?"},
-    {"name": "genre_subgenre", "prompt": "Genre and subgenre?"},
-    {"name": "audience", "prompt": "Who's the target audience?"},
-    {"name": "comps", "prompt": "A couple of published books it sits beside?"},
-    {"name": "target_length", "prompt": "Target length?"},
-    {"name": "draft_stage", "prompt": "Draft stage: exploratory / first complete draft / revised / near-submission?"},
-    {"name": "pov", "prompt": "POV?"},
-    {"name": "tense", "prompt": "Tense?"},
-    {"name": "structure", "prompt": "Structure (linear, non-linear, multi-POV, etc.)?"}
+    {"name": "logline", "label": "Logline", "prompt": "What's the book, in one or two sentences?"},
+    {"name": "genre_subgenre", "label": "Genre / subgenre", "prompt": "Genre and subgenre?"},
+    {"name": "audience", "label": "Audience", "prompt": "Who's the target audience?"},
+    {"name": "comps", "label": "Comps", "prompt": "A couple of published books it sits beside?"},
+    {"name": "target_length", "label": "Target length", "prompt": "Target length?"},
+    {"name": "pov", "label": "POV", "prompt": "POV?"},
+    {"name": "tense", "label": "Tense", "prompt": "Tense?"},
+    {"name": "structure", "label": "Structure", "prompt": "Structure (linear, non-linear, multi-POV, etc.)?"}
+  ],
+  "draft_stages": [
+    {"name": "exploratory / partial", "implication": "Structure only. No line-level findings at all — the prose isn't real yet."},
+    {"name": "first complete draft", "implication": "Developmental focus. Line findings only if major+ or a manuscript-wide pattern."},
+    {"name": "revised", "implication": "Both layers in full, normal severity calibration."},
+    {"name": "near-submission", "implication": "Both layers, and minor findings become worth reporting."}
   ]
 }

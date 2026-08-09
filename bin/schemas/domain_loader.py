@@ -27,8 +27,12 @@ REQUIRED_KEYS = {
     "developmental_categories",
     "line_categories",
     "continuity",
+    "brief_fields",
+    "draft_stages",
 }
 REQUIRED_CONTINUITY_KEYS = {"entity_types", "sources", "categories"}
+REQUIRED_BRIEF_FIELD_KEYS = {"name", "label", "prompt"}
+REQUIRED_DRAFT_STAGE_KEYS = {"name", "implication"}
 
 
 class DomainError(Exception):
@@ -62,5 +66,23 @@ def load_domain(name: str) -> dict:
         raise DomainError(
             f"{path}: 'continuity' missing required keys {sorted(continuity_missing)}"
         )
+
+    if not domain.get("brief_fields"):
+        raise DomainError(f"{path}: 'brief_fields' must be a non-empty list")
+    for field in domain["brief_fields"]:
+        missing = REQUIRED_BRIEF_FIELD_KEYS - set(field)
+        if missing:
+            raise DomainError(
+                f"{path}: brief_fields entry {field!r} missing keys {sorted(missing)}"
+            )
+
+    if not domain.get("draft_stages"):
+        raise DomainError(f"{path}: 'draft_stages' must be a non-empty list")
+    for stage in domain["draft_stages"]:
+        missing = REQUIRED_DRAFT_STAGE_KEYS - set(stage)
+        if missing:
+            raise DomainError(
+                f"{path}: draft_stages entry {stage!r} missing keys {sorted(missing)}"
+            )
 
     return domain
