@@ -194,20 +194,27 @@ bin/validate_findings.py <manuscript_dir>
 ## Status / next steps
 
 Working end to end against `sample_manuscript/` through all three layers
-(developmental, line, continuity) as of the plugin conversion — but the
-plugin structure itself has only been verified statically (file layout,
-script executability, PATH-independent imports tested by invoking from
-an unrelated directory). It has **not** been loaded through a real
-`claude --plugin-dir` session yet — that's the next real step, since
-static checks can't confirm skill/agent discovery or the Task tool
-resolving namespaced subagents correctly.
+(developmental, line, continuity), and the plugin structure has now been
+verified by an actual `claude --plugin-dir` load — not just statically.
+That test, run against a scratch manuscript with no relationship to this
+repo, confirmed: the plugin's skills and agents are discovered with
+correct namespacing; `bin/`'s scripts genuinely resolve via PATH from an
+unrelated directory (checked by reading the resulting state file off
+disk, not by trusting a self-report); and `/edaitor:run` as a real slash
+command follows its own documented logic. It also caught a real bug —
+`SKILL.md` was Task-ing subagents by their bare name
+(`developmental-editor`) instead of the plugin-namespaced one
+(`edaitor:developmental-editor`), which failed outright when actually
+invoked. Fixed and reconfirmed live; see git history.
 
-Roughly in order after that:
+That test was narrow (skill discovery, PATH resolution, one subagent
+ping) — it did not run a full `/edaitor:intake` → `/edaitor:run assess`
+pass through the real Task-orchestrated pipeline end to end, only through
+the manually-driven Agent-tool equivalent used earlier in development.
+Next:
 
-1. Load via `claude --plugin-dir .` from an unrelated project directory
-   and run the full `/edaitor:intake` → `/edaitor:run assess` flow for
-   real, confirming PATH resolution and skill discovery work as designed
-   rather than as tested.
+1. Run the full pipeline through the real plugin-loaded path, on a fresh
+   manuscript with no prior `.edaitor/` state, start to finish.
 2. Point it at a real manuscript.
 3. Revisit `TODO.md` — Go port (deferred until schema churn settles) and
    Obsidian vault integration (read-only, second source of canon).
