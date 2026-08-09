@@ -3,6 +3,73 @@
 Design questions raised during development that we deliberately parked.
 Not a task tracker — the reasoning matters more than the checkbox.
 
+## Domain generalization: build the domain-creation skill (IN PROGRESS)
+
+**Raised:** 2026-08-09
+
+The user wants edaitor usable beyond fiction (product proposals, design
+docs) if it can be done without compromising the fiction use case, which
+stays the primary one. This was scoped as four steps; **three are done**:
+
+1. ✅ Renamed `chapter_*.txt` → `section_*.txt` and all associated field
+   names everywhere (mechanical, no domain concept yet).
+2. ✅ Added a `domain` field to `.edaitor/state.json`, defaulting to
+   `"fiction"`.
+3. ✅ Moved fiction's category vocabulary (developmental/line categories,
+   continuity entity types/sources/categories) into
+   `domains/fiction/domain.json`, loaded per-manuscript by
+   `bin/schemas/domain_loader.py`. `findings_schema.py`/`canon_schema.py`'s
+   validators take categories as parameters now, not module constants.
+   Also fixed a coupling bug this surfaced: `edaitor_state.py`'s
+   round-increment logic hardcoded a check against the literal string
+   `"developmental"` — now reads `round_tracked_phase` from the domain
+   config instead.
+
+See git log around commits `95a25e5` and `51b33bb` for the detail and the
+verification each step went through (no regression against
+`sample_manuscript`, confirmed by direct testing, not assumed).
+
+**Step 4, not started: the domain-creation skill + docs.** Design
+decisions already made for it — don't re-litigate these, they came from
+a deliberate review, not a default:
+
+- **Generate concrete per-domain agent files (B1), don't make agent
+  prompts generic with runtime-injected vocabulary (B2).** The agent
+  files are the best-engineered part of this system (real iterated
+  prompt craft, e.g. `developmental-editor.md`'s handling of
+  `deferred_to_line`). Runtime injection would either hollow that out
+  into generic text or move it into a config file where it's harder to
+  read/review/diff, and it would make the orchestrating skill's
+  prompt-construction step — already the site of one real bug (the
+  namespace issue in `SKILL.md`) — the place every future bug hides. A
+  domain should be a template that *generates* static files like
+  `agents/design-doc-structural-editor.md`, regenerated when the domain
+  changes, hand-editable after.
+- **Category design needs explicit guardrails**, because it's a harder
+  interview than intake: bad category design (too many, overlapping,
+  unclear boundaries) silently degrades every finding downstream forever.
+  Give the skill explicit rules: 4–7 categories per phase, each must be
+  something a reviewer could plausibly disagree about being present, no
+  category that's really a severity in disguise (e.g. don't allow both
+  `minor_issue` and a `severity` field — that's redundant, not two
+  useful axes).
+- **Write the design-doc domain's `entity_types`/`categories` by hand
+  first, before building anything.** This was the sanity check on
+  whether the domain-config format is right: "the summary says Q3
+  launch, the timeline section says Q4" needs to be expressible without
+  contorting fiction-shaped fields. If it isn't easy to express, the
+  format is wrong, not the example.
+- **Phase names stay `developmental`/`line` internally, not made
+  domain-configurable, for now.** Renaming those to something generic
+  (`structural`/`detail`) was considered and deliberately deferred — it
+  would also mean renaming the `/edaitor:run assess`/`/edaitor:run line`
+  command surface, which is worse UX for the fiction case that's still
+  primary. A second domain can use the same two internal phase keys with
+  different *meaning* (its `domain.json`'s category lists carry the
+  actual semantic difference) without needing the keys themselves to
+  change. Revisit only if a domain genuinely doesn't fit a two-phase
+  structural/detail split at all.
+
 ## Port to a compiled language for distributable binaries?
 
 **Raised:** 2026-08-08. **Updated:** 2026-08-08, after the plugin conversion.

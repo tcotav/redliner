@@ -89,17 +89,41 @@ edaitor/                          (plugin root)
 ├── skills/
 │   ├── run/SKILL.md              /edaitor:run <status|assess|work|resolve|recheck|line>
 │   └── intake/SKILL.md           /edaitor:intake
+├── domains/                      vocabulary per kind of document (see below)
+│   └── fiction/domain.json
 └── bin/                          on PATH while the plugin is enabled
     ├── edaitor_state.py          phase, rounds, section fingerprinting/diff
     ├── edaitor_canon.py          merges per-section facts, finds collisions mechanically
     ├── validate_findings.py      schema + excerpt-verbatim checks
     └── schemas/                  shared vocabulary + validators, imported by all three
+        └── domain_loader.py      loads domains/<name>/domain.json
 ```
 
 State lives with the manuscript, not with the tool: every manuscript
 directory gets its own `<manuscript_dir>/.edaitor/` (state, brief,
 findings, canon), so edaitor works across multiple manuscripts and a
 manuscript's editing history travels with it if you move or back it up.
+
+### Domains: this isn't fiction-only by design
+
+`edaitor` started fiction-specific, but the engine (state machine,
+schemas, validators) doesn't know what "fiction" means anymore — only
+the active **domain** does. A manuscript's `.edaitor/state.json` carries
+a `domain` field (defaults to `fiction`); `bin/schemas/domain_loader.py`
+loads `domains/<name>/domain.json` for that manuscript and everything
+downstream (allowed categories for developmental/line findings, the
+continuity layer's entity types/sources/categories, which phase tracks
+revision rounds) comes from that file rather than being hardcoded.
+
+`domains/fiction/domain.json` is the only domain that exists today, and
+the five agent files in `agents/` are still fiction's specific prompts
+(a developmental editor "for a novelist," reviewing "chapters" — sorry,
+sections). Extending this to a second domain (a design-doc reviewer, a
+product-proposal reviewer) means writing a new `domain.json` plus a new
+set of agent prompts using that domain's vocabulary and framing — the
+plan (not yet built) is a skill that interviews someone through that
+design and generates the agent files, rather than hand-writing five
+prompts from scratch. See `TODO.md`.
 
 A few things worth knowing if you're debugging or extending this:
 
@@ -159,5 +183,16 @@ subagent bug mentioned above.
 
 Not yet done: a full `/edaitor:intake` → `/edaitor:run assess` pass
 through the real Task-orchestrated pipeline, start to finish, on a fresh
-manuscript. See `TODO.md` for other open items (a compiled-binary port,
-read-only Obsidian vault integration as a second source of canon).
+manuscript.
+
+**Domain generalization (see "Domains" above) is in progress.** Done:
+the engine loads category vocabulary from `domains/<name>/domain.json`
+instead of hardcoding fiction's; verified with no regression against
+`sample_manuscript`. Not done: the domain-creation skill and a second
+real domain to prove the abstraction against something other than
+fiction. See `TODO.md` for the concrete next step and the design
+decisions already made for it (worth reading before starting — they're
+not obvious and were arrived at deliberately).
+
+Other open items in `TODO.md`: a compiled-binary port, read-only
+Obsidian vault integration as a second source of canon.
