@@ -1,9 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python3 edaitor_state.py *)",
-      "Bash(python3 edaitor_canon.py *)",
-      "Bash(python3 validate_findings.py *)"
+      "Bash(bin/edaitor_state.py *)",
+      "Bash(bin/edaitor_canon.py *)",
+      "Bash(bin/validate_findings.py *)"
     ]
   }
 }

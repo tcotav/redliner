@@ -1,9 +1,9 @@
 ---
-name: edaitor-intake
+name: intake
 description: Interviews the author about a manuscript's intent, genre, and deliberate craft choices, then writes the manuscript brief that edaitor's editing passes read. Use before the first edaitor run on a manuscript, or when the author wants to revise the brief.
 ---
 
-# edaitor intake
+# edaitor:intake
 
 Produces `<manuscript_dir>/.edaitor/brief.md` — the context every editing
 pass reads before forming an opinion.
@@ -17,8 +17,10 @@ and unremarkable in literary fiction.
 
 ## Steps
 
-1. **Set up state.** Determine the manuscript directory (argument, or ask).
-   Run `python3 edaitor_state.py init <manuscript_dir>` — if state already
+1. **Set up state.** Determine the manuscript directory (argument, or ask
+   — defaults to the current directory). Run
+   `edaitor_state.py init <manuscript_dir>` (no `python3` prefix; the
+   plugin's `bin/` is on PATH while it's enabled) — if state already
    exists, that's fine, it'll say so and you're revising an existing brief.
 
 2. **Read a sample first, then interview.** Read the first chapter (and
@@ -52,7 +54,7 @@ and unremarkable in literary fiction.
    editorialize their intent into something tidier.
 
 5. **Confirm.** Show the brief and ask whether it reflects their intent.
-   Fix what's wrong. Then tell them the next step is `/edaitor assess`.
+   Fix what's wrong. Then tell them the next step is `/edaitor:run assess`.
 
 ## Draft stage gates severity
 

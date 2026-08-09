@@ -1,25 +1,32 @@
 ---
-name: edaitor
-description: Runs layered fiction editing on a manuscript — developmental assessment, revision support, re-checks, then line editing. Use when the author asks to edit, assess, or review a manuscript, to work or resolve a finding, or types /edaitor.
+name: run
+description: Runs layered fiction editing on a manuscript — developmental assessment, revision support, re-checks, then line editing. Use when the author asks to edit, assess, or review a manuscript, to work or resolve a finding, or types /edaitor:run.
 ---
 
-# edaitor
+# edaitor:run
 
 Phase-aware editing pipeline. Subcommands:
 
 | Command | Does |
 |---|---|
-| `/edaitor status` | Where this manuscript stands |
-| `/edaitor assess` | Developmental pass (round 1, or a fresh full read) |
-| `/edaitor work <id>` | Talk through one finding and how to revise it |
-| `/edaitor resolve <id>` | Mark a finding addressed (author's claim) |
-| `/edaitor recheck` | Re-read after revision; verify claims, find new issues |
-| `/edaitor line` | Line-editing phase (gated — see below) |
+| `/edaitor:run status` | Where this manuscript stands |
+| `/edaitor:run assess` | Developmental pass (round 1, or a fresh full read) |
+| `/edaitor:run work <id>` | Talk through one finding and how to revise it |
+| `/edaitor:run resolve <id>` | Mark a finding addressed (author's claim) |
+| `/edaitor:run recheck` | Re-read after revision; verify claims, find new issues |
+| `/edaitor:run line` | Line-editing phase (gated — see below) |
 
 Default with no subcommand: run `status` and recommend the next step.
 
-Manuscript directory comes from the argument, or defaults to
-`sample_manuscript/`. State lives in `<manuscript_dir>/.edaitor/`.
+Manuscript directory comes from the argument, or defaults to the current
+directory — the intended usage is `cd` into the author's manuscript
+directory, then run `/edaitor:run`. State lives in
+`<manuscript_dir>/.edaitor/`.
+
+The scripts below (`edaitor_state.py`, `edaitor_canon.py`,
+`validate_findings.py`) run as bare commands, no `python3` prefix — the
+plugin's `bin/` directory is on the Bash tool's PATH while this plugin is
+enabled, and each script is executable with its own shebang.
 
 ## Why phases are sequential
 
@@ -34,28 +41,30 @@ Everything below enforces that ordering.
 
 ## Preconditions (all subcommands)
 
-Run `python3 edaitor_state.py status <manuscript_dir>`. If there's no
-state, or no `.edaitor/brief.md`, stop and tell the author to run
-`/edaitor-intake` first — every pass depends on the brief.
+Run `edaitor_state.py status <manuscript_dir>`. If there's no state, or
+no `.edaitor/brief.md`, stop and tell the author to run `/edaitor:intake`
+first — every pass depends on the brief.
 
-## `/edaitor assess`
+## `/edaitor:run assess`
 
-1. `python3 edaitor_state.py phase <manuscript_dir> developmental` (this
+1. `edaitor_state.py phase <manuscript_dir> developmental` (this
    increments the round counter).
 2. Prepare `<manuscript_dir>/.edaitor/findings/`; clear stale files from
    a previous round.
 3. Task the `developmental-editor` subagent with the manuscript directory,
    the round number, and output path `.edaitor/findings/developmental.json`.
-4. `python3 validate_findings.py <manuscript_dir>/.edaitor/findings/` —
-   stop and report errors rather than aggregating bad data.
-5. `python3 edaitor_state.py snapshot <manuscript_dir>` — records what the
-   text looked like when assessed, so `recheck` can tell what changed.
+4. `validate_findings.py <manuscript_dir>` — stop and report errors
+   rather than aggregating bad data. (Takes the manuscript directory
+   itself, not a findings/ or canon/ subpath — it checks everything
+   under `<manuscript_dir>/.edaitor/` in one pass.)
+5. `edaitor_state.py snapshot <manuscript_dir>` — records what the text
+   looked like when assessed, so `recheck` can tell what changed.
 6. Task `editorial-aggregator` for the **developmental** letter.
 7. Validate again, then read and show the letter.
 
 Do **not** run line editing here, whatever the author asked for.
 
-## `/edaitor work <id>`
+## `/edaitor:run work <id>`
 
 Revision support — the conversational one. Do this **in the main session,
 not via a subagent**: it's a back-and-forth, not a batch job.
@@ -68,17 +77,17 @@ not via a subagent**: it's a back-and-forth, not a batch job.
    doesn't solve the problem when it doesn't.
 4. Don't edit the manuscript unless asked directly. Their book.
 
-## `/edaitor resolve <id>`
+## `/edaitor:run resolve <id>`
 
 Set that finding's `status` to `claimed` in `developmental.json` (not
 `addressed` — the author's claim isn't verification). Confirm, and note
-that `/edaitor recheck` will verify it.
+that `/edaitor:run recheck` will verify it.
 
-## `/edaitor recheck`
+## `/edaitor:run recheck`
 
-1. `python3 edaitor_state.py diff <manuscript_dir>` and branch on the
-   verdict — this is deterministic, so trust it over any impression of
-   how much changed:
+1. `edaitor_state.py diff <manuscript_dir>` and branch on the verdict —
+   this is deterministic, so trust it over any impression of how much
+   changed:
 
    - **`unchanged`** — no chapter text differs from the last assessment.
      Any `claimed` findings can't be verified; say so plainly and stop.
@@ -100,7 +109,7 @@ that `/edaitor recheck` will verify it.
    editing — count open `major`/`critical` findings and give a real
    recommendation, not a hedge.
 
-## `/edaitor line`
+## `/edaitor:run line`
 
 1. Read `developmental.json`. Count open findings at `major` or
    `critical`.
@@ -110,7 +119,7 @@ that `/edaitor recheck` will verify it.
    a soft gate by design: it's their manuscript and there are legitimate
    reasons to line-edit a section that's structurally settled even while
    other parts aren't.
-3. `python3 edaitor_state.py phase <manuscript_dir> line`.
+3. `edaitor_state.py phase <manuscript_dir> line`.
 4. For each chapter, task `line-editor` with the manuscript directory,
    that chapter's path, any `deferred_to_line` developmental findings for
    it, and output path `.edaitor/findings/line_<chapter_stem>.json`.
@@ -120,7 +129,7 @@ that `/edaitor recheck` will verify it.
 6. Task `editorial-aggregator` for the **line** letter.
 7. Validate, then read and show the letter.
 
-## `/edaitor status`
+## `/edaitor:run status`
 
 Show phase, developmental round, open findings by severity, and the
 `diff` verdict if the text has moved since the last assessment. End with

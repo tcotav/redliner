@@ -5,14 +5,21 @@ Not a task tracker — the reasoning matters more than the checkbox.
 
 ## Port to a compiled language for distributable binaries?
 
-**Raised:** 2026-08-08
+**Raised:** 2026-08-08. **Updated:** 2026-08-08, after the plugin conversion.
 
-The deterministic pieces are all Python (`edaitor_state.py`,
-`edaitor_canon.py`, `validate_findings.py`, `schemas/`), which assumes a
-working Python on the machine. Claude Code itself will be present — but
-possibly as the desktop app rather than a terminal with a dev toolchain,
-and a novelist using this is much less likely to have Python set up than
-a developer is.
+The deterministic pieces are all Python (`bin/edaitor_state.py`,
+`bin/edaitor_canon.py`, `bin/validate_findings.py`, `bin/schemas/`),
+which assumes a working Python on the machine. Claude Code itself will be
+present — but possibly as the desktop app rather than a terminal with a
+dev toolchain, and a novelist using this is much less likely to have
+Python set up than a developer is.
+
+Since this was raised, the project moved these scripts into the plugin's
+`bin/` (PATH-resolved while the plugin is enabled) specifically to fix a
+cwd-dependent invocation bug. That fix is orthogonal to this question —
+`bin/` is exactly where a future Go binary would live too — so it doesn't
+change the recommendation below, just confirms `bin/` is the right target
+directory whenever this happens.
 
 Worth considering: port the deterministic layer to Go or Rust and ship
 prebuilt binaries, so the only prerequisite is Claude Code itself.
@@ -28,20 +35,30 @@ Points in favor:
 
 Points against / to think about:
 - The **agent definitions and skills are markdown** and don't port at
-  all — a binary only replaces maybe a third of the system. The
-  `.claude/` directory still has to be installed somehow, so "just
-  download one binary" isn't actually achievable.
-- Python-on-macOS/Linux is usually present; the real gap is Windows.
+  all — a binary only replaces the deterministic third of the system.
+  The `.claude/` directory still has to be installed somehow, so "just
+  download one binary" doesn't fully solve distribution even after a
+  port — it solves the runtime-dependency part of it.
 - Contributors editing schema vocabulary (categories, severities) would
   need a toolchain to rebuild, where today they edit a file. That's a
-  real cost for a project whose vocabulary is still moving.
-- Premature: the schemas are still changing shape (we've revised them
-  twice already this session).
+  real cost for a project whose vocabulary is still moving — we've
+  revised it three times in one session so far.
+- ~~Python-on-macOS/Linux is usually present~~ — checked, don't assume
+  this. Anthropic's own *recommended* Claude Code install path (as of
+  2026) is a self-contained native binary specifically so it doesn't
+  depend on a Node install; a meaningful share of users will have
+  Claude Code and nothing else. That's the same problem this project has
+  with Python, and Anthropic's own answer was "ship a standalone
+  binary" — real precedent for doing the same here, not just a guess.
 
-**Rough recommendation when we return to this:** revisit once the schema
-vocabulary stops changing. If it's still worth doing then, Go, and treat
-the binary as an optimization of the install story rather than a rewrite
-— keep the markdown agents as the real product.
+**Rough recommendation when we return to this:** the destination is Go
+(stdlib's `encoding/json` + `crypto/sha256` map closely onto
+`schemas/*.py` already, so it should be a mechanical port, not a
+redesign) — but sequence it after the schema vocabulary stops changing,
+so there's one implementation to iterate on instead of two to keep in
+lockstep. Treat the binary as solving the runtime-dependency problem,
+not the whole install story — the markdown agents still need to land in
+`.claude/` somehow either way.
 
 ## Obsidian vault integration
 
@@ -63,3 +80,16 @@ Constraints decided up front:
   format. Read actual notes from the real vault first, then add an
   `origin` field distinguishing manuscript-derived from vault-derived
   facts.
+
+## Permission-allowlist doesn't travel with the plugin
+
+**Raised:** 2026-08-08
+
+Claude Code plugin-root `settings.json` only honors `agent` and
+`subagentStatusLine` — not `permissions`. So the allowlist that keeps
+`bin/`'s scripts from triggering raw command-line permission prompts
+(fine for a developer, opaque for a novelist) can't ship inside the
+plugin itself. Current stopgap: the README documents the snippet to copy
+into your own project/user settings. Worth a real fix once this has more
+than one user — maybe a `/edaitor:setup` step that offers to write it for
+them, rather than expecting a novelist to hand-edit `settings.json`.

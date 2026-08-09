@@ -1,9 +1,14 @@
+#!/usr/bin/env python3
 """Merge per-chapter observations into a canon, and find collisions.
+
+Lives in the plugin's bin/ (on PATH while the plugin is enabled) -- runs
+as `edaitor_canon.py ...` from any working directory. See the sys.path
+bootstrap below for how it finds its sibling `schemas` package.
 
 Two commands:
 
-    python3 edaitor_canon.py stale     <manuscript_dir>   # which chapters need re-extraction
-    python3 edaitor_canon.py reconcile <manuscript_dir>   # build canon + find collisions
+    edaitor_canon.py stale     <manuscript_dir>   # which chapters need re-extraction
+    edaitor_canon.py reconcile <manuscript_dir>   # build canon + find collisions
 
 Finding a collision is a *computation*, not a judgment: two facts about
 the same entity and attribute with different values collide, and a script
@@ -33,6 +38,8 @@ import json
 import sys
 from collections import defaultdict
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from schemas.project_state import (
     chapter_files,
