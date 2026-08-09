@@ -14,7 +14,7 @@ of cwd or how it was invoked.
 
 Usage:
     edaitor_state.py status   <manuscript_dir>
-    edaitor_state.py init     <manuscript_dir>
+    edaitor_state.py init     <manuscript_dir> [domain]   # domain defaults to "fiction"
     edaitor_state.py diff     <manuscript_dir>
     edaitor_state.py snapshot <manuscript_dir>            # record current text as assessed
     edaitor_state.py phase    <manuscript_dir> <phase>
@@ -32,7 +32,9 @@ from pathlib import Path
 # used.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+from schemas.domain_loader import DomainError, load_domain
 from schemas.project_state import (
+    DEFAULT_DOMAIN,
     PHASES,
     diff_manuscript,
     fingerprint_manuscript,
@@ -53,13 +55,18 @@ def _require_state(manuscript_dir: Path) -> dict:
     return state
 
 
-def cmd_init(manuscript_dir: Path) -> int:
+def cmd_init(manuscript_dir: Path, domain: str = DEFAULT_DOMAIN) -> int:
     if load_state(manuscript_dir) is not None:
         print(f"State already exists at {state_path(manuscript_dir)}")
         return 1
-    state = new_state(manuscript_dir)
+    try:
+        load_domain(domain)  # fail fast on a typo'd/missing domain, not at first use
+    except DomainError as e:
+        print(f"Domain config error: {e}")
+        return 1
+    state = new_state(manuscript_dir, domain=domain)
     path = save_state(manuscript_dir, state)
-    print(f"Initialized {path} (phase: intake)")
+    print(f"Initialized {path} (domain: {domain}, phase: intake)")
     return 0
 
 
@@ -88,9 +95,20 @@ def cmd_phase(manuscript_dir: Path, phase: str) -> int:
         print(f"Unknown phase {phase!r}. Must be one of: {', '.join(PHASES)}")
         return 1
     state = _require_state(manuscript_dir)
+
+    try:
+        domain = load_domain(state.get("domain", DEFAULT_DOMAIN))
+    except DomainError as e:
+        print(f"Domain config error: {e}")
+        return 1
+    round_tracked_phase = domain["round_tracked_phase"]
+
     previous = state.get("phase")
     state["phase"] = phase
-    if phase == "developmental" and previous != "developmental":
+    # Entering the domain's round-tracked phase (fiction: "developmental")
+    # from anywhere else starts a new round -- not hardcoded to the literal
+    # string "developmental" so a domain can name/choose this phase itself.
+    if phase == round_tracked_phase and previous != round_tracked_phase:
         state["developmental_round"] = state.get("developmental_round", 0) + 1
     save_state(manuscript_dir, state)
     print(
@@ -110,7 +128,8 @@ def main(argv: list) -> int:
         return 1
 
     if command == "init":
-        return cmd_init(manuscript_dir)
+        domain = argv[3] if len(argv) > 3 else DEFAULT_DOMAIN
+        return cmd_init(manuscript_dir, domain)
     if command == "status":
         return cmd_status(manuscript_dir)
     if command == "diff":

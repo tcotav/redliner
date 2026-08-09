@@ -1,0 +1,54 @@
+{
+  "name": "fiction",
+  "display_name": "Fiction Manuscript",
+  "description": "Novels and short fiction: prose narrative with characters, plot, and a fictional world.",
+  "round_tracked_phase": "developmental",
+  "unit_name": "section",
+  "developmental_categories": [
+    "plot",
+    "pacing",
+    "character_arc",
+    "structure",
+    "stakes",
+    "theme"
+  ],
+  "line_categories": [
+    "prose_rhythm",
+    "voice_consistency",
+    "show_dont_tell",
+    "dialogue",
+    "pov",
+    "word_choice"
+  ],
+  "continuity": {
+    "entity_types": [
+      "character",
+      "place",
+      "object",
+      "organization",
+      "event",
+      "world_rule"
+    ],
+    "sources": ["narration", "dialogue", "character_thought"],
+    "categories": [
+      "character_attribute",
+      "timeline",
+      "geography",
+      "world_rule",
+      "naming",
+      "relationship",
+      "object"
+    ]
+  },
+  "brief_fields": [
+    {"name": "logline", "prompt": "What's the book, in one or two sentences?"},
+    {"name": "genre_subgenre", "prompt": "Genre and subgenre?"},
+    {"name": "audience", "prompt": "Who's the target audience?"},
+    {"name": "comps", "prompt": "A couple of published books it sits beside?"},
+    {"name": "target_length", "prompt": "Target length?"},
+    {"name": "draft_stage", "prompt": "Draft stage: exploratory / first complete draft / revised / near-submission?"},
+    {"name": "pov", "prompt": "POV?"},
+    {"name": "tense", "prompt": "Tense?"},
+    {"name": "structure", "prompt": "Structure (linear, non-linear, multi-POV, etc.)?"}
+  ]
+}

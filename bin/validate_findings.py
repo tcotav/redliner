@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate a manuscript's .edaitor/ output against the schemas.
+"""Validate a manuscript's .edaitor/ output against its domain's schema.
 
 Lives in the plugin's bin/ (on PATH while the plugin is enabled) -- runs
 as `validate_findings.py ...` from any working directory. See the
@@ -14,6 +14,11 @@ inference was wrong for any layout other than the one nested exactly one
 level under .edaitor/, and failed *silently* (exit 0, canon layer quietly
 skipped) rather than erroring. One required argument, checked to actually
 contain .edaitor/, removes the guess entirely.
+
+The category vocabulary checked against comes from the manuscript's
+domain (`.edaitor/state.json`'s `domain` field, defaulting to `fiction`
+if absent) via `domain_loader.py` -- this script has no fiction-specific
+knowledge itself.
 
 Exits 0 if everything present validates cleanly, 1 otherwise. Missing
 files are not errors by themselves (the pipeline may not have reached
@@ -36,11 +41,13 @@ from schemas.canon_schema import (
     validate_continuity_report,
     validate_observations,
 )
+from schemas.domain_loader import DomainError, load_domain
 from schemas.findings_schema import (
     validate_developmental_report,
     validate_editorial_letter,
     validate_line_report,
 )
+from schemas.project_state import DEFAULT_DOMAIN, load_state
 
 
 def _check(path: Path, errors: list) -> bool:
@@ -81,15 +88,22 @@ def _verify_excerpts(items: list, section_text: str, label: str) -> list:
     return errors
 
 
-def _validate_canon(manuscript_dir: Path, edaitor_path: Path, ok: bool) -> bool:
+def _validate_canon(
+    manuscript_dir: Path, edaitor_path: Path, domain: dict, ok: bool
+) -> bool:
     """Validate the continuity layer's files, if any exist yet."""
     canon_path = edaitor_path / "canon"
     if not canon_path.is_dir():
         return ok
 
+    continuity = domain["continuity"]
+    entity_types = set(continuity["entity_types"])
+    sources = set(continuity["sources"])
+    categories = set(continuity["categories"])
+
     for obs_file in sorted((canon_path / "observations").glob("*.json")):
         report = json.loads(obs_file.read_text())
-        errors = validate_observations(report)
+        errors = validate_observations(report, entity_types, sources)
         section_text = _load_section_text(manuscript_dir, obs_file.stem)
         if section_text is not None:
             errors += _verify_excerpts(
@@ -99,7 +113,9 @@ def _validate_canon(manuscript_dir: Path, edaitor_path: Path, ok: bool) -> bool:
 
     continuity_file = canon_path / "continuity.json"
     if continuity_file.exists():
-        errors = validate_continuity_report(json.loads(continuity_file.read_text()))
+        errors = validate_continuity_report(
+            json.loads(continuity_file.read_text()), categories
+        )
         ok = _check(continuity_file, errors) and ok
 
     return ok
@@ -114,8 +130,16 @@ def main(manuscript_dir_arg: str) -> int:
         )
         return 1
 
+    state = load_state(manuscript_dir) or {}
+    domain_name = state.get("domain", DEFAULT_DOMAIN)
+    try:
+        domain = load_domain(domain_name)
+    except DomainError as e:
+        print(f"Domain config error: {e}")
+        return 1
+
     findings_path = edaitor_path / "findings"
-    ok = _validate_canon(manuscript_dir, edaitor_path, True)
+    ok = _validate_canon(manuscript_dir, edaitor_path, domain, True)
 
     if not findings_path.is_dir():
         print(f"No findings/ yet under {edaitor_path}")
@@ -123,7 +147,9 @@ def main(manuscript_dir_arg: str) -> int:
 
     dev_file = findings_path / "developmental.json"
     if dev_file.exists():
-        errors = validate_developmental_report(json.loads(dev_file.read_text()))
+        errors = validate_developmental_report(
+            json.loads(dev_file.read_text()), set(domain["developmental_categories"])
+        )
         # Developmental findings don't carry excerpts -- they're
         # manuscript-scope, not tied to one quotable location the way a
         # line finding or an extracted fact is.
@@ -133,7 +159,7 @@ def main(manuscript_dir_arg: str) -> int:
     line_files = sorted(findings_path.glob("line_*.json"))
     for line_file in line_files:
         report = json.loads(line_file.read_text())
-        errors = validate_line_report(report)
+        errors = validate_line_report(report, set(domain["line_categories"]))
         match = line_pattern.match(line_file.name)
         if match:
             section_text = _load_section_text(manuscript_dir, match.group(1))

@@ -21,6 +21,21 @@ rounds — you can't mark "the third item in the array" as addressed when
 the array gets regenerated. So every finding has an `id` (unique within
 its report) and a `status`, and `findings/` becomes a *mutable record*
 across a revision cycle rather than write-once output.
+
+## What's generic here vs. what's domain vocabulary
+
+`SEVERITIES` and `STATUSES` are universal — every domain's findings carry
+a severity and a status. The *category* vocabulary (what a developmental
+or line finding can be about) is not: `plot`/`character_arc` mean nothing
+for a design doc. Categories come from the manuscript's domain config
+(`domains/<name>/domain.json`, loaded by `domain_loader.py`) and get
+passed into these validators as a parameter — this module doesn't know or
+care what domain it's validating.
+
+`DEFERRED_CATEGORY` is the one exception: it's a protocol-level marker
+(the developmental pass observed something prose-level and is handing it
+to the line pass), not domain content, so it's a fixed constant rather
+than something a domain declares.
 """
 
 from __future__ import annotations
@@ -37,28 +52,12 @@ STATUSES = {
     "wontfix",  # author considered it and declined; don't re-raise
 }
 
-DEVELOPMENTAL_CATEGORIES = {
-    "plot",
-    "pacing",
-    "character_arc",
-    "structure",
-    "stakes",
-    "theme",
-    # Prose-level observations noticed during a developmental read are
-    # recorded here and deferred to the line phase rather than acted on --
-    # a developmental editor does notice prose, but polishing it before the
-    # structure settles is wasted work.
-    "deferred_to_line",
-}
-
-LINE_CATEGORIES = {
-    "prose_rhythm",
-    "voice_consistency",
-    "show_dont_tell",
-    "dialogue",
-    "pov",
-    "word_choice",
-}
+# Prose-level observations noticed during a developmental read are
+# recorded under this category and deferred to the line phase rather than
+# acted on -- a developmental editor does notice prose, but polishing it
+# before the structure settles is wasted work. Fixed across domains: it's
+# how the two phases hand off, not domain content.
+DEFERRED_CATEGORY = "deferred_to_line"
 
 DEV_ID_PATTERN = re.compile(r"^dev-\d{3}$")
 LINE_ID_PATTERN = re.compile(r"^line-[a-z0-9_]+-\d{3}$")
@@ -106,7 +105,10 @@ def _check_finding(
         errors.append(f"{prefix}: missing/empty 'note'")
 
 
-def validate_developmental_report(report: dict) -> list:
+def validate_developmental_report(report: dict, categories: set) -> list:
+    """`categories` is the domain's developmental-phase category set (from
+    `domain.json`) -- `DEFERRED_CATEGORY` is allowed automatically, not
+    part of what the caller needs to pass."""
     errors: list = []
     if not isinstance(report, dict):
         return ["report is not a JSON object"]
@@ -145,15 +147,16 @@ def validate_developmental_report(report: dict) -> list:
         errors.append("'findings' is not a list")
         return errors
 
+    allowed = set(categories) | {DEFERRED_CATEGORY}
     seen_ids: set = set()
     for i, finding in enumerate(findings):
-        _check_finding(
-            finding, DEVELOPMENTAL_CATEGORIES, i, errors, DEV_ID_PATTERN, seen_ids
-        )
+        _check_finding(finding, allowed, i, errors, DEV_ID_PATTERN, seen_ids)
     return errors
 
 
-def validate_line_report(report: dict) -> list:
+def validate_line_report(report: dict, categories: set) -> list:
+    """`categories` is the domain's line-phase category set (from
+    `domain.json`)."""
     errors: list = []
     if not isinstance(report, dict):
         return ["report is not a JSON object"]
@@ -168,7 +171,7 @@ def validate_line_report(report: dict) -> list:
 
     seen_ids: set = set()
     for i, finding in enumerate(findings):
-        _check_finding(finding, LINE_CATEGORIES, i, errors, LINE_ID_PATTERN, seen_ids)
+        _check_finding(finding, set(categories), i, errors, LINE_ID_PATTERN, seen_ids)
     return errors
 
 

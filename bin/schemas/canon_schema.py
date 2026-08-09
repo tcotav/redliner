@@ -21,6 +21,17 @@ is happening in two places with two standards.
 
 Judgment happens once, in reconciliation, and only on collisions a script
 already found mechanically.
+
+## What's generic here vs. what's domain vocabulary
+
+`CONFIDENCES` (explicit/implied) and `CONTRADICTION_KINDS`
+(contradiction/unverified) are universal — every domain's facts and
+collisions get judged on those axes. `ENTITY_TYPES`, `SOURCES` (*where*
+an assertion comes from — fiction distinguishes narration from a
+lying/mistaken character; a different domain has a different notion of
+provenance), and the continuity category vocabulary are not: they come
+from the manuscript's domain config and get passed into these validators
+as parameters.
 """
 
 from __future__ import annotations
@@ -28,20 +39,6 @@ from __future__ import annotations
 import re
 
 from schemas.findings_schema import SEVERITIES, STATUSES
-
-ENTITY_TYPES = {
-    "character",
-    "place",
-    "object",
-    "organization",
-    "event",
-    "world_rule",
-}
-
-# Where the assertion comes from. This matters in fiction: two narration
-# facts that disagree is an error, but a character stating something the
-# narration contradicts may just be a character who is lying or wrong.
-SOURCES = {"narration", "dialogue", "character_thought"}
 
 # "her green eyes" is explicit; "she reached the top shelf easily" implies
 # height. Implied facts shouldn't drive hard contradictions on their own.
@@ -51,16 +48,6 @@ CONTRADICTION_KINDS = {
     "contradiction",  # two assertions that cannot both be true
     "unverified",  # looks wrong, but needs the author -- lying character,
     # unreliable narrator, or possible in-world explanation
-}
-
-CONTINUITY_CATEGORIES = {
-    "character_attribute",
-    "timeline",
-    "geography",
-    "world_rule",
-    "naming",
-    "relationship",
-    "object",
 }
 
 FACT_REQUIRED_KEYS = {
@@ -82,7 +69,9 @@ FACT_ID_PATTERN = re.compile(r"^fact-[a-z0-9_]+-\d{3}$")
 CONTRADICTION_ID_PATTERN = re.compile(r"^cont-\d{3}$")
 
 
-def _check_fact(fact: dict, index: int, errors: list, seen_ids: set) -> None:
+def _check_fact(
+    fact: dict, entity_types: set, sources: set, index: int, errors: list, seen_ids: set
+) -> None:
     prefix = f"facts[{index}]"
     if not isinstance(fact, dict):
         errors.append(f"{prefix}: not an object")
@@ -110,14 +99,14 @@ def _check_fact(fact: dict, index: int, errors: list, seen_ids: set) -> None:
     else:
         seen_ids.add(fact_id)
 
-    if fact.get("entity_type") not in ENTITY_TYPES:
+    if fact.get("entity_type") not in entity_types:
         errors.append(
-            f"{prefix}: entity_type {fact.get('entity_type')!r} not in {sorted(ENTITY_TYPES)}"
+            f"{prefix}: entity_type {fact.get('entity_type')!r} not in {sorted(entity_types)}"
         )
 
-    if fact.get("source") not in SOURCES:
+    if fact.get("source") not in sources:
         errors.append(
-            f"{prefix}: source {fact.get('source')!r} not in {sorted(SOURCES)}"
+            f"{prefix}: source {fact.get('source')!r} not in {sorted(sources)}"
         )
 
     if fact.get("confidence") not in CONFIDENCES:
@@ -130,8 +119,9 @@ def _check_fact(fact: dict, index: int, errors: list, seen_ids: set) -> None:
             errors.append(f"{prefix}: missing/empty {key!r}")
 
 
-def validate_observations(report: dict) -> list:
-    """Validate one section's extracted facts."""
+def validate_observations(report: dict, entity_types: set, sources: set) -> list:
+    """Validate one section's extracted facts. `entity_types`/`sources` come
+    from the manuscript's domain config."""
     errors: list = []
     if not isinstance(report, dict):
         return ["observations file is not a JSON object"]
@@ -150,12 +140,13 @@ def validate_observations(report: dict) -> list:
 
     seen_ids: set = set()
     for i, fact in enumerate(facts):
-        _check_fact(fact, i, errors, seen_ids)
+        _check_fact(fact, entity_types, sources, i, errors, seen_ids)
     return errors
 
 
-def validate_continuity_report(report: dict) -> list:
-    """Validate the adjudicated contradictions."""
+def validate_continuity_report(report: dict, categories: set) -> list:
+    """Validate the adjudicated contradictions. `categories` is the
+    domain's continuity-category set (from `domain.json`)."""
     errors: list = []
     if not isinstance(report, dict):
         return ["continuity report is not a JSON object"]
@@ -194,9 +185,9 @@ def validate_continuity_report(report: dict) -> list:
                 f"{prefix}: kind {item.get('kind')!r} not in {sorted(CONTRADICTION_KINDS)}"
             )
 
-        if item.get("category") not in CONTINUITY_CATEGORIES:
+        if item.get("category") not in categories:
             errors.append(
-                f"{prefix}: category {item.get('category')!r} not in {sorted(CONTINUITY_CATEGORIES)}"
+                f"{prefix}: category {item.get('category')!r} not in {sorted(categories)}"
             )
 
         if item.get("severity") not in SEVERITIES:
