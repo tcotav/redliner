@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 edaitor_state.py *)",
+      "Bash(python3 edaitor_canon.py *)",
+      "Bash(python3 validate_findings.py *)"
+    ]
+  }
+}
