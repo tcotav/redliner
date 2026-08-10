@@ -53,15 +53,29 @@ a suggestion.
 ## Setup
 
 Nothing to install beyond Claude Code itself and Python 3 (stdlib only —
-no `pip install`). Load the plugin from whatever directory holds the
+no `pip install`).
+
+**From the CLI**, load the plugin from whatever directory holds the
 manuscript you want to work on:
 
 ```
 claude --plugin-dir /path/to/redliner
 ```
 
-(A marketplace install, once this is distributed somewhere, would replace
-the `--plugin-dir` flag with a one-time `/plugin install`.)
+**As a one-time install** (CLI or [Claude Cowork](https://claude.com/docs/cowork/overview) —
+Cowork uses the same plugin system, and is a GUI/desktop surface rather
+than a terminal, which may suit a non-technical author better):
+
+```
+claude plugin marketplace add tcotav/redliner
+claude plugin install redliner@redliner
+```
+
+In Cowork, the equivalent is **Customize → Plugins → Add marketplace**,
+entering `tcotav/redliner`, then installing `redliner` from the list
+that appears. `.claude-plugin/marketplace.json` at this repo's root is
+what makes that resolve — it's what both `claude plugin marketplace add`
+and Cowork's "Add marketplace" actually look for.
 
 ## Run
 

@@ -1,0 +1,15 @@
+{
+  "name": "redliner",
+  "description": "A layered manuscript-editing tool for fiction, design docs, and other long-form writing, distributed as a single Claude Code / Cowork plugin.",
+  "owner": {
+    "name": "tcotav",
+    "url": "https://github.com/tcotav"
+  },
+  "plugins": [
+    {
+      "name": "redliner",
+      "source": "./",
+      "description": "Layered manuscript-editing pipeline (fiction, design docs, and other long-form domains): developmental and line editing, plus a cross-cutting continuity/canon-consistency layer, running as Claude Code subagents."
+    }
+  ]
+}
