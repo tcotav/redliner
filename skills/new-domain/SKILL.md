@@ -1,9 +1,9 @@
 ---
 name: new-domain
-description: Walks someone through designing a new edaitor domain (a kind of document to edit, beyond fiction) — category vocabulary for both editing phases, the continuity layer's entity types/sources/categories, brief fields, and draft stages — then generates that domain's domain.json and its five agent files. Use when the author wants edaitor to work on something that isn't fiction (a design doc, product proposal, or any other long-form document) and no suitable domain exists yet.
+description: Walks someone through designing a new redliner domain (a kind of document to edit, beyond fiction) — category vocabulary for both editing phases, the continuity layer's entity types/sources/categories, brief fields, and draft stages — then generates that domain's domain.json and its five agent files. Use when the author wants redliner to work on something that isn't fiction (a design doc, product proposal, or any other long-form document) and no suitable domain exists yet.
 ---
 
-# edaitor:new-domain
+# redliner:new-domain
 
 Produces `domains/<name>/domain.json` and five agent files
 (`agents/<name>-developmental-editor.md`, `<name>-line-editor.md`,
@@ -32,7 +32,7 @@ this.
 Interview conversationally, not as a rigid form:
 
 - **`name`** — kebab-case, short (`design-doc`, not
-  `design-document-review-domain`). Run `edaitor_domain.py list` first
+  `design-document-review-domain`). Run `redliner_domain.py list` first
   and refuse a name that collides.
 - **`display_name`** — human-readable (`"Design Doc / Product Proposal"`).
 - **`description`** — one sentence: what kind of document, what makes it
@@ -113,7 +113,7 @@ don't contort the example.
 
 ## Step 4: Design brief fields and draft stages
 
-- **`brief_fields`** — what does `/edaitor:intake` need to ask before any
+- **`brief_fields`** — what does `/redliner:intake` need to ask before any
   pass can judge this document fairly? Each entry needs `name` (snake_
   case), `label` (for the brief template), and `prompt` (the actual
   question). Fiction has 9 (logline, release format, genre, audience,
@@ -144,7 +144,7 @@ Write `domains/<name>/domain.json` matching
 `domains/fiction/domain.json`'s exact key structure. Then run:
 
 ```
-edaitor_domain.py show <name>
+redliner_domain.py show <name>
 ```
 
 This calls the same loader every pass uses — if it errors, the domain
@@ -194,9 +194,9 @@ agent id — the file looked renamed and wasn't).
 1. **Frontmatter/filename consistency.** For each of the five files,
    read its frontmatter `name:` and confirm it equals `<domain>-<role>`
    matching the filename stem exactly. Any mismatch: stop, fix, recheck.
-2. **Domain config still valid.** Re-run `edaitor_domain.py show <name>`.
+2. **Domain config still valid.** Re-run `redliner_domain.py show <name>`.
 3. **Live registration check.** For each of the five generated agents,
-   use the Task tool to invoke `edaitor:<name>-<role>` with a trivial
+   use the Task tool to invoke `redliner:<name>-<role>` with a trivial
    prompt: reply with the single word `PONG` and nothing else. Confirm
    each one responds — an "Agent type not found" error means step 6's
    naming didn't actually take, whatever the file contents look like.
@@ -210,6 +210,6 @@ Summarize what was created: the category lists, the continuity design,
 and one line per agent file on its role framing. Point the author at
 `agents/<name>-*.md` and `domains/<name>/domain.json` directly — these
 are plain files, hand-editable any time without re-running this skill.
-Tell them the next step is `/edaitor:intake` on a real document in this
+Tell them the next step is `/redliner:intake` on a real document in this
 domain, which is the real end-to-end test no synthetic check here can
 substitute for.

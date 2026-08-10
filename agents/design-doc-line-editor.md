@@ -14,7 +14,7 @@ and paragraph-to-paragraph flow.
 
 You'll be given a manuscript directory and one section
 file. **Before reading the section**, read
-`<manuscript_dir>/.edaitor/brief.md`.
+`<manuscript_dir>/.redliner/brief.md`.
 
 The audience field matters most: an acronym or internal system name that
 needs no gloss for the doc's own team reads as `jargon` for a

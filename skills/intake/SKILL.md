@@ -1,11 +1,11 @@
 ---
 name: intake
-description: Interviews the author about a manuscript's intent, context, and deliberate choices (fields depend on the manuscript's domain), then writes the brief that edaitor's editing passes read. Use before the first edaitor run on a manuscript, or when the author wants to revise the brief.
+description: Interviews the author about a manuscript's intent, context, and deliberate choices (fields depend on the manuscript's domain), then writes the brief that redliner's editing passes read. Use before the first redliner run on a manuscript, or when the author wants to revise the brief.
 ---
 
-# edaitor:intake
+# redliner:intake
 
-Produces `<manuscript_dir>/.edaitor/brief.md` — the context every editing
+Produces `<manuscript_dir>/.redliner/brief.md` — the context every editing
 pass reads before forming an opinion.
 
 This exists because **an editor who doesn't know what you were trying to
@@ -17,26 +17,26 @@ and unremarkable in literary fiction.
 
 This interview is **domain-driven, not fiction-specific**: what to ask,
 and what draft stages mean for severity, come from the manuscript's
-active domain config, not from this file. `edaitor_domain.py list` and
-`edaitor_domain.py show <name>` (both bare commands, no `python3` prefix
+active domain config, not from this file. `redliner_domain.py list` and
+`redliner_domain.py show <name>` (both bare commands, no `python3` prefix
 — `bin/` is on PATH while the plugin is enabled) are how you read that
 config; don't hardcode fiction's fields here even as a fallback.
 
 ## Steps
 
-1. **Determine the domain.** Run `edaitor_state.py status <manuscript_dir>`.
+1. **Determine the domain.** Run `redliner_state.py status <manuscript_dir>`.
    - If state already exists, use its `domain` field — you're revising an
      existing brief for an already-chosen domain, don't re-ask.
-   - If no state exists, run `edaitor_domain.py list`. If it returns
+   - If no state exists, run `redliner_domain.py list`. If it returns
      exactly one domain, use it without asking. If more than one, show
      the author each domain's `display_name`/`description` via
      AskUserQuestion and let them pick. Never guess.
 
 2. **Set up state.** Run
-   `edaitor_state.py init <manuscript_dir> <domain>` — if state already
+   `redliner_state.py init <manuscript_dir> <domain>` — if state already
    exists, that's fine, it'll say so and you're revising an existing brief.
 
-3. **Load the domain config.** Run `edaitor_domain.py show <domain>` and
+3. **Load the domain config.** Run `redliner_domain.py show <domain>` and
    read its `brief_fields` and `draft_stages` — these drive everything
    below. Don't ask about anything not listed in `brief_fields`, and use
    `draft_stages`' `name` values verbatim as the draft-stage options.
@@ -68,7 +68,7 @@ config; don't hardcode fiction's fields here even as a fallback.
    - **Off-limits** — anything they don't want touched
    - **What they want from this pass** — specific worries beat "make it good"
 
-6. **Write the brief** to `<manuscript_dir>/.edaitor/brief.md` using
+6. **Write the brief** to `<manuscript_dir>/.redliner/brief.md` using
    `reference/brief_template.md` in this skill directory as the structure
    — it's written generically, looping over whatever `brief_fields` and
    `draft_stages` the domain supplied. Write what the author actually
@@ -76,7 +76,7 @@ config; don't hardcode fiction's fields here even as a fallback.
    something tidier.
 
 7. **Confirm.** Show the brief and ask whether it reflects their intent.
-   Fix what's wrong. Then tell them the next step is `/edaitor:run assess`.
+   Fix what's wrong. Then tell them the next step is `/redliner:run assess`.
 
 ## Draft stage gates severity
 

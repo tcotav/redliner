@@ -7,21 +7,21 @@ Not a task tracker — the reasoning matters more than the checkbox.
 
 **Raised:** 2026-08-09. **Completed:** 2026-08-09.
 
-The user wants edaitor usable beyond fiction (product proposals, design
+The user wants redliner usable beyond fiction (product proposals, design
 docs) if it can be done without compromising the fiction use case, which
 stays the primary one. This was scoped as four steps; **all four are
 done**:
 
 1. ✅ Renamed `chapter_*.txt` → `section_*.txt` and all associated field
    names everywhere (mechanical, no domain concept yet).
-2. ✅ Added a `domain` field to `.edaitor/state.json`, defaulting to
+2. ✅ Added a `domain` field to `.redliner/state.json`, defaulting to
    `"fiction"`.
 3. ✅ Moved fiction's category vocabulary (developmental/line categories,
    continuity entity types/sources/categories) into
    `domains/fiction/domain.json`, loaded per-manuscript by
    `bin/schemas/domain_loader.py`. `findings_schema.py`/`canon_schema.py`'s
    validators take categories as parameters now, not module constants.
-   Also fixed a coupling bug this surfaced: `edaitor_state.py`'s
+   Also fixed a coupling bug this surfaced: `redliner_state.py`'s
    round-increment logic hardcoded a check against the literal string
    `"developmental"` — now reads `round_tracked_phase` from the domain
    config instead.
@@ -63,7 +63,7 @@ get re-litigated by a future reader:
 - **Phase names stay `developmental`/`line` internally, not made
   domain-configurable, for now.** Renaming those to something generic
   (`structural`/`detail`) was considered and deliberately deferred — it
-  would also mean renaming the `/edaitor:run assess`/`/edaitor:run line`
+  would also mean renaming the `/redliner:run assess`/`/redliner:run line`
   command surface, which is worse UX for the fiction case that's still
   primary. A second domain can use the same two internal phase keys with
   different *meaning* (its `domain.json`'s category lists carry the
@@ -91,7 +91,7 @@ the format, not by inspection):
   test (bare renamed files kept resolving to the old unprefixed agent
   id), the same methodology that already caught the bare-vs-namespaced
   bug earlier in this project. Fixed by changing both. `run/SKILL.md`
-  now resolves `edaitor:<domain>-<role>` from the manuscript's `domain`
+  now resolves `redliner:<domain>-<role>` from the manuscript's `domain`
   field at Task time rather than hardcoding fiction's names.
 
 The design-doc domain's `entity_types`/`sources`/`categories` were
@@ -106,9 +106,9 @@ fixture through `validate_findings.py` (no model calls), and a live
 actually register and respond under their expected ids.
 
 **Gap surfaced here, since fixed** — see "Wire the continuity layer into
-`/edaitor:run`" below.
+`/redliner:run`" below.
 
-## Wire the continuity layer into `/edaitor:run` (DONE)
+## Wire the continuity layer into `/redliner:run` (DONE)
 
 **Raised:** 2026-08-09 (surfaced while closing out domain
 generalization). **Completed:** 2026-08-09.
@@ -118,13 +118,13 @@ were never Tasked from any step in `run/SKILL.md`, for either domain —
 the continuity layer's sample data in this repo had been produced by
 hand or direct script testing, not through the orchestrated pipeline.
 
-**What got built:** `/edaitor:run continuity` — callable standalone, and
+**What got built:** `/redliner:run continuity` — callable standalone, and
 run automatically at the end of both `assess` and `recheck`. Steps:
-`edaitor_canon.py stale` (extended to report each stale section's
+`redliner_canon.py stale` (extended to report each stale section's
 current hash, so the orchestrator doesn't need a second round trip or to
 hash sections itself) → Task the extractor per stale section → validate
-→ `edaitor_canon.py reconcile` → if `collisions.json` is empty, write
-`.edaitor/canon/continuity.json` as `{"contradictions": []}` directly,
+→ `redliner_canon.py reconcile` → if `collisions.json` is empty, write
+`.redliner/canon/continuity.json` as `{"contradictions": []}` directly,
 no model call; otherwise Task the adjudicator → validate → summarize.
 Not phase-gated — extraction is judgment-free and tracks its own
 per-section staleness independent of the developmental round counter, so
@@ -144,7 +144,7 @@ verbatim check):
   `continuity.json` is written directly as `{"contradictions": []}`.
 - A real `assess` → edit one section → `recheck` cycle, which caught a
   real ordering bug before it shipped: the first draft of this wiring
-  ran `edaitor_state.py snapshot` *before* continuity's `reconcile`.
+  ran `redliner_state.py snapshot` *before* continuity's `reconcile`.
   `reconcile` computes `likely_unpropagated_revision` by diffing against
   whatever baseline currently sits in `state.json` — snapshotting first
   moves that baseline to match the current text, so the diff always came
@@ -170,7 +170,7 @@ ids; collisions don't have a stable identity the same way (they're
 recomputed fresh each `reconcile` from an (entity, attribute) key, not
 carried as objects).
 
-The fix sketched (not built): extend `edaitor_canon.py reconcile` to
+The fix sketched (not built): extend `redliner_canon.py reconcile` to
 optionally read the existing `continuity.json` and emit a `carry_forward`
 block matching prior contradiction ids to fresh collisions by (entity,
 attribute), with `addressed`/`stale` computed the same way
@@ -202,11 +202,11 @@ in `skills/new-domain/reference/templates/developmental-editor.md` (so
 future-generated domains don't reintroduce it); reconfirmed live that a
 fresh `assess` no longer reports the duplicate.
 
-**Small gap noticed, not addressed:** `/edaitor:run work <id>` and
-`/edaitor:run resolve <id>` only operate on `developmental.json` — there's
+**Small gap noticed, not addressed:** `/redliner:run work <id>` and
+`/redliner:run resolve <id>` only operate on `developmental.json` — there's
 no equivalent for talking through or resolving a `continuity.json`
 contradiction directly. Today the workaround is real (fix the text,
-`/edaitor:run recheck` re-derives continuity from scratch since there's
+`/redliner:run recheck` re-derives continuity from scratch since there's
 no persistent id to resolve yet anyway — see the carry-forward item
 above, which is a prerequisite for this actually mattering) but worth
 revisiting once carry-forward exists.
@@ -255,7 +255,7 @@ correct behavior):
   match (a fabricated one still fails, since the actual wording would
   differ, not just the punctuation around it).
 - **The `SectionCollisionError` import got silently dropped from both
-  `edaitor_state.py` and `edaitor_canon.py`** between the edit that
+  `redliner_state.py` and `redliner_canon.py`** between the edit that
   added it and the edit that used it — the third occurrence of this
   exact bug class in this project (see the domain-generalization and
   earlier sections). `py_compile` doesn't catch it (a `NameError` only
@@ -296,7 +296,7 @@ on a hook" as a blanket genre rule regardless of what the brief says,
 which is the same category of mistake `release_format` fixes for
 fiction generally. All five of `serial-fiction`'s new agents were
 confirmed live to register and respond under their
-`edaitor:serial-fiction-<role>` ids (fifteen total across all three
+`redliner:serial-fiction-<role>` ids (fifteen total across all three
 domains now carry that same live confirmation, `fiction`'s and
 `design-doc`'s from earlier work). `serial-fiction`'s `chapter_hook`
 category was further confirmed against a live
@@ -313,8 +313,8 @@ schema entries nobody's prompt actually uses.
 
 **Raised:** 2026-08-08. **Updated:** 2026-08-08, after the plugin conversion.
 
-The deterministic pieces are all Python (`bin/edaitor_state.py`,
-`bin/edaitor_canon.py`, `bin/validate_findings.py`, `bin/schemas/`),
+The deterministic pieces are all Python (`bin/redliner_state.py`,
+`bin/redliner_canon.py`, `bin/validate_findings.py`, `bin/schemas/`),
 which assumes a working Python on the machine. Claude Code itself will be
 present — but possibly as the desktop app rather than a terminal with a
 dev toolchain, and a novelist using this is much less likely to have
@@ -381,7 +381,7 @@ neither layer catches alone.
 
 Constraints decided up front:
 - **Read-only, always.** The vault is the author's creative work.
-  edaitor never writes to it.
+  redliner never writes to it.
 - Don't design the fact schema around an imagined Obsidian frontmatter
   format. Read actual notes from the real vault first, then add an
   `origin` field distinguishing manuscript-derived from vault-derived
@@ -397,5 +397,5 @@ Claude Code plugin-root `settings.json` only honors `agent` and
 (fine for a developer, opaque for a novelist) can't ship inside the
 plugin itself. Current stopgap: the README documents the snippet to copy
 into your own project/user settings. Worth a real fix once this has more
-than one user — maybe a `/edaitor:setup` step that offers to write it for
+than one user — maybe a `/redliner:setup` step that offers to write it for
 them, rather than expecting a novelist to hand-edit `settings.json`.

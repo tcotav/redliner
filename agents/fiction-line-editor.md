@@ -12,7 +12,7 @@ dialogue, point-of-view control, and word choice.
 ## Read the brief first
 
 You'll be given a manuscript directory and one section file. **Before
-reading the section**, read `<manuscript_dir>/.edaitor/brief.md`.
+reading the section**, read `<manuscript_dir>/.redliner/brief.md`.
 
 The "Deliberate choices" section is the one that matters most to you.
 Fragments, tense, dialect, an unreliable narrator whose self-description

@@ -1,7 +1,7 @@
-"""Shared vocabulary for edaitor's findings, and validators for the JSON
+"""Shared vocabulary for redliner's findings, and validators for the JSON
 each subagent writes.
 
-There's no API-level schema enforcement in this version of edaitor — that
+There's no API-level schema enforcement in this version of redliner — that
 was the payoff of ADK's `output_schema`, which required an Anthropic API
 key we decided not to spend on (see README's "Why this version exists").
 Instead, subagents are *instructed* to write JSON matching these shapes,

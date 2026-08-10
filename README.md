@@ -1,11 +1,11 @@
-# edaitor
+# redliner
 
 A layered long-form-editing tool that runs as a Claude Code plugin —
 developmental editing, line editing, and a cross-cutting continuity
 checker, each running as its own subagent against your manuscript.
 Built first for fiction, which stays the primary use case, but the
 category vocabulary is domain-driven, so it also works on design docs
-and product proposals today, and on anything else `/edaitor:new-domain`
+and product proposals today, and on anything else `/redliner:new-domain`
 can be walked through designing.
 
 ## What it does
@@ -35,7 +35,7 @@ Which category vocabulary applies comes from the manuscript's **domain**
 `status` (open/claimed/addressed/stale/wontfix), a `category`, and a
 `severity`.
 
-An **intake interview** (`/edaitor:intake`) runs first and produces a
+An **intake interview** (`/redliner:intake`) runs first and produces a
 persistent brief — the domain's own fields (genre and comps for fiction;
 audience and decision authority for a design doc), draft stage, and a
 *deliberate choices* list, because an editor that doesn't know your
@@ -57,7 +57,7 @@ no `pip install`). Load the plugin from whatever directory holds the
 manuscript you want to work on:
 
 ```
-claude --plugin-dir /path/to/edaitor
+claude --plugin-dir /path/to/redliner
 ```
 
 (A marketplace install, once this is distributed somewhere, would replace
@@ -66,15 +66,15 @@ the `--plugin-dir` flag with a one-time `/plugin install`.)
 ## Run
 
 ```
-/edaitor:intake                 # first time only, or to revise the brief (asks which domain, if more than one)
-/edaitor:run assess             # developmental pass (also runs continuity at the end)
-/edaitor:run work dev-003       # talk through one finding
-/edaitor:run resolve dev-003    # mark it addressed (your claim)
-/edaitor:run recheck            # verify claims after revision (also re-runs continuity)
-/edaitor:run line               # line-editing phase (soft-gated on open major/critical findings)
-/edaitor:run continuity         # extract facts, find collisions, adjudicate — standalone or automatic
-/edaitor:run status             # where things stand
-/edaitor:new-domain             # design a new kind of document to edit (see "Domains" below)
+/redliner:intake                 # first time only, or to revise the brief (asks which domain, if more than one)
+/redliner:run assess             # developmental pass (also runs continuity at the end)
+/redliner:run work dev-003       # talk through one finding
+/redliner:run resolve dev-003    # mark it addressed (your claim)
+/redliner:run recheck            # verify claims after revision (also re-runs continuity)
+/redliner:run line               # line-editing phase (soft-gated on open major/critical findings)
+/redliner:run continuity         # extract facts, find collisions, adjudicate — standalone or automatic
+/redliner:run status             # where things stand
+/redliner:new-domain             # design a new kind of document to edit (see "Domains" below)
 ```
 
 Manuscript directories are one file per section, named `section_01`,
@@ -82,7 +82,7 @@ Manuscript directories are one file per section, named `section_01`,
 or `.md` — pick one per section; the same stem can't exist as both.
 Defaults to the current directory if no path is given.
 
-Validate a manuscript's `.edaitor/` output directly, without running a
+Validate a manuscript's `.redliner/` output directly, without running a
 full pass:
 
 ```
@@ -92,7 +92,7 @@ bin/validate_findings.py <manuscript_dir>
 ## Architecture
 
 ```
-edaitor/                          (plugin root)
+redliner/                          (plugin root)
 ├── .claude-plugin/plugin.json
 ├── agents/                       five subagents per domain (Task tool targets)
 │   ├── fiction-developmental-editor.md
@@ -103,38 +103,38 @@ edaitor/                          (plugin root)
 │   ├── design-doc-*.md           (same five roles, design-doc's own vocabulary)
 │   └── serial-fiction-*.md       (same five roles, episodic-fiction vocabulary)
 ├── skills/
-│   ├── run/SKILL.md              /edaitor:run <status|assess|work|resolve|recheck|line|continuity>
-│   ├── intake/SKILL.md           /edaitor:intake
+│   ├── run/SKILL.md              /redliner:run <status|assess|work|resolve|recheck|line|continuity>
+│   ├── intake/SKILL.md           /redliner:intake
 │   └── new-domain/
-│       ├── SKILL.md              /edaitor:new-domain — design + generate a domain
+│       ├── SKILL.md              /redliner:new-domain — design + generate a domain
 │       └── reference/templates/  FIXED/AUTHORED templates for the five agent roles
 ├── domains/                      vocabulary per kind of document (see below)
 │   ├── fiction/domain.json
 │   ├── design-doc/domain.json
 │   └── serial-fiction/domain.json
 └── bin/                          on PATH while the plugin is enabled
-    ├── edaitor_state.py          phase, rounds, section fingerprinting/diff
-    ├── edaitor_canon.py          merges per-section facts, finds collisions mechanically
-    ├── edaitor_domain.py         list/show domain configs
+    ├── redliner_state.py          phase, rounds, section fingerprinting/diff
+    ├── redliner_canon.py          merges per-section facts, finds collisions mechanically
+    ├── redliner_domain.py         list/show domain configs
     ├── validate_findings.py      schema + excerpt-verbatim checks
     └── schemas/                  shared vocabulary + validators, imported by all three
         └── domain_loader.py      loads domains/<name>/domain.json
 ```
 
 State lives with the manuscript, not with the tool: every manuscript
-directory gets its own `<manuscript_dir>/.edaitor/` (state, brief,
-findings, canon), so edaitor works across multiple manuscripts and a
+directory gets its own `<manuscript_dir>/.redliner/` (state, brief,
+findings, canon), so redliner works across multiple manuscripts and a
 manuscript's editing history travels with it if you move or back it up.
 
 ### Domains: not fiction-only
 
-`edaitor` started fiction-specific, but the engine (state machine,
+`redliner` started fiction-specific, but the engine (state machine,
 schemas, validators) doesn't know what "fiction" means anymore — only
-the active **domain** does. A manuscript's `.edaitor/state.json` carries
+the active **domain** does. A manuscript's `.redliner/state.json` carries
 a `domain` field (defaults to `fiction`); `bin/schemas/domain_loader.py`
 loads `domains/<name>/domain.json` for that manuscript and everything
 downstream (allowed categories for developmental/line findings, the
-continuity layer's entity types/sources/categories, `/edaitor:intake`'s
+continuity layer's entity types/sources/categories, `/redliner:intake`'s
 questions, which phase tracks revision rounds) comes from that file
 rather than being hardcoded.
 
@@ -148,7 +148,7 @@ domain also has its own five agent files in `agents/`
 of generated prompts, not config alone; see "Why this is static, not
 runtime-injected" below.
 
-**To add a domain, run `/edaitor:new-domain`.** It interviews you
+**To add a domain, run `/redliner:new-domain`.** It interviews you
 through the design (category vocabulary for both editing phases, the
 continuity layer's entity types/sources/categories, brief fields, draft
 stages), enforces guardrails on the category design (4–7 categories per
@@ -162,13 +162,13 @@ before calling it done.
 
 Every domain is one JSON file at `domains/<name>/domain.json`, loaded
 and validated by `bin/schemas/domain_loader.py`. All keys below are
-required — `edaitor_domain.py show <name>` will say exactly what's
+required — `redliner_domain.py show <name>` will say exactly what's
 missing if not:
 
 | Key | Shape | What it controls |
 |---|---|---|
 | `name` | string | Must match the directory name. |
-| `display_name` | string | Shown when `/edaitor:intake` offers a choice of domains. |
+| `display_name` | string | Shown when `/redliner:intake` offers a choice of domains. |
 | `description` | string | One sentence; also shown in that choice. |
 | `round_tracked_phase` | string | Fixed to `"developmental"` for every domain — see `TODO.md` for why this isn't domain-configurable. |
 | `unit_name` | string | Fixed to `"section"` — descriptive only today; the `section_<NNN>` naming convention is still hardcoded in `bin/schemas/project_state.py` (the file extension isn't — `.txt` and `.md` are both supported). |
@@ -177,13 +177,13 @@ missing if not:
 | `continuity.entity_types` | list of strings | What kinds of things get checkable facts extracted about them. |
 | `continuity.sources` | list of strings | Where an assertion comes from, ordered by nothing but distinguished by authority/reliability (fiction: narration vs. a lying character; design-doc: body vs. a simplifying summary). |
 | `continuity.categories` | list of strings | What *kind* of contradiction a collision represents. |
-| `brief_fields` | list of `{name, label, prompt}` | What `/edaitor:intake` asks before any pass runs. `name` is the internal key, `label` is used in the brief template, `prompt` is the literal question. |
+| `brief_fields` | list of `{name, label, prompt}` | What `/redliner:intake` asks before any pass runs. `name` is the internal key, `label` is used in the brief template, `prompt` is the literal question. |
 | `draft_stages` | list of `{name, implication}` | Ordered draft-stage vocabulary; `implication` is copied verbatim into the brief and read by every pass to calibrate severity. |
 
 A domain with `domain.json` but no matching `agents/<name>-*.md` files
 is incomplete — the config alone doesn't make the passes work, since
 each agent's role framing and worked examples have to actually be
-written for that domain. `/edaitor:new-domain` is the intended way to
+written for that domain. `/redliner:new-domain` is the intended way to
 get both in sync; if hand-editing an existing domain's `domain.json`
 (e.g. adding a category), update the matching agent file's category
 list and output-format example too — nothing enforces that they agree
@@ -198,7 +198,7 @@ best-engineered part of this system (real iterated prompt craft, e.g.
 `fiction-developmental-editor.md`'s handling of `deferred_to_line`);
 runtime injection would hollow that out into generic text, and it would
 concentrate every future bug in one prompt-construction step instead of
-in reviewable, diffable, per-domain files. `/edaitor:new-domain`
+in reviewable, diffable, per-domain files. `/redliner:new-domain`
 generates static files for exactly this reason — regenerate them when a
 domain's design changes, hand-edit them after.
 
@@ -224,8 +224,8 @@ A few things worth knowing if you're debugging or extending this:
   guessed at silently — this has already surfaced a real
   self-contradiction in this repo's own sample brief.
 - **Subagents must be referenced by their plugin-namespaced,
-  domain-prefixed name** (`edaitor:fiction-developmental-editor`, not
-  `developmental-editor` or even `edaitor:developmental-editor`)
+  domain-prefixed name** (`redliner:fiction-developmental-editor`, not
+  `developmental-editor` or even `redliner:developmental-editor`)
   anywhere `SKILL.md` invokes the Task tool. Two real bugs were caught
   here by an actual plugin load test, not by static checking: a bare
   name fails outright, and — less obviously — **the registered agent id
@@ -248,9 +248,9 @@ can't ship inside the plugin. Add this to your own project or user
 {
   "permissions": {
     "allow": [
-      "Bash(edaitor_state.py *)",
-      "Bash(edaitor_canon.py *)",
-      "Bash(edaitor_domain.py *)",
+      "Bash(redliner_state.py *)",
+      "Bash(redliner_canon.py *)",
+      "Bash(redliner_domain.py *)",
       "Bash(validate_findings.py *)"
     ]
   }
@@ -267,14 +267,14 @@ load against a scratch manuscript with no relationship to this repo, not
 just statically — that test caught and fixed the bare-vs-namespaced
 subagent bug mentioned above.
 
-Not yet done: a full `/edaitor:intake` → `/edaitor:run assess` pass
+Not yet done: a full `/redliner:intake` → `/redliner:run assess` pass
 through the real Task-orchestrated pipeline, start to finish, on a fresh
 manuscript.
 
 **Domain generalization (see "Domains" above) is done.** The engine
 loads category vocabulary from `domains/<name>/domain.json` instead of
-hardcoding fiction's; `/edaitor:new-domain` designs and generates a new
-domain's config and agent files; `/edaitor:intake` reads its questions
+hardcoding fiction's; `/redliner:new-domain` designs and generates a new
+domain's config and agent files; `/redliner:intake` reads its questions
 from whichever domain is active instead of hardcoding fiction's. Two
 more real domains exist beyond fiction: `design-doc`, verified two ways
 — its `domain.json` and a hand-built findings/canon fixture (the
@@ -282,7 +282,7 @@ concrete "the summary says Q3, the timeline section says Q4" test case)
 both pass `validate_findings.py` with zero model calls — and
 `serial-fiction`. Every domain's five generated agents (fifteen total
 across the three) were confirmed live (`claude --plugin-dir`) to
-actually register and respond under their expected `edaitor:<domain>-*`
+actually register and respond under their expected `redliner:<domain>-*`
 ids — not just read back as plausible-looking files.
 
 **Three smaller things added alongside the domain work, each verified
@@ -327,7 +327,7 @@ live, each catching a real bug in the process:**
   variable in play, so treat this as strong evidence the field works as
   intended, not as an isolated clean A/B result.
 
-**The continuity layer is wired into `/edaitor:run`.** `/edaitor:run
+**The continuity layer is wired into `/redliner:run`.** `/redliner:run
 continuity` (standalone, and run automatically by both `assess` and
 `recheck`, its summary shown after their developmental letter) extracts
 facts from whatever sections changed, reconciles deterministically, and
@@ -354,7 +354,7 @@ sketched for it (a script-computed carry-forward, not a model guessing
 at a diff).
 
 (Separately, the pre-existing permission-allowlist gap below also needs
-`edaitor_domain.py` added wherever it's copied — not new, just one more
+`redliner_domain.py` added wherever it's copied — not new, just one more
 script name.)
 
 Other open items in `TODO.md`: a compiled-binary port, read-only

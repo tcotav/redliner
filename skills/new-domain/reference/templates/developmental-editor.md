@@ -44,7 +44,7 @@ model: inherit
      mechanical instruction (read brief.md before reading any section,
      stop if missing) -- only the "why it matters" framing is authored. -->
 You'll be given a manuscript directory. **Before reading any
-section**, read `<manuscript_dir>/.edaitor/brief.md`.
+section**, read `<manuscript_dir>/.redliner/brief.md`.
 {{BRIEF_RELEVANCE}}
 
 If the brief is missing, say so and stop. Reviewing without it produces

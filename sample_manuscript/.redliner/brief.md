@@ -1,8 +1,8 @@
 # Manuscript Brief: The Gray Gull
 
 <!--
-Example brief for edaitor's placeholder manuscript. Normally written by
-/edaitor-intake through an interview with the author; written by hand here
+Example brief for redliner's placeholder manuscript. Normally written by
+/redliner-intake through an interview with the author; written by hand here
 so the sample manuscript is runnable out of the box and so there's a
 worked example of the format.
 -->

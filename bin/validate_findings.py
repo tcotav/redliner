@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate a manuscript's .edaitor/ output against its domain's schema.
+"""Validate a manuscript's .redliner/ output against its domain's schema.
 
 Lives in the plugin's bin/ (on PATH while the plugin is enabled) -- runs
 as `validate_findings.py ...` from any working directory. See the
@@ -11,12 +11,12 @@ Usage:
 Takes a manuscript directory only -- not a findings/ or canon/ path
 directly. An earlier version accepted either and inferred which; that
 inference was wrong for any layout other than the one nested exactly one
-level under .edaitor/, and failed *silently* (exit 0, canon layer quietly
+level under .redliner/, and failed *silently* (exit 0, canon layer quietly
 skipped) rather than erroring. One required argument, checked to actually
-contain .edaitor/, removes the guess entirely.
+contain .redliner/, removes the guess entirely.
 
 The category vocabulary checked against comes from the manuscript's
-domain (`.edaitor/state.json`'s `domain` field, defaulting to `fiction`
+domain (`.redliner/state.json`'s `domain` field, defaulting to `fiction`
 if absent) via `domain_loader.py` -- this script has no fiction-specific
 knowledge itself.
 
@@ -113,10 +113,10 @@ def _verify_excerpts(items: list, section_text: str, label: str) -> list:
 
 
 def _validate_canon(
-    manuscript_dir: Path, edaitor_path: Path, domain: dict, ok: bool
+    manuscript_dir: Path, redliner_path: Path, domain: dict, ok: bool
 ) -> bool:
     """Validate the continuity layer's files, if any exist yet."""
-    canon_path = edaitor_path / "canon"
+    canon_path = redliner_path / "canon"
     if not canon_path.is_dir():
         return ok
 
@@ -147,10 +147,10 @@ def _validate_canon(
 
 def main(manuscript_dir_arg: str) -> int:
     manuscript_dir = Path(manuscript_dir_arg)
-    edaitor_path = manuscript_dir / ".edaitor"
-    if not edaitor_path.is_dir():
+    redliner_path = manuscript_dir / ".redliner"
+    if not redliner_path.is_dir():
         print(
-            f"No .edaitor/ under {manuscript_dir} -- pass a manuscript directory, not a findings/canon path."
+            f"No .redliner/ under {manuscript_dir} -- pass a manuscript directory, not a findings/canon path."
         )
         return 1
 
@@ -162,11 +162,11 @@ def main(manuscript_dir_arg: str) -> int:
         print(f"Domain config error: {e}")
         return 1
 
-    findings_path = edaitor_path / "findings"
-    ok = _validate_canon(manuscript_dir, edaitor_path, domain, True)
+    findings_path = redliner_path / "findings"
+    ok = _validate_canon(manuscript_dir, redliner_path, domain, True)
 
     if not findings_path.is_dir():
-        print(f"No findings/ yet under {edaitor_path}")
+        print(f"No findings/ yet under {redliner_path}")
         return 0 if ok else 1
 
     dev_file = findings_path / "developmental.json"

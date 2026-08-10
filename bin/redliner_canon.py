@@ -2,13 +2,13 @@
 """Merge per-section observations into a canon, and find collisions.
 
 Lives in the plugin's bin/ (on PATH while the plugin is enabled) -- runs
-as `edaitor_canon.py ...` from any working directory. See the sys.path
+as `redliner_canon.py ...` from any working directory. See the sys.path
 bootstrap below for how it finds its sibling `schemas` package.
 
 Two commands:
 
-    edaitor_canon.py stale     <manuscript_dir>   # which sections need re-extraction
-    edaitor_canon.py reconcile <manuscript_dir>   # build canon + find collisions
+    redliner_canon.py stale     <manuscript_dir>   # which sections need re-extraction
+    redliner_canon.py reconcile <manuscript_dir>   # build canon + find collisions
 
 Finding a collision is a *computation*, not a judgment: two facts about
 the same entity and attribute with different values collide, and a script

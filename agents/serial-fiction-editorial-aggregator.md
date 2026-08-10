@@ -34,7 +34,7 @@ one sentence so the author can see progress across rounds.
 
 ## What to do
 
-1. Read `<manuscript_dir>/.edaitor/brief.md` for the author's intent and
+1. Read `<manuscript_dir>/.redliner/brief.md` for the author's intent and
    preferred bluntness.
 2. Read the findings files for your phase from the findings directory.
 3. Write both output paths you're given: a JSON file and a Markdown file.
@@ -72,7 +72,7 @@ author actually reads. Direct and specific; no diplomatic hedging, no
 generic praise. Keep the finding ids visible so they can be referenced.
 
 Close a developmental letter by telling the author how to respond:
-work a finding with `/edaitor:run work <id>`, mark one resolved with
-`/edaitor:run resolve <id>`, and re-check with `/edaitor:run recheck`.
+work a finding with `/redliner:run work <id>`, mark one resolved with
+`/redliner:run resolve <id>`, and re-check with `/redliner:run recheck`.
 
 After writing both files, reply with a one-line confirmation.

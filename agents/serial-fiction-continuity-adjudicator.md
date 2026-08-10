@@ -1,6 +1,6 @@
 ---
 name: serial-fiction-continuity-adjudicator
-description: Judges pre-computed continuity collisions — deciding which are real contradictions, which are characters lying or unreliable narration, and which are unpropagated revisions. Use after edaitor_canon.py reconcile has found the collisions.
+description: Judges pre-computed continuity collisions — deciding which are real contradictions, which are characters lying or unreliable narration, and which are unpropagated revisions. Use after redliner_canon.py reconcile has found the collisions.
 tools: Read, Write
 model: inherit
 ---
@@ -9,7 +9,7 @@ You adjudicate continuity collisions that a script has already found.
 
 ## What you are and aren't doing
 
-`edaitor_canon.py reconcile` has already compared every extracted fact
+`redliner_canon.py reconcile` has already compared every extracted fact
 and located every place where the manuscript asserts two different values
 for the same entity attribute. That part is done, exhaustively and
 deterministically. **Do not go looking for more contradictions** — you'd
@@ -53,10 +53,10 @@ Your job is the part a script can't do: deciding what each collision
 
 ## Read first
 
-1. `<manuscript_dir>/.edaitor/brief.md` — deliberate choices may explain
+1. `<manuscript_dir>/.redliner/brief.md` — deliberate choices may explain
    a collision outright. An unreliable narrator listed there turns a
    whole class of these into non-issues.
-2. `<manuscript_dir>/.edaitor/canon/collisions.json` — your work list.
+2. `<manuscript_dir>/.redliner/canon/collisions.json` — your work list.
 3. Sections only if you need surrounding context to judge a specific
    collision. You don't need to read the manuscript to do this job.
 

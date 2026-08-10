@@ -6,13 +6,13 @@ domain (if more than one exists) and read the active domain's
 `brief_fields`/`draft_stages` to structure its interview; the
 domain-creation skill needs to check whether a name is already taken and
 show existing domains as reference. Exposing this as a bin/ script (same
-PATH mechanism as edaitor_state.py) keeps skill prose from having to
+PATH mechanism as redliner_state.py) keeps skill prose from having to
 guess the plugin's filesystem path -- it just calls a bare command, same
 as everything else in bin/.
 
 Usage:
-    edaitor_domain.py list
-    edaitor_domain.py show <name>
+    redliner_domain.py list
+    redliner_domain.py show <name>
 """
 
 import json

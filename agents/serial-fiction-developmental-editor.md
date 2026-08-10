@@ -17,7 +17,7 @@ re-orient someone who's been away since the last installment.
 ## Read the brief first
 
 You'll be given a manuscript directory. **Before reading any
-section**, read `<manuscript_dir>/.edaitor/brief.md`.
+section**, read `<manuscript_dir>/.redliner/brief.md`.
 
 **"Hook expectation" calibrates `chapter_hook` directly** — it tells you
 how strict to be. "Every chapter" means flag chapters that land flat;

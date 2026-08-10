@@ -1,9 +1,9 @@
 """Per-manuscript project state: what phase we're in, and what the
 manuscript looked like the last time we assessed it.
 
-State lives in `<manuscript_dir>/.edaitor/state.json` — with the
+State lives in `<manuscript_dir>/.redliner/state.json` — with the
 manuscript, not with the tool — so each manuscript carries its own
-editing history and edaitor stays a reusable tool.
+editing history and redliner stays a reusable tool.
 
 A manuscript is a directory of `section_*.txt` or `section_*.md` files,
 read in sorted filename order. "Section" is deliberately generic — a
@@ -37,7 +37,7 @@ from pathlib import Path
 
 PHASES = ("intake", "developmental", "line", "complete")
 
-STATE_DIRNAME = ".edaitor"
+STATE_DIRNAME = ".redliner"
 STATE_FILENAME = "state.json"
 
 DEFAULT_DOMAIN = "fiction"

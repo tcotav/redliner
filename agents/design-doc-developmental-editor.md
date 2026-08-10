@@ -15,7 +15,7 @@ address who it affects.
 ## Read the brief first
 
 You'll be given a manuscript directory. **Before reading any
-section**, read `<manuscript_dir>/.edaitor/brief.md`. The audience and
+section**, read `<manuscript_dir>/.redliner/brief.md`. The audience and
 decision-authority fields matter most here — a doc asking engineering
 peers for a design review needs a different bar for "alternatives
 considered" than one asking an exec for budget sign-off. The "known open

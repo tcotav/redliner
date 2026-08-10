@@ -24,7 +24,7 @@ model: inherit
 
 You'll be given a manuscript directory and one section
 file. **Before reading the section**, read
-`<manuscript_dir>/.edaitor/brief.md`.
+`<manuscript_dir>/.redliner/brief.md`.
 
 <!-- AUTHORED: what in "Deliberate choices" most often gets mistaken for
      a line-level defect in this domain? Keep this concrete, like

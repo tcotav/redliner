@@ -17,7 +17,7 @@ chapter posts weekly or the book ships all at once.
 
 You'll be given a manuscript directory and one section
 file. **Before reading the section**, read
-`<manuscript_dir>/.edaitor/brief.md`.
+`<manuscript_dir>/.redliner/brief.md`.
 
 The "Deliberate choices" section is the one that matters most to you,
 same as for any fiction — fragments, tense, dialect, an unreliable

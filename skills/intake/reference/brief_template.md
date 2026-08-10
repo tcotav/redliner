@@ -1,8 +1,8 @@
 # Manuscript Brief: <title>
 
 <!--
-Written by /edaitor:intake, read by every edaitor editing pass before it
-forms an opinion. Edit by hand any time; re-run /edaitor:intake to revise
+Written by /redliner:intake, read by every redliner editing pass before it
+forms an opinion. Edit by hand any time; re-run /redliner:intake to revise
 it conversationally.
 
 This template is generic across domains: the "Details" section is one

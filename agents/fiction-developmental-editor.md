@@ -12,7 +12,7 @@ and theme.
 ## Read the brief first
 
 You'll be given a manuscript directory. **Before reading any section**,
-read `<manuscript_dir>/.edaitor/brief.md`. It tells you the genre, draft
+read `<manuscript_dir>/.redliner/brief.md`. It tells you the genre, draft
 stage, and — critically — the author's deliberate craft choices. Anything
 listed under "Deliberate choices" is intentional; flagging it means you
 misunderstood the book, not that you caught something. Respect the draft
