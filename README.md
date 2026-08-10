@@ -89,6 +89,43 @@ full pass:
 bin/validate_findings.py <manuscript_dir>
 ```
 
+### A manuscript's path through this, end to end
+
+```mermaid
+flowchart TD
+    A["Author writes section_01.txt,<br/>section_02.txt, ..."] --> B["/redliner:intake<br/>interview: genre, draft stage, deliberate choices"]
+    B --> C["brief.md written"]
+    C --> D["/redliner:run assess<br/>developmental read + continuity extraction"]
+    D --> E["Editorial letter + findings<br/>(dev-001..dev-009, cont-001)"]
+    E --> F{"Open major/critical<br/>findings?"}
+    F -->|yes| G["/redliner:run work dev-003<br/>talk it through"]
+    G --> H["Author revises the text"]
+    H --> I["/redliner:run resolve dev-003<br/>mark it claimed"]
+    I --> J["/redliner:run recheck<br/>diff decides targeted vs. full re-read"]
+    J --> E
+    F -->|"no — structure settled"| K["/redliner:run line<br/>per-section prose pass"]
+    K --> L["Line findings per section"]
+    L --> M["Author revises prose"]
+    M --> N["Polished manuscript"]
+
+    classDef command fill:#4a5568,stroke:#2d3748,color:#fff
+    classDef artifact fill:#2b6cb0,stroke:#1a4971,color:#fff
+    classDef human fill:#805ad5,stroke:#553c9a,color:#fff
+    classDef gate fill:#c05621,stroke:#7b341e,color:#fff
+
+    class B,D,G,I,J,K command
+    class C,E,L,N artifact
+    class A,H,M human
+    class F gate
+```
+
+The loop in the middle (`work` → revise → `resolve` → `recheck`) is the
+point, not an inconvenience — see "Why phases are sequential" above.
+Most manuscripts go around it several times before structure settles
+enough to reach `line`. `/redliner:run continuity` runs alongside
+`assess` and `recheck` rather than as its own step here; its
+contradictions land in the same letter developmental findings do.
+
 ## Architecture
 
 ```
