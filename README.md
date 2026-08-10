@@ -52,30 +52,73 @@ a suggestion.
 
 ## Setup
 
-Nothing to install beyond Claude Code itself and Python 3 (stdlib only —
-no `pip install`).
+Two plugin variants exist in this one repo, because Cowork and the
+Claude Code CLI have genuinely different constraints on how a plugin is
+allowed to run its deterministic logic — see "Two plugin variants"
+below for why. Install the one matching where you'll actually use it.
 
-**From the CLI**, load the plugin from whatever directory holds the
-manuscript you want to work on:
+**Claude Code CLI** — nothing to install beyond Claude Code itself and
+Python 3 (stdlib only, no `pip install`). Load the plugin from whatever
+directory holds the manuscript you want to work on:
 
 ```
 claude --plugin-dir /path/to/redliner
 ```
 
-**As a one-time install** (CLI or [Claude Cowork](https://claude.com/docs/cowork/overview) —
-Cowork uses the same plugin system, and is a GUI/desktop surface rather
-than a terminal, which may suit a non-technical author better):
+Or install it once, permanently:
 
 ```
 claude plugin marketplace add tcotav/redliner
 claude plugin install redliner@redliner
 ```
 
-In Cowork, the equivalent is **Customize → Plugins → Add marketplace**,
-entering `tcotav/redliner`, then installing `redliner` from the list
-that appears. `.claude-plugin/marketplace.json` at this repo's root is
-what makes that resolve — it's what both `claude plugin marketplace add`
-and Cowork's "Add marketplace" actually look for.
+**[Claude Cowork](https://claude.com/docs/cowork/overview)** — a
+GUI/desktop surface rather than a terminal, likely a better fit for a
+non-technical author. Install `redliner-cowork` (not `redliner` — the
+CLI variant is rejected by Cowork's content policy, see below):
+
+```
+claude plugin marketplace add tcotav/redliner
+claude plugin install redliner-cowork@redliner
+```
+
+In Cowork's own UI, the equivalent is **Customize → Plugins → Add
+marketplace**, entering `tcotav/redliner`, then installing
+**`redliner-cowork`** specifically from the list that appears.
+`.claude-plugin/marketplace.json` at this repo's root is what makes
+`tcotav/redliner` resolve at all — it's what both `claude plugin
+marketplace add` and Cowork's "Add marketplace" look for, and it lists
+both variants.
+
+Requires Python 3 to be reachable on first use — `redliner-cowork`
+installs its own `mcp` dependency into an isolated, persistent location
+automatically (nothing to `pip install` by hand), but that first
+install takes a few real seconds. **If a tool call doesn't work the
+very first time you use it after installing, restart the MCP server and
+try again** — that's a one-time startup race on the very first load,
+not a broken install; every use after that first restart works
+normally.
+
+### Two plugin variants, one shared core
+
+`redliner` (CLI variant, this repo's root) runs its deterministic logic
+— state tracking, hashing, schema validation — as bare executables in
+`bin/`, added to the Bash tool's PATH while the plugin is enabled.
+Cowork's own content policy explicitly rejects that shape: a plugin
+that ships a top-level `bin/` directory of PATH-executables is refused
+at "Add marketplace" time, because that mechanism is invisible to
+whatever review surface an org admin uses to approve a plugin.
+
+`redliner-cowork` (`cowork/` in this repo) is the same tool, same
+`agents/`, same `skills/`, same underlying `bin/schemas/*.py` logic
+(shared via symlinks, not duplicated) — but exposes the deterministic
+operations as an MCP server instead of PATH executables, which Cowork
+does allow. Every skill file is written to describe what it needs
+("check the manuscript's current state") rather than exact command
+syntax, so the identical skill prose correctly drives either the CLI's
+bare commands or the MCP tools, whichever this session actually has.
+See `TODO.md`'s "Cowork support via an MCP server variant" section for
+the full story, including two real bugs this surfaced and fixed.
 
 ## Run
 
@@ -163,13 +206,23 @@ redliner/                          (plugin root)
 │   ├── fiction/domain.json
 │   ├── design-doc/domain.json
 │   └── serial-fiction/domain.json
-└── bin/                          on PATH while the plugin is enabled
-    ├── redliner_state.py          phase, rounds, section fingerprinting/diff
-    ├── redliner_canon.py          merges per-section facts, finds collisions mechanically
-    ├── redliner_domain.py         list/show domain configs
-    ├── validate_findings.py      schema + excerpt-verbatim checks
-    └── schemas/                  shared vocabulary + validators, imported by all three
-        └── domain_loader.py      loads domains/<name>/domain.json
+├── bin/                          on PATH while the plugin is enabled
+│   ├── redliner_state.py          phase, rounds, section fingerprinting/diff
+│   ├── redliner_canon.py          merges per-section facts, finds collisions mechanically
+│   ├── redliner_domain.py         list/show domain configs
+│   ├── validate_findings.py      schema + excerpt-verbatim checks
+│   └── schemas/                  shared vocabulary + validators, imported by all three
+│       └── domain_loader.py      loads domains/<name>/domain.json
+└── cowork/                       (plugin root #2 — see "Setup" above)
+    ├── .claude-plugin/plugin.json   declares mcpServers, no bin/
+    ├── mcp_server.py                same 10 operations as bin/, as MCP tools
+    ├── hooks/hooks.json             SessionStart: bootstraps mcp into a venv
+    ├── requirements.txt
+    ├── schemas -> ../bin/schemas          symlinks: one shared core,
+    ├── redliner_canon.py -> ../bin/...    not a fork — see TODO.md's
+    ├── validate_findings.py -> ../bin/... "Cowork support" section
+    ├── agents -> ../agents
+    └── skills -> ../skills
 ```
 
 State lives with the manuscript, not with the tool: every manuscript
@@ -321,6 +374,20 @@ subagent bug mentioned above.
 Not yet done: a full `/redliner:intake` → `/redliner:run assess` pass
 through the real Task-orchestrated pipeline, start to finish, on a fresh
 manuscript.
+
+**Cowork support (see "Setup" above) is done, v0/Python.** A second
+plugin variant (`redliner-cowork`) exposes the same 10 deterministic
+operations as MCP tools instead of `bin/`-on-PATH, which Cowork's
+content policy otherwise rejects outright. Verified for real, not just
+locally: after installing `redliner-cowork` in actual Cowork and one
+restart (a known first-load rough edge — see `TODO.md`), a real tool
+call answered correctly. One shared set of skill/agent files, phrased by
+intent, drives either the CLI or MCP variant — proven by a live spike
+before committing to that design, not assumed. See `TODO.md`'s "Cowork
+support via an MCP server variant" section for the two real bugs this
+build caught (a path-traversal import bug only a real install-cycle
+test surfaced, and a dependency-bootstrap gap) and the known first-use
+restart caveat.
 
 **Domain generalization (see "Domains" above) is done.** The engine
 loads category vocabulary from `domains/<name>/domain.json` instead of

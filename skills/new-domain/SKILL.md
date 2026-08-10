@@ -32,8 +32,8 @@ this.
 Interview conversationally, not as a rigid form:
 
 - **`name`** — kebab-case, short (`design-doc`, not
-  `design-document-review-domain`). Run `redliner_domain.py list` first
-  and refuse a name that collides.
+  `design-document-review-domain`). List the existing domains first and
+  refuse a name that collides.
 - **`display_name`** — human-readable (`"Design Doc / Product Proposal"`).
 - **`description`** — one sentence: what kind of document, what makes it
   a document at all (fiction: "characters, plot, and a fictional world";
@@ -141,16 +141,16 @@ don't contort the example.
 ## Step 5: Write and validate `domain.json`
 
 Write `domains/<name>/domain.json` matching
-`domains/fiction/domain.json`'s exact key structure. Then run:
-
-```
-redliner_domain.py show <name>
-```
+`domains/fiction/domain.json`'s exact key structure. Then look up the
+full config for the new domain by name (whichever concrete tool this
+session offers for that — a bare `redliner_domain.py show <name>`
+command on the CLI variant, or the matching MCP tool on the Cowork/MCP
+variant).
 
 This calls the same loader every pass uses — if it errors, the domain
-config is malformed (missing keys, empty lists); fix it and re-run until
-it prints cleanly. Don't hand-verify the shape yourself and skip this —
-the loader's validation is the actual contract, not a formality.
+config is malformed (missing keys, empty lists); fix it and re-check
+until it comes back clean. Don't hand-verify the shape yourself and skip
+this — the loader's validation is the actual contract, not a formality.
 
 ## Step 6: Generate the five agent files
 
@@ -194,7 +194,8 @@ agent id — the file looked renamed and wasn't).
 1. **Frontmatter/filename consistency.** For each of the five files,
    read its frontmatter `name:` and confirm it equals `<domain>-<role>`
    matching the filename stem exactly. Any mismatch: stop, fix, recheck.
-2. **Domain config still valid.** Re-run `redliner_domain.py show <name>`.
+2. **Domain config still valid.** Look up the new domain's full config
+   again and confirm it still comes back clean.
 3. **Live registration check.** For each of the five generated agents,
    use the Task tool to invoke `redliner:<name>-<role>` with a trivial
    prompt: reply with the single word `PONG` and nothing else. Confirm

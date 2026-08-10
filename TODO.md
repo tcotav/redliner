@@ -309,6 +309,146 @@ chapter 2's — while also surfacing real `episodic_pacing`,
 fixture, unprompted, confirming the other five categories aren't just
 schema entries nobody's prompt actually uses.
 
+## Cowork support via an MCP server variant (DONE, v0/Python)
+
+**Raised:** 2026-08-10. **Completed:** 2026-08-10.
+
+The user tried installing `redliner` in Claude Cowork (a GUI/desktop
+surface, not the terminal-based CLI) and it failed outright. The real
+error — found in `~/Library/Logs/Claude/claude.ai-web.log`, not the
+generic "Marketplace sync failed. Check the repository URL and try
+again." shown in the UI — was:
+
+> Plugin contains a top-level bin/ directory (...). claude.ai-hosted
+> plugins may not ship bin/ executables because they are added to PATH
+> on the CLI but are not shown on the admin approval surface. Declare
+> executable entry points via hooks, commands, or mcpServers instead.
+
+This is a deliberate Cowork content policy, not a bug: `bin/`-on-PATH is
+invisible to whatever review surface an org admin uses to approve a
+plugin. Checked the other two alternatives the error names before
+committing to `mcpServers`: **hooks** are event-triggered (wrong shape
+for on-demand operations like "check the manuscript's phase"), and
+**commands** in the plugin-manifest sense just means markdown-based
+skills — already what `SKILL.md` is, not a script-execution mechanism.
+
+This mattered beyond "get Cowork working": the tool's stated primary
+audience (non-technical fiction writers, students writing web serials)
+is much more likely to use a normal GUI app than a CLI that requires
+terminal comfort as a hard prerequisite even to install. CLI-only isn't
+*less comfortable* for that audience, it's a wall — the same
+generalize-without-compromising-the-primary-case test already applied
+to domain generalization.
+
+**Sequencing, per explicit direction:** this (v0) is Python, reusing the
+existing `bin/schemas/*.py` logic unchanged. Porting the whole thing to
+Go (v1), so the MCP server and CLI converge into one dual-mode compiled
+binary with no Python dependency at all, is separate, later work — see
+the "Port to a compiled language" section below, whose sequencing note
+this now updates.
+
+**What got built:** `cowork/` — a second plugin root in the same repo,
+listed as a second entry (`redliner-cowork`) in `.claude-plugin/
+marketplace.json` alongside the original `redliner` entry.
+`cowork/mcp_server.py` exposes the exact same 10 operations the CLI
+already has (`state_init/status/diff/snapshot/phase`,
+`canon_stale/reconcile`, `domain_list/show`, `validate_findings`) as MCP
+tools, named 1:1 with their CLI subcommands. `cowork/schemas`,
+`cowork/agents`, `cowork/skills`, `cowork/redliner_canon.py`, and
+`cowork/validate_findings.py` are all symlinks into the existing
+`bin/`/`agents/`/`skills/` — one shared source of truth, not a fork.
+`skills/run/SKILL.md`, `skills/intake/SKILL.md`, and
+`skills/new-domain/SKILL.md` were rewritten to describe operations by
+*intent* ("check the manuscript's current state") rather than exact CLI
+syntax, so the same skill files drive either variant depending on what
+tools the session actually has — proven to work by a real spike before
+committing to it (see below), not assumed.
+
+**Two spikes run first, both confirmed live before building anything
+real** (the plan's own explicit gate — stop and reassess if either
+failed):
+1. A minimal MCP-only plugin (one dummy tool, no `bin/` anywhere) pushed
+   to a standalone repo and added via Cowork's real "Add marketplace"
+   GUI. Passed cleanly. (A first attempt using a branch + subdirectory of
+   the main repo silently mis-tested the *original* rejection instead —
+   Cowork's Add-marketplace field doesn't parse `/tree/<branch>/<path>`
+   URLs, it just falls back to the repo's default branch root. A genuine
+   standalone repo was needed for an unambiguous result.)
+2. A real MCP server wrapping actual domain-loading logic, with a skill
+   phrased entirely by intent (no tool names given). Run isolated
+   (`--plugin-dir`, no `bin/` on PATH) against the real
+   `sample_manuscript` — Claude picked all three correct tools
+   unprompted, and every returned value matched the real `domain.json`/
+   `state.json` content exactly (verified by direct diff).
+
+**Two real bugs found by live install-testing, not by reasoning about
+docs:**
+1. `mcp_server.py` originally imported `redliner_canon`/
+   `validate_findings` via a `sys.path` hack reaching `../bin` from its
+   own directory — worked perfectly running straight from the dev source
+   tree (`cowork/` and `bin/` really are siblings there), and would have
+   shipped looking correct. Broke immediately on a real
+   `claude plugin marketplace add` + `install` cycle:
+   `ModuleNotFoundError: No module named 'redliner_canon'`, because the
+   installed plugin cache only contains what's inside `cowork/`'s own
+   directory — `../bin` from there lands outside the plugin entirely.
+   ("Path traversal limitations" is explicitly documented behavior, not
+   an edge case — plugins genuinely cannot reference files outside their
+   own directory once installed.) Fixed by symlinking the two CLI modules
+   directly into `cowork/` (same treatment as `schemas`/`agents`/
+   `skills`) and making the import relative to the file's own directory.
+   Reverified via a full clean uninstall → reinstall → cache inspection:
+   both modules now arrive as real dereferenced copies, correct siblings
+   of `schemas/`.
+2. The original manifest's bare `python3` command assumes `mcp` is
+   already installed system-wide — false on a fresh machine, exactly the
+   dependency-friction concern this plan raised up front. Fixed with the
+   documented, sanctioned pattern for exactly this: a `SessionStart` hook
+   (`cowork/hooks/hooks.json`) that builds a venv in
+   `${CLAUDE_PLUGIN_DATA}` (a data directory that persists across plugin
+   updates) and installs `requirements.txt` on first run — diff-based, so
+   it also re-installs when the manifest changes — with `mcpServers.
+   command` pointing at that persisted venv's Python instead of bare
+   `python3`. Verified live: a fresh install actually built the venv and
+   installed `mcp` into it.
+
+**One known rough edge, documented rather than engineered around for
+v0:** on a plugin's very first load, the `SessionStart` hook (building
+the venv, a real few seconds of `pip install`) races the MCP server's own
+startup attempt — if the server tries to spawn
+`${CLAUDE_PLUGIN_DATA}/venv/bin/python3` before the hook has finished
+creating it, that first spawn fails silently (the interpreter it's told
+to run doesn't exist yet). A restart *after* the hook completes succeeds,
+which is exactly what happened in the user's own real Cowork test: first
+attempt needed a manual MCP server restart, then it worked correctly.
+Not fixed here — v1's Go port removes the whole hook-bootstraps-a-venv
+dance entirely (a static binary has no dependency to install), so the
+race disappears on its own rather than needing a bespoke synchronization
+fix in Python. **Tell anyone installing `redliner-cowork`: first use may
+need one MCP server restart.**
+
+**Verification, in order of what's actually load-bearing:**
+- All 10 MCP tools functionally verified against real data with exact
+  parity to the CLI, including the two side-effect-based ones
+  (`state_init`'s double-init error, `canon_reconcile`'s file writes
+  matching what's on disk byte-for-byte).
+- `claude plugin validate --strict` passes for both manifests.
+- A full local marketplace install (not `--plugin-dir` — the mechanism
+  that actually matters, since it's what exercises the symlink-to-copy
+  and dependency-bootstrap behavior a raw source run doesn't) confirmed
+  the cache contains real files, not broken symlinks.
+- **The real test:** the user installed `redliner-cowork` in actual
+  Cowork and, after the one-time restart above, got a correct answer to
+  a question that required a real MCP tool call. This is the test
+  nothing else here could substitute for — my own CLI-based attempts at
+  the same check (six different invocation modes: `-p` mode, piped
+  stdin, marketplace-installed, `--plugin-dir`-loaded, self-report, and
+  direct scoped-name invocation) all showed the tool as genuinely
+  unavailable, which in hindsight was each attempt hitting the same
+  hook/server startup race fresh in an isolated one-shot process, never
+  getting the "long-lived session survives past the hook, then
+  reconnects" pattern a real restart provides.
+
 ## Port to a compiled language for distributable binaries?
 
 **Raised:** 2026-08-08. **Updated:** 2026-08-08, after the plugin conversion.
@@ -365,6 +505,22 @@ so there's one implementation to iterate on instead of two to keep in
 lockstep. Treat the binary as solving the runtime-dependency problem,
 not the whole install story — the markdown agents still need to land in
 `.claude/` somehow either way.
+
+**Sequencing update, 2026-08-10, now that Cowork support exists (see
+"Cowork support via an MCP server variant" above):** this is no longer
+just "port the CLI." There are now two Python front doors onto the same
+`bin/schemas/*.py` logic — `bin/redliner_*.py` (CLI, bare executables)
+and `cowork/mcp_server.py` (MCP tools) — and v1 should converge them
+into **one dual-mode Go binary** that behaves as a CLI when invoked
+directly and as an MCP server when given the right flag/argv, rather
+than porting each front door separately. This is why Phase 1 of the
+Cowork work deliberately named its MCP tools 1:1 with the CLI's
+subcommands (`state_status` ~ `redliner_state.py status`) — so the
+convergence is a mechanical rename, not a second design pass. Porting
+also permanently removes the one real rough edge Cowork support
+shipped with (the `SessionStart`-hook-builds-a-venv race on first
+load) — a static Go binary has no dependency to bootstrap, so there's
+nothing left to race.
 
 ## Obsidian vault integration
 

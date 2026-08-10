@@ -24,24 +24,33 @@ directory — the intended usage is `cd` into the author's manuscript
 directory, then run `/redliner:run`. State lives in
 `<manuscript_dir>/.redliner/`.
 
-The scripts below (`redliner_state.py`, `redliner_canon.py`,
-`validate_findings.py`) run as bare commands, no `python3` prefix — the
-plugin's `bin/` directory is on the Bash tool's PATH while this plugin is
-enabled, and each script is executable with its own shebang.
+## Deterministic operations
+
+Everything below refers to a handful of deterministic operations —
+checking state, diffing against the last snapshot, checking which
+sections need continuity re-extraction, reconciling the canon, and
+validating everything under `.redliner/` against the domain's schema.
+These are described here by what they do, not by exact syntax: use
+whichever concrete tool this session actually has for each one (a bare
+`redliner_state.py`/`redliner_canon.py`/`validate_findings.py` command
+on the CLI variant, or the matching MCP tool — `state_status`,
+`state_diff`, `canon_stale`, `canon_reconcile`, `validate_findings`, and
+so on — on the Cowork/MCP variant). Don't guess at exact command syntax
+if you're unsure which mechanism is available; check what's actually
+offered in this session and use that.
 
 ## Which subagent to Task
 
 Agent files are named `agents/<domain>-<role>.md` and registered under
 the plugin namespace as `redliner:<domain>-<role>` (e.g.
 `redliner:fiction-developmental-editor`) — never a bare or undomained
-name. Get `<domain>` from `redliner_state.py status <manuscript_dir>`'s
-`domain` field (fall back to `fiction` only if that key is somehow
-absent from old state) and substitute it into every `redliner:<role>`
-reference below. So on a `design-doc` manuscript, "Task
-`redliner:<domain>-developmental-editor`" means Task
-`redliner:design-doc-developmental-editor`. This holds for all five
-roles: `developmental-editor`, `line-editor`, `editorial-aggregator`,
-`continuity-extractor`, `continuity-adjudicator`.
+name. Determine `<domain>` by checking the manuscript's current state
+(fall back to `fiction` only if that's somehow absent from old state)
+and substitute it into every `redliner:<role>` reference below. So on a
+`design-doc` manuscript, "Task `redliner:<domain>-developmental-editor`"
+means Task `redliner:design-doc-developmental-editor`. This holds for
+all five roles: `developmental-editor`, `line-editor`,
+`editorial-aggregator`, `continuity-extractor`, `continuity-adjudicator`.
 
 ## Why phases are sequential
 
@@ -56,33 +65,33 @@ Everything below enforces that ordering.
 
 ## Preconditions (all subcommands)
 
-Run `redliner_state.py status <manuscript_dir>`. If there's no state, or
-no `.redliner/brief.md`, stop and tell the author to run `/redliner:intake`
+Check the manuscript's current state. If there's no state, or no
+`.redliner/brief.md`, stop and tell the author to run `/redliner:intake`
 first — every pass depends on the brief.
 
 ## `/redliner:run assess`
 
-1. `redliner_state.py phase <manuscript_dir> developmental` (this
-   increments the round counter).
+1. Move the manuscript to the developmental phase (this increments the
+   round counter).
 2. Prepare `<manuscript_dir>/.redliner/findings/`; clear stale files from
    a previous round.
 3. Task the `redliner:<domain>-developmental-editor` subagent with the manuscript directory,
    the round number, and output path `.redliner/findings/developmental.json`.
-4. `validate_findings.py <manuscript_dir>` — stop and report errors
-   rather than aggregating bad data. (Takes the manuscript directory
-   itself, not a findings/ or canon/ subpath — it checks everything
-   under `<manuscript_dir>/.redliner/` in one pass.)
+4. Validate everything currently under `.redliner/` — stop and report
+   errors rather than aggregating bad data. (This checks the whole
+   manuscript directory in one pass, not just the one file you just
+   wrote.)
 5. Run the **continuity** steps below now — **before the snapshot in the
-   next step**, not after. Continuity's `reconcile` diffs against
-   whatever baseline is currently in `state.json` to decide
-   `likely_unpropagated_revision`; if `snapshot` runs first, that
+   next step**, not after. Continuity's reconcile step diffs against
+   whatever baseline is currently in the manuscript's state to decide
+   `likely_unpropagated_revision`; if the snapshot runs first, that
    baseline already matches the current text and the diff always comes
    back empty, silently disabling the flag. This only looks harmless on
    a first-ever assess (empty baseline either way); it breaks the moment
    `assess` is re-run later as "a fresh full read" with a real prior
    baseline. Don't reorder this.
-6. `redliner_state.py snapshot <manuscript_dir>` — records what the text
-   looked like when assessed, so `recheck` can tell what changed.
+6. Record the current text as the assessed baseline — this is what lets
+   a later `recheck` tell what changed.
 7. Task `redliner:<domain>-editorial-aggregator` for the **developmental** letter.
 8. Validate again, then read and show the developmental letter, then the
    continuity summary from step 5.
@@ -110,9 +119,9 @@ that `/redliner:run recheck` will verify it.
 
 ## `/redliner:run recheck`
 
-1. `redliner_state.py diff <manuscript_dir>` and branch on the verdict —
-   this is deterministic, so trust it over any impression of how much
-   changed:
+1. Compare the manuscript's current text against the last assessed
+   snapshot, and branch on the verdict — this comparison is
+   deterministic, so trust it over any impression of how much changed:
 
    - **`unchanged`** — no section text differs from the last assessment.
      Any `claimed` findings can't be verified; say so plainly and stop.
@@ -135,17 +144,17 @@ that `/redliner:run recheck` will verify it.
    else: revision is exactly when facts get out of sync (an edit in one
    section not yet propagated to another), and `likely_unpropagated_
    revision` is *the* signal continuity exists to surface on a recheck.
-   That signal comes from diffing against the baseline still sitting in
-   `state.json` from the last assessment — if `snapshot` (next step) runs
-   first, the baseline already matches the current text, the diff comes
-   back empty, and every collision looks like a standing issue instead of
-   fresh fallout from this revision. `redliner_canon.py stale` figures out
-   which sections actually need re-extraction; a `targeted` developmental
-   verdict usually means continuity only has one or two sections to redo,
-   not the whole manuscript.
-4. `redliner_state.py snapshot <manuscript_dir>`, aggregate a fresh
-   developmental letter, show it, then show the continuity summary from
-   step 3.
+   That signal comes from diffing against the baseline recorded at the
+   last assessment — if the snapshot (next step) runs first, the
+   baseline already matches the current text, the diff comes back empty,
+   and every collision looks like a standing issue instead of fresh
+   fallout from this revision. Checking which sections need
+   re-extraction first tells you the real scope; a `targeted`
+   developmental verdict usually means continuity only has one or two
+   sections to redo, not the whole manuscript.
+4. Record the current text as the new assessed baseline, aggregate a
+   fresh developmental letter, show it, then show the continuity summary
+   from step 3.
 5. Then say plainly whether structure looks settled enough for line
    editing — count open `major`/`critical` findings and give a real
    recommendation, not a hedge.
@@ -160,7 +169,7 @@ that `/redliner:run recheck` will verify it.
    a soft gate by design: it's their manuscript and there are legitimate
    reasons to line-edit a section that's structurally settled even while
    other parts aren't.
-3. `redliner_state.py phase <manuscript_dir> line`.
+3. Move the manuscript to the line phase.
 4. For each section, task `redliner:<domain>-line-editor` with the manuscript directory,
    that section's path, any `deferred_to_line` developmental findings for
    it, and output path `.redliner/findings/line_<section_stem>.json`.
@@ -181,12 +190,12 @@ judgment-free (it doesn't need the developmental pass to have run first)
 and it tracks its own staleness per section, independent of the
 developmental round counter. It's safe to run any time after intake.
 
-1. `redliner_canon.py stale <manuscript_dir>`. Its JSON output drives
+1. Check which sections need (re-)extraction. The result drives
    everything below:
    - `needs_extraction` — sections to (re-)extract this run.
    - `current_hashes` — each of those sections' current SHA-256, keyed by
      stem. The extractor needs this exact value; don't compute it
-     yourself or reuse a stale one from `state.json`.
+     yourself or reuse a stale one from state.
    - `orphaned_observations` — observation files whose section no longer
      exists (deleted or renamed). Delete
      `.redliner/canon/observations/<stem>.json` for each before
@@ -200,14 +209,14 @@ developmental round counter. It's safe to run any time after intake.
    and output path `.redliner/canon/observations/<section_stem>.json`.
    Sections share no state — parallel is fine, sequential keeps the
    transcript readable.
-4. `validate_findings.py <manuscript_dir>` — stop and report errors
-   rather than reconciling from bad extraction data.
-5. `redliner_canon.py reconcile <manuscript_dir>` — deterministically
-   rebuilds `.redliner/canon/canon.json` (merged facts) and
+4. Validate — stop and report errors rather than reconciling from bad
+   extraction data.
+5. Reconcile the canon — this deterministically rebuilds
+   `.redliner/canon/canon.json` (merged facts) and
    `.redliner/canon/collisions.json` (entity+attribute pairs with more
    than one asserted value) from every current observations file, not
    just the ones just (re-)extracted.
-6. Read `collisions.json`.
+6. Read the resulting collisions.
    - **Empty `collisions` list** — write
      `.redliner/canon/continuity.json` as `{"contradictions": []}`
      yourself. There's nothing to adjudicate, so don't spend a Task call
@@ -215,10 +224,10 @@ developmental round counter. It's safe to run any time after intake.
    - **Non-empty** — Task the `redliner:<domain>-continuity-adjudicator`
      subagent with the manuscript directory and output path
      `.redliner/canon/continuity.json`.
-7. `validate_findings.py <manuscript_dir>` again.
-8. Report a short summary: entity/fact counts from `canon.json`, and
-   contradiction counts from `continuity.json` broken out by `kind`
-   (`contradiction` vs. `unverified`) and by `severity`. Name any
+7. Validate again.
+8. Report a short summary: entity/fact counts from the canon, and
+   contradiction counts broken out by `kind` (`contradiction` vs.
+   `unverified`) and by `severity`. Name any
    `likely_unpropagated_revision` collisions explicitly — those are the
    ones the author can act on fastest ("section_02 changed since the
    last pass, section_07 didn't").
@@ -231,7 +240,7 @@ is a known limitation, not an oversight; see `TODO.md`.
 ## `/redliner:run status`
 
 Show phase, developmental round, open findings by severity, and the
-`diff` verdict if the text has moved since the last assessment. Also
-show open contradiction counts from `.redliner/canon/continuity.json` (if
-it exists) and whether `redliner_canon.py stale` reports any sections
-needing re-extraction. End with one concrete recommended next command.
+diff verdict if the text has moved since the last assessment. Also show
+open contradiction counts from `.redliner/canon/continuity.json` (if it
+exists) and whether any sections need re-extraction for continuity. End
+with one concrete recommended next command.

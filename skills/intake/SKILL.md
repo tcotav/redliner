@@ -17,29 +17,32 @@ and unremarkable in literary fiction.
 
 This interview is **domain-driven, not fiction-specific**: what to ask,
 and what draft stages mean for severity, come from the manuscript's
-active domain config, not from this file. `redliner_domain.py list` and
-`redliner_domain.py show <name>` (both bare commands, no `python3` prefix
-— `bin/` is on PATH while the plugin is enabled) are how you read that
-config; don't hardcode fiction's fields here even as a fallback.
+active domain config, not from this file. Listing available domains and
+showing one domain's full config are how you read that config — use
+whichever concrete tool this session offers for those two operations
+(bare `redliner_domain.py list`/`show <name>` commands on the CLI
+variant, or the matching MCP tool on the Cowork/MCP variant); don't
+hardcode fiction's fields here even as a fallback.
 
 ## Steps
 
-1. **Determine the domain.** Run `redliner_state.py status <manuscript_dir>`.
+1. **Determine the domain.** Check the manuscript's current state.
    - If state already exists, use its `domain` field — you're revising an
      existing brief for an already-chosen domain, don't re-ask.
-   - If no state exists, run `redliner_domain.py list`. If it returns
-     exactly one domain, use it without asking. If more than one, show
-     the author each domain's `display_name`/`description` via
-     AskUserQuestion and let them pick. Never guess.
+   - If no state exists, list the available domains. If there's exactly
+     one, use it without asking. If more than one, show the author each
+     domain's `display_name`/`description` via AskUserQuestion and let
+     them pick. Never guess.
 
-2. **Set up state.** Run
-   `redliner_state.py init <manuscript_dir> <domain>` — if state already
-   exists, that's fine, it'll say so and you're revising an existing brief.
+2. **Set up state.** Initialize state for this manuscript in the chosen
+   domain — if state already exists, that's fine, it'll say so and
+   you're revising an existing brief.
 
-3. **Load the domain config.** Run `redliner_domain.py show <domain>` and
-   read its `brief_fields` and `draft_stages` — these drive everything
-   below. Don't ask about anything not listed in `brief_fields`, and use
-   `draft_stages`' `name` values verbatim as the draft-stage options.
+3. **Load the domain config.** Look up the full config for the chosen
+   domain and read its `brief_fields` and `draft_stages` — these drive
+   everything below. Don't ask about anything not listed in
+   `brief_fields`, and use `draft_stages`' `name` values verbatim as the
+   draft-stage options.
 
 4. **Read a sample first, then interview.** Read the first section (and
    skim one from the middle) *before* asking anything. Ask questions
