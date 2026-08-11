@@ -1,0 +1,14 @@
+{
+  "section": "section_01",
+  "findings": [
+    {
+      "id": "line-prose_rhythm-001",
+      "status": "open",
+      "category": "prose_rhythm",
+      "severity": "minor",
+      "location": "para 2",
+      "excerpt": "She was scared. She was very scared",
+      "note": "The repeated 'scared' beats read as filler rather than escalation -- consider varying the second clause to actually intensify."
+    }
+  ]
+}

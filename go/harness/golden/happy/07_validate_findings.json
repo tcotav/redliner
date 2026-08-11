@@ -5,7 +5,7 @@
     "/Volumes/T7/code/ideas/redliner/go/harness/.work/happy"
   ],
   "exit_code": 0,
-  "stdout": "OK   /Volumes/T7/code/ideas/redliner/go/harness/.work/happy/.redliner/canon/observations/section_01.json\nOK   /Volumes/T7/code/ideas/redliner/go/harness/.work/happy/.redliner/canon/observations/section_02.json\nOK   /Volumes/T7/code/ideas/redliner/go/harness/.work/happy/.redliner/canon/continuity.json\nOK   /Volumes/T7/code/ideas/redliner/go/harness/.work/happy/.redliner/findings/developmental.json\nOK   /Volumes/T7/code/ideas/redliner/go/harness/.work/happy/.redliner/findings/editorial_letter.json\n",
+  "stdout": "OK   /Volumes/T7/code/ideas/redliner/go/harness/.work/happy/.redliner/canon/observations/section_01.json\nOK   /Volumes/T7/code/ideas/redliner/go/harness/.work/happy/.redliner/canon/observations/section_02.json\nOK   /Volumes/T7/code/ideas/redliner/go/harness/.work/happy/.redliner/canon/continuity.json\nOK   /Volumes/T7/code/ideas/redliner/go/harness/.work/happy/.redliner/findings/developmental.json\nOK   /Volumes/T7/code/ideas/redliner/go/harness/.work/happy/.redliner/findings/line_section_01.json\nOK   /Volumes/T7/code/ideas/redliner/go/harness/.work/happy/.redliner/findings/editorial_letter.json\n",
   "stdout_json": null,
   "stderr": "",
   "state_dir_snapshot": {
@@ -1225,6 +1225,20 @@
       ],
       "developmental_notes": "Three findings answer the questions you asked directly, and I've kept them at the top for that reason.\n\nWhere the history material should go (dev-002, dev-003): the block doesn't have one problem, it has three, and they don't belong in the same place. The uncle's-ledger-as-insurance motive is load-bearing -- it's the reason the ledger exists as a plot object -- and needs to land early, worked into the Section 1 hiding beat or into the Renne exchange where payment is being negotiated. The Voss family dynasty should wait for Voss (or a deputy) to appear on the page as an active threat; introducing the family before the man does the opposite of what the material is for. Selkirk's founding and the customs office's institutional history are the only genuinely optional part -- seed it in fragments later or cut it. The sentence that currently invites all three onto the page at once, 'Before she could board, she needed to understand everything that had led her here,' is a narrator's need dressed as a character's want. Cut it and the dump loses its excuse to be there.\n\nIs Mira's motivation legible before the stakes are explained (dev-004, dev-005): not yet. You've given the reader what she's doing -- running, stealing, seeking passage -- well before why she wants it badly enough to risk this much. 'Mira had always known she would leave the harbor town of Selkirk' asserts a longstanding want with no wound or specific future underneath it, and the only stated consequence for getting caught ('half the harbor would be in chains by morning') is collective, not personal -- your logline promises the uncle is a danger to Mira specifically, and the prose doesn't say what he, or customs, does to her if he catches up. One concrete image while she's hiding in the fish stall would ground the want; one clause naming the personal cost of capture would make the civic stakes land.\n\nDoes the opening create enough forward pressure (dev-006, dev-007): partially, and it's losing what it has. 'You're late' implies a schedule the reader was never given, so there's no clock to feel ticking -- either seed the deadline earlier so the line pays off a promise, or cut it. Separately, the chase and the alarm bell from Section 1 vanish with no bridge; Section 2 opens at a frictionless dawn boarding that doesn't acknowledge the pursuit was ever live. And the hook you close Section 1 on -- 'The ledger was worth more than Renne knew' -- is a real promise of complication that Section 2 doesn't cash; Renne's payment demand gets deferred instead of used to extend the tension across the chapter break.\n\nOne finding outside your three questions, but worth flagging at the same priority: dev-001 catches two places where Renne's interiority leaks onto the page despite your note that her opacity is deliberate. Line 20-22 states her private assessment of Mira as flat narration, entirely outside Mira's POV. Line 28-30 is softer but still resolves what her expression means rather than leaving it unread. Both spend the uncertainty you're protecting before Act 1 has used it. These aren't a case for developing Renne -- they're POV discipline slips that undercut the choice you've already made.",
       "line_notes": "Not covered: this is a developmental-phase letter; line editing comes after structure settles."
+    },
+    "findings/line_section_01.json": {
+      "section": "section_01",
+      "findings": [
+        {
+          "id": "line-prose_rhythm-001",
+          "status": "open",
+          "category": "prose_rhythm",
+          "severity": "minor",
+          "location": "para 2",
+          "excerpt": "She was scared. She was very scared",
+          "note": "The repeated 'scared' beats read as filler rather than escalation -- consider varying the second clause to actually intensify."
+        }
+      ]
     },
     "state.json": {
       "manuscript_dir": "sample_manuscript",
