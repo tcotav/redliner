@@ -1,0 +1,12 @@
+{
+  "canon_reconcile": "Rebuild the merged canon and find continuity collisions from every\ncurrent observations file. Writes canon.json and collisions.json to\nthe manuscript's .redliner/canon/ directory (same side effect as the\nCLI) and returns their contents. Mirrors `redliner_canon.py reconcile\n<manuscript_dir>`.",
+  "canon_stale": "Report which sections need (re-)extraction for the continuity layer\n-- never extracted, or changed since their facts were extracted --\nalong with each such section's current hash and any orphaned\nobservation files. Mirrors `redliner_canon.py stale <manuscript_dir>`.",
+  "domain_list": "List every domain config available (name, display name,\ndescription). Mirrors `redliner_domain.py list`.",
+  "domain_show": "Show the full config for one named domain -- categories, continuity\nvocabulary, brief fields, draft stages. Mirrors `redliner_domain.py\nshow <name>`.",
+  "state_diff": "Compare the manuscript's text on disk against the last assessed\nsnapshot; returns a verdict (unchanged/targeted/restructured) plus\nwhich sections changed. Mirrors `redliner_state.py diff\n<manuscript_dir>`.",
+  "state_init": "Initialize redliner state for a manuscript directory, in the given\ndomain (defaults to \"fiction\"). Fails if state already exists, or if\nthe domain name doesn't match a real domain config. Mirrors\n`redliner_state.py init <manuscript_dir> [domain]`.",
+  "state_phase": "Move a manuscript to a new phase (intake/developmental/line/\ncomplete). Entering the domain's round-tracked phase from elsewhere\nincrements the round counter automatically. Mirrors `redliner_state.py\nphase <manuscript_dir> <phase>`.",
+  "state_snapshot": "Record the manuscript's current text as the assessed baseline, so a\nlater state_diff can tell what changed. Mirrors `redliner_state.py\nsnapshot <manuscript_dir>`.",
+  "state_status": "Report a manuscript's current redliner state (domain, phase, round,\nsection fingerprints) as JSON. Mirrors `redliner_state.py status\n<manuscript_dir>`.",
+  "validate_findings": "Validate everything currently under a manuscript's .redliner/\ndirectory (canon observations, continuity, developmental/line\nfindings, editorial letter) against its domain's schema, including\nexcerpt-verbatim checks against the actual section text. Mirrors\n`validate_findings.py <manuscript_dir>` -- same pass/fail logic and\nper-file detail, captured from its stdout rather than re-derived."
+}

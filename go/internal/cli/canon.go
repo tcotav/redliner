@@ -2,6 +2,7 @@ package cli
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -39,11 +40,15 @@ func RunCanon(args []string, stdout io.Writer) int {
 	}
 }
 
-func observationsDir(manuscriptDir string) string {
+// ObservationsDir and CanonDir are exported for reuse by internal/mcpserver
+// (Phase 4), which -- like mcp_server.py importing redliner_canon.py's
+// module-level helpers directly -- calls into this package's canon
+// logic rather than re-deriving it.
+func ObservationsDir(manuscriptDir string) string {
 	return filepath.Join(schemas.StateDir(manuscriptDir), "canon", "observations")
 }
 
-func canonDir(manuscriptDir string) string {
+func CanonDir(manuscriptDir string) string {
 	return filepath.Join(schemas.StateDir(manuscriptDir), "canon")
 }
 
@@ -58,7 +63,7 @@ func stemOfPath(path string) string {
 // deterministic iteration order (cmdCanonReconcile) sort the keys
 // themselves rather than relying on map order.
 func loadObservations(manuscriptDir string) (map[string]map[string]interface{}, error) {
-	dir := observationsDir(manuscriptDir)
+	dir := ObservationsDir(manuscriptDir)
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -94,16 +99,26 @@ type StaleResult struct {
 	OrphanedObservations   []string          `json:"orphaned_observations"`
 }
 
-func cmdCanonStale(manuscriptDir string, stdout io.Writer) int {
+// ComputeStale is cmd_stale's computation, pure (no I/O writer, no
+// printing) so it's reusable as-is by internal/mcpserver's canon_stale
+// tool -- mirrors mcp_server.py's canon_stale, which reimplements this
+// same loop against redliner_canon.py's module-level helpers rather
+// than calling cmd_stale (which only prints). Exported for that reuse.
+//
+// Returns the raw error from loadObservations/SectionFiles unwrapped:
+// callers (cmdCanonStale below, and mcpserver) each decide how to
+// present a *schemas.SectionCollisionError specially and other errors
+// generically, matching how the two Python front doors already present
+// these differently from each other.
+func ComputeStale(manuscriptDir string) (StaleResult, error) {
 	observations, err := loadObservations(manuscriptDir)
 	if err != nil {
-		fmt.Fprintf(stdout, "Error reading observations: %v\n", err)
-		return 1
+		return StaleResult{}, err
 	}
 
 	sections, err := schemas.SectionFiles(manuscriptDir)
 	if err != nil {
-		return reportSectionError(err, stdout)
+		return StaleResult{}, err
 	}
 
 	var missing, stale []string
@@ -115,8 +130,7 @@ func cmdCanonStale(manuscriptDir string, stdout io.Writer) int {
 		sectionStems[stem] = true
 		fp, err := schemas.FingerprintSection(path)
 		if err != nil {
-			fmt.Fprintf(stdout, "Error hashing %s: %v\n", path, err)
-			return 1
+			return StaleResult{}, err
 		}
 		recorded, ok := observations[stem]
 		if !ok {
@@ -142,17 +156,25 @@ func cmdCanonStale(manuscriptDir string, stdout io.Writer) int {
 	}
 	sort.Strings(orphaned)
 
-	if currentHashes == nil {
-		currentHashes = map[string]string{}
-	}
-
-	return printJSON(stdout, StaleResult{
+	return StaleResult{
 		NeedsExtraction:        orEmptyStrings(needsExtraction),
 		NeverExtracted:         orEmptyStrings(missing),
 		ChangedSinceExtraction: orEmptyStrings(stale),
 		CurrentHashes:          currentHashes,
 		OrphanedObservations:   orEmptyStrings(orphaned),
-	})
+	}, nil
+}
+
+func cmdCanonStale(manuscriptDir string, stdout io.Writer) int {
+	result, err := ComputeStale(manuscriptDir)
+	if err != nil {
+		if _, ok := err.(*schemas.SectionCollisionError); ok {
+			return reportSectionError(err, stdout)
+		}
+		fmt.Fprintf(stdout, "Error reading observations: %v\n", err)
+		return 1
+	}
+	return printJSON(stdout, result)
 }
 
 // --- reconcile ---
@@ -234,15 +256,28 @@ type Canon struct {
 
 type groupKey struct{ entity, attribute string }
 
-func cmdCanonReconcile(manuscriptDir string, stdout io.Writer) int {
+// ErrNoObservations signals cmd_reconcile's "no observations yet" case --
+// a sentinel rather than a formatted error so each caller (the CLI, the
+// MCP tool) can render its own message text around
+// ObservationsDir(manuscriptDir), same as Python's two front doors each
+// format this independently.
+var ErrNoObservations = errors.New("no observations to reconcile")
+
+// ComputeReconcile is cmd_reconcile's computation, pure (no I/O writer,
+// no file writes, no printing) -- exported so internal/mcpserver's
+// canon_reconcile tool can call it directly and get structured data back
+// instead of Python's approach of capturing stdout and re-reading the
+// written files. The observable side effect (canon.json/collisions.json
+// written to disk) still happens for both front doors, via the shared
+// WriteCanonFiles below -- only the in-process data path differs from
+// Python's, not the on-disk contract.
+func ComputeReconcile(manuscriptDir string) (Canon, []Collision, error) {
 	observations, err := loadObservations(manuscriptDir)
 	if err != nil {
-		fmt.Fprintf(stdout, "Error reading observations: %v\n", err)
-		return 1
+		return Canon{}, nil, err
 	}
 	if len(observations) == 0 {
-		fmt.Fprintf(stdout, "No observations in %s. Run extraction first.\n", observationsDir(manuscriptDir))
-		return 1
+		return Canon{}, nil, ErrNoObservations
 	}
 
 	// `state = load_state(manuscript_dir) or {}` -- a missing state file
@@ -252,7 +287,7 @@ func cmdCanonReconcile(manuscriptDir string, stdout io.Writer) int {
 	if state != nil && len(state.SectionFingerprints) > 0 {
 		diff, err := schemas.DiffManuscript(manuscriptDir, state)
 		if err != nil {
-			return reportSectionError(err, stdout)
+			return Canon{}, nil, err
 		}
 		for _, s := range diff.Changed {
 			changedSinceSnapshot[s] = true
@@ -413,21 +448,47 @@ func cmdCanonReconcile(manuscriptDir string, stdout io.Writer) int {
 		SectionsCovered: sectionStems,
 	}
 
-	dir := canonDir(manuscriptDir)
+	return canon, collisions, nil
+}
+
+// WriteCanonFiles writes canon.json and collisions.json to the
+// manuscript's .redliner/canon/ directory -- the one side effect both
+// the CLI and the MCP tool must produce identically, factored out so
+// there's exactly one place that does it.
+func WriteCanonFiles(manuscriptDir string, canon Canon, collisions []Collision) error {
+	dir := CanonDir(manuscriptDir)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
-		fmt.Fprintf(stdout, "Error writing canon: %v\n", err)
-		return 1
+		return fmt.Errorf("creating canon dir: %w", err)
 	}
 	if err := writeJSONFile(filepath.Join(dir, "canon.json"), canon); err != nil {
-		fmt.Fprintf(stdout, "Error writing canon.json: %v\n", err)
-		return 1
+		return fmt.Errorf("writing canon.json: %w", err)
 	}
-	if err := writeJSONFile(filepath.Join(dir, "collisions.json"), CollisionsFile{Collisions: orEmptyCollisions(collisions)}); err != nil {
-		fmt.Fprintf(stdout, "Error writing collisions.json: %v\n", err)
+	if err := writeJSONFile(filepath.Join(dir, "collisions.json"), CollisionsFile{Collisions: OrEmptyCollisions(collisions)}); err != nil {
+		return fmt.Errorf("writing collisions.json: %w", err)
+	}
+	return nil
+}
+
+func cmdCanonReconcile(manuscriptDir string, stdout io.Writer) int {
+	canon, collisions, err := ComputeReconcile(manuscriptDir)
+	if err != nil {
+		switch {
+		case errors.Is(err, ErrNoObservations):
+			fmt.Fprintf(stdout, "No observations in %s. Run extraction first.\n", ObservationsDir(manuscriptDir))
+		case isSectionCollisionError(err):
+			reportSectionError(err, stdout)
+		default:
+			fmt.Fprintf(stdout, "Error reading observations: %v\n", err)
+		}
 		return 1
 	}
 
-	fmt.Fprintf(stdout, "Canon: %d entities, %d facts.\n", len(entities), len(factsByID))
+	if err := WriteCanonFiles(manuscriptDir, canon, collisions); err != nil {
+		fmt.Fprintf(stdout, "Error writing canon: %v\n", err)
+		return 1
+	}
+
+	fmt.Fprintf(stdout, "Canon: %d entities, %d facts.\n", len(canon.Entities), canon.FactCount)
 	fmt.Fprintf(stdout, "Collisions to adjudicate: %d\n", len(collisions))
 	for _, c := range collisions {
 		flag := ""
@@ -439,12 +500,19 @@ func cmdCanonReconcile(manuscriptDir string, stdout io.Writer) int {
 	return 0
 }
 
+func isSectionCollisionError(err error) bool {
+	_, ok := err.(*schemas.SectionCollisionError)
+	return ok
+}
+
 func asStr(v interface{}) string {
 	s, _ := v.(string)
 	return s
 }
 
-func orEmptyCollisions(c []Collision) []Collision {
+// OrEmptyCollisions makes sure a nil slice marshals as JSON `[]`, not
+// `null` -- exported alongside the rest of canon.go's reused pieces.
+func OrEmptyCollisions(c []Collision) []Collision {
 	if c == nil {
 		return []Collision{}
 	}

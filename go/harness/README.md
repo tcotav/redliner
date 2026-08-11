@@ -51,22 +51,37 @@ see `capture_baseline.comparable()`):
 python3 capture_baseline.py --self-check
 ```
 
-## What this does *not* cover yet
+## MCP front door (Phase 4)
 
-**MCP-front-door parity is not captured here.** `cowork/mcp_server.py`'s
-10 tools are documented thin wrappers over the same `schemas`-level calls
-the CLI baseline already exercises (`state_status` literally calls
-`load_state`/returns it as a dict instead of printing it; `canon_reconcile`
-and `validate_findings` capture the *same* CLI functions' stdout/file
-writes this harness already captures). Capturing real MCP-protocol
-baselines would require installing the `mcp` package outside the
-plugin's own bootstrapped venv, which this project deliberately avoids
-(see TODO.md's Cowork section on why dependency bootstrapping was worth
-removing, not adding to). Real MCP-front-door verification — tool names,
-descriptions, and behavior — happens at the Phase 5 gate: full
-marketplace uninstall/reinstall + live Cowork query, the same protocol
-that already caught two real bugs in this project and is not something a
-mocked-up local capture would have caught either time.
+`go/internal/mcpserver/server_test.go` covers the Go MCP server directly
+against real Python-derived references, at two levels:
+
+- **Tool names and descriptions**: `golden/mcp_tool_descriptions.json`
+  is extracted straight from `cowork/mcp_server.py`'s real docstrings
+  via Python's `ast.get_docstring` (see the file's own header for the
+  exact command), not copied from `internal/mcpserver/descriptions.go`'s
+  own constants — a test that compared those constants against
+  themselves would prove nothing about whether the hand-transcription
+  is accurate. `TestToolNamesAndDescriptions_MatchPython` diffs the
+  live `tools/list` response against this file.
+- **Tool behavior**: `TestMCPTools_MatchGolden` and
+  `TestMCPTools_StateInitAndSnapshot` call 8 of the 10 tools over a real
+  in-memory MCP protocol session (`mcp.NewInMemoryTransports`, actual
+  JSON-RPC `tools/call`, not a direct Go function call), checking
+  results against this directory's `golden/` captures — the same
+  Python-derived references `internal/cli`'s differential test uses,
+  not hand-typed numbers.
+
+**What this still doesn't cover:** a real stdio subprocess round trip
+was verified manually during development (spawn the built binary,
+`tools/list` + `tools/call` over actual stdin/stdout, not just the
+in-memory transport) but isn't part of the automated suite. Full
+MCP-front-door verification in the real Cowork product — a genuine
+install, not just protocol-level correctness — still happens at the
+Phase 5 gate: full marketplace uninstall/reinstall + live Cowork query,
+the same protocol that already caught two real bugs in this project and
+is not something any local capture, mocked or real, would have caught
+either time.
 
 ## The Go-side comparison runner (Phase 3+)
 

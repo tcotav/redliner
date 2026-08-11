@@ -68,12 +68,33 @@ func verifyExcerpts(items []interface{}, sectionText, label string) []string {
 // everything under a manuscript's .redliner/ (canon observations,
 // continuity, developmental/line findings, editorial letter) against
 // its domain's schema, including excerpt-verbatim checks.
+//
+// Resolves its own domainsDir via schemas.FindDomainsDir() -- correct
+// for the CLI, where os.Executable() really is this binary. Reused by
+// internal/mcpserver's validate_findings tool, which does NOT go through
+// this entry point for that reason (a second FindDomainsDir() call
+// there would search from whatever binary the calling test/process
+// happens to be, not from the domainsDir the MCP server already
+// resolved once) -- see ValidateManuscript below, which takes
+// domainsDir as a parameter instead of rediscovering it.
 func RunValidate(args []string, stdout io.Writer) int {
 	if len(args) < 1 {
 		fmt.Fprintln(stdout, validateUsage)
 		return 1
 	}
-	manuscriptDir := args[0]
+	domainsDir, err := schemas.FindDomainsDir()
+	if err != nil {
+		fmt.Fprintf(stdout, "Domain config error: %v\n", err)
+		return 1
+	}
+	return ValidateManuscript(args[0], domainsDir, stdout)
+}
+
+// ValidateManuscript is RunValidate's logic with domainsDir taken as a
+// parameter instead of resolved internally -- the piece
+// internal/mcpserver's validate_findings tool actually calls, passing
+// the same domainsDir every other tool in that server uses.
+func ValidateManuscript(manuscriptDir, domainsDir string, stdout io.Writer) int {
 	redlinerPath := schemas.StateDir(manuscriptDir)
 	if info, err := os.Stat(redlinerPath); err != nil || !info.IsDir() {
 		fmt.Fprintf(stdout, "No .redliner/ under %s -- pass a manuscript directory, not a findings/canon path.\n", manuscriptDir)
@@ -84,11 +105,6 @@ func RunValidate(args []string, stdout io.Writer) int {
 	domainName := schemas.DefaultDomain
 	if state != nil {
 		domainName = state.DomainName()
-	}
-	domainsDir, err := schemas.FindDomainsDir()
-	if err != nil {
-		fmt.Fprintf(stdout, "Domain config error: %v\n", err)
-		return 1
 	}
 	domain, err := schemas.LoadDomain(domainsDir, domainName)
 	if err != nil {
