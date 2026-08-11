@@ -1,0 +1,28 @@
+{
+  "cmd": [
+    "/opt/homebrew/opt/python@3.14/bin/python3.14",
+    "/Volumes/T7/code/ideas/redliner/bin/redliner_domain.py",
+    "list"
+  ],
+  "exit_code": 0,
+  "stdout": "[\n  {\n    \"name\": \"design-doc\",\n    \"display_name\": \"Design Doc / Product Proposal\",\n    \"description\": \"Technical design docs, product proposals, and RFCs: a written argument for a decision, with a stated problem, a proposed approach, and consequences for people other than the author.\"\n  },\n  {\n    \"name\": \"fiction\",\n    \"display_name\": \"Fiction Manuscript\",\n    \"description\": \"Novels and short fiction: prose narrative with characters, plot, and a fictional world.\"\n  },\n  {\n    \"name\": \"serial-fiction\",\n    \"display_name\": \"Serial / Episodic Fiction\",\n    \"description\": \"Fiction released in installments over time (a web serial, a Substack/Patreon serial, an episodic series) rather than as a single complete work \\u2014 each chapter is read both on its own and as part of an ongoing whole.\"\n  }\n]\n",
+  "stdout_json": [
+    {
+      "name": "design-doc",
+      "display_name": "Design Doc / Product Proposal",
+      "description": "Technical design docs, product proposals, and RFCs: a written argument for a decision, with a stated problem, a proposed approach, and consequences for people other than the author."
+    },
+    {
+      "name": "fiction",
+      "display_name": "Fiction Manuscript",
+      "description": "Novels and short fiction: prose narrative with characters, plot, and a fictional world."
+    },
+    {
+      "name": "serial-fiction",
+      "display_name": "Serial / Episodic Fiction",
+      "description": "Fiction released in installments over time (a web serial, a Substack/Patreon serial, an episodic series) rather than as a single complete work \u2014 each chapter is read both on its own and as part of an ongoing whole."
+    }
+  ],
+  "stderr": "",
+  "state_dir_snapshot": {}
+}

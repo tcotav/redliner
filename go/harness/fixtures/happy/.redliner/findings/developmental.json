@@ -1,0 +1,99 @@
+{
+  "scope": "Full manuscript (sections 1-2)",
+  "round": 1,
+  "assumptions": [
+    {
+      "assumption": "The brief refers to 'Chapter 1' and 'Chapter 2'; the manuscript files are section_01.txt and section_02.txt. Treated as a 1:1 mapping (section_01 = Chapter 1, section_02 = Chapter 2).",
+      "because": "No other section files exist and the brief's 'known problem areas' and questions describe content that matches section_02 exactly (the history exposition).",
+      "affects": ["dev-001", "dev-002", "dev-003", "dev-004", "dev-005", "dev-006", "dev-007", "dev-008", "dev-009"]
+    },
+    {
+      "assumption": "The brief states the ending is unwritten and these two sections are the opening only. Findings below assess opening/setup function (hook, motivation legibility, forward pressure) and cannot speak to arc payoff or resolution.",
+      "because": "Brief explicitly scopes this round to the opening; judging unresolved threads as 'unresolved' would misread intent.",
+      "affects": ["dev-003", "dev-004", "dev-007"]
+    }
+  ],
+  "findings": [
+    {
+      "id": "dev-001",
+      "status": "open",
+      "category": "character_arc",
+      "severity": "major",
+      "location": "Section 2, lines 20-22 and 28-30",
+      "note": "Two sentences hand the reader Renne's interior read, which spends the opacity the brief says is deliberate for Act 1. Line 20-22: \"Renne had seen a hundred desperate people come aboard with a hundred desperate stories, and this one would be no different\" is Renne's own assessment delivered as flat narration, not filtered through Mira's tight-third POV at all. Line 28-30 is softer but still asserts Renne's interior state as fact: \"something in her expression softened... in a way that suggested she recognized something of herself in this frightened, resourceful young woman.\" Both give the reader access to what Renne thinks and feels, which undercuts the intended uncertainty about her motives before it has a chance to build.",
+      "suggestion": "Keep everything strictly as Mira's external observation and inference. E.g. replace the flat narration in lines 20-22 with something Mira could actually perceive (Renne's flat, practiced stare; the way she doesn't react to being asked twice). For lines 28-30, hedge harder or cut the payoff clause -- 'something in her expression shifted, and Mira couldn't read it' preserves the moment without resolving what it means."
+    },
+    {
+      "id": "dev-002",
+      "status": "open",
+      "category": "structure",
+      "severity": "major",
+      "location": "Section 2, lines 5-19",
+      "note": "The history dump (Selkirk's founding, the customs office's 40-year history, the Voss family dynasty) sits in one block and stops the story to explain background at the exact moment Mira reaches the dock. Answering the author's question 3 directly: the material splits into three destinations with different urgency. (1) The uncle's ledger-as-insurance motive ('the whole reason her uncle had kept a ledger in the first place') is load-bearing -- it's the reason the plot object exists -- and belongs early, ideally worked into Mira's hiding beat in Section 1 or into the Renne exchange where payment/danger is being negotiated. (2) The Voss family dynasty belongs at the point Voss (or a Voss deputy) first appears on the page as an active antagonist, not before. (3) Selkirk's founding and the customs office's institutional history are ambient world-building that can be seeded in fragments across later chapters, or cut, without loss to this scene.",
+      "suggestion": "Split the block along the three lines above; move the uncle's-motive fragment earlier, hold Voss for his on-page entrance, and cut or thin the founding/institutional history to a sentence or two seeded elsewhere."
+    },
+    {
+      "id": "dev-003",
+      "status": "open",
+      "category": "structure",
+      "severity": "major",
+      "location": "Section 2, line 5",
+      "note": "The sentence 'Before she could board, she needed to understand everything that had led her here' is the seam where the exposition dump gets attached, and it's a false motivation: Mira doesn't need anything at this moment except to get on the boat. It's the narrator's need to explain, given to the character as a want. This sentence is the most direct thing to point at when relocating the material in dev-002, since removing or replacing it removes the dump's anchor.",
+      "suggestion": "Cut the sentence, or replace it with an actual, in-scene want (e.g. Mira needing Renne to move faster, or needing to decide how much to tell her) so the paragraph break doesn't announce an exposition detour."
+    },
+    {
+      "id": "dev-004",
+      "status": "open",
+      "category": "character_arc",
+      "severity": "major",
+      "location": "Section 1, lines 1-8, 20-22",
+      "note": "Directly answers the author's question 2. The stakes of the ledger (half the harbor in chains) are established before the reader knows why Mira, personally, wants out of Selkirk or what she stands to lose. 'Mira had always known she would leave the harbor town of Selkirk' asserts a longstanding want but gives no grounding for it -- no wound, no specific future she's running toward, no cost to staying. The reader is told what she's doing (running, stealing, seeking passage) well before understanding why she wants it badly enough to risk this. Note: the brief's disorientation-by-design covers the chase opening, not the absence of a personal want underneath it -- the two are separable, and it's the want that's currently missing.",
+      "suggestion": "One line grounding Mira's want in something concrete and personal (not just plot mechanics) would let the chase read as an expression of that want rather than a random emergency. Doesn't need to be exposition -- a single image or thought while she's hiding in the fish stall would do it."
+    },
+    {
+      "id": "dev-005",
+      "status": "open",
+      "category": "stakes",
+      "severity": "moderate",
+      "location": "Section 1, lines 14-18",
+      "note": "The only consequence stated for the ledger falling into customs hands is collective and impersonal: 'half the harbor would be in chains by morning.' The logline names the uncle as a source of personal danger to Mira, but the prose never states what happens to Mira specifically, or what her uncle might do to her, if she's caught or if he catches up with her first. Without a personal stake, the citywide one reads abstract.",
+      "suggestion": "Add a clause naming what customs (or her uncle) does to her specifically if she's caught -- even a single phrase makes the danger personal rather than civic."
+    },
+    {
+      "id": "dev-006",
+      "status": "open",
+      "category": "pacing",
+      "severity": "moderate",
+      "location": "Section 2, lines 24-33",
+      "note": "'You're late' implies a prearranged time the reader was never told existed, so there's no clock the reader can feel ticking. This is the direct answer to the author's question 1: the forward pressure exists in the author's head (a deadline, a schedule) but never lands on the page as something the reader can count down. Compounding it, the alarm bell and active pursuit from Section 1 evaporate with no bridge -- Section 2 opens with Mira simply 'arriving at dawn,' and the boarding itself is frictionless (no lookout, no near-miss, no sense that the chase from Section 1 is still live).",
+      "suggestion": "Either seed the deadline earlier (a specific hour or tide Mira is racing) so 'You're late' pays off a promise already made, or cut the line. Separately, consider one beat bridging the chase to the dock -- a glance over her shoulder, a bell still audible in the distance -- so the urgency established in Section 1 doesn't just stop."
+    },
+    {
+      "id": "dev-007",
+      "status": "open",
+      "category": "plot",
+      "severity": "moderate",
+      "location": "Section 1, line 22; Section 2, lines 20-33",
+      "note": "Section 1 ends on real leverage and danger: 'The ledger was worth more than Renne knew.' That's a planted promise of a coming complication (Renne doesn't know what she's carrying, or what it's worth, or what it will cost her to have it aboard). Section 2 doesn't cash it -- Renne's payment demand is deferred ('We'll talk about payment once we're clear of the harbor mouth'), and nothing in the boarding scene escalates or even references the gap in knowledge the chapter break promised. The chapter-break hook currently deflates instead of building.",
+      "suggestion": "Use the boarding scene to actively cash or extend the promise -- a moment where Mira has to lie about what she's carrying, or where Renne asks a question that shows she suspects there's more to this than a desperate passenger, would carry the hook's tension across the scene break instead of dropping it."
+    },
+    {
+      "id": "dev-008",
+      "status": "open",
+      "category": "deferred_to_line",
+      "severity": "moderate",
+      "location": "Section 1, lines 7-8, 10-12",
+      "note": "Two consecutive beats use the same pattern -- name the emotion, restate it as intensified, then restate it again as physical sensation: 'She was scared. She was very scared, and she felt fear in her chest as she ran.' / 'Her heart was pounding. It was pounding very hard, like a drum, and she could hear it pounding in her ears.' This is a repeated structural pattern (redundant restatement plus naming the emotion directly) rather than an isolated line slip, and rather than the brief's protected choice of short, clipped, fragmentary sentences during action -- these sentences aren't fragments, they're three-beat repetitions of the same information.",
+      "suggestion": "Cut each triplet to a single concrete image or action that implies the emotion without naming it (e.g. cut straight from the pounding heart to what she does next)."
+    },
+    {
+      "id": "dev-009",
+      "status": "open",
+      "category": "deferred_to_line",
+      "severity": "minor",
+      "location": "Section 1, line 4; Section 2, line 1",
+      "note": "Mira's eye color is given as green in Section 1 ('her green eyes scanning the alleys') and blue in Section 2 ('Her blue eyes found the Gray Gull'). Likely a continuity slip rather than an intentional detail.",
+      "suggestion": "Pick one eye color and track it in a canon/continuity reference for future chapters."
+    }
+  ]
+}

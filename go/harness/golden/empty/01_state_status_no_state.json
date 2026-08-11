@@ -1,0 +1,13 @@
+{
+  "cmd": [
+    "/opt/homebrew/opt/python@3.14/bin/python3.14",
+    "/Volumes/T7/code/ideas/redliner/bin/redliner_state.py",
+    "status",
+    "/Volumes/T7/code/ideas/redliner/go/harness/.work/empty"
+  ],
+  "exit_code": 1,
+  "stdout": "No redliner state in /Volumes/T7/code/ideas/redliner/go/harness/.work/empty. Run: redliner_state.py init /Volumes/T7/code/ideas/redliner/go/harness/.work/empty\n",
+  "stdout_json": null,
+  "stderr": "",
+  "state_dir_snapshot": {}
+}

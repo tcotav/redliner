@@ -1,0 +1,292 @@
+{
+  "section": "section_02",
+  "section_sha256": "40026bb31a1420f2e6b85e122ab40c02e932c4692fe31b35f9ad73409a6e6d76",
+  "facts": [
+    {
+      "id": "fact-section_02-001",
+      "entity": "Mira",
+      "entity_type": "character",
+      "attribute": "eye_color",
+      "value": "blue",
+      "excerpt": "Her blue eyes",
+      "location": "paragraph 1",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-002",
+      "entity": "Mira",
+      "entity_type": "character",
+      "attribute": "arrival",
+      "value": "reached the docks just as dawn broke over the water",
+      "excerpt": "Mira reached the docks just as dawn broke over the water.",
+      "location": "paragraph 1",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-003",
+      "entity": "Gray Gull",
+      "entity_type": "object",
+      "attribute": "location",
+      "value": "at the docks",
+      "excerpt": "found the Gray Gull immediately,",
+      "location": "paragraph 1",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-004",
+      "entity": "Gray Gull",
+      "entity_type": "object",
+      "attribute": "sail_state",
+      "value": "sails still furled against the mast",
+      "excerpt": "its sails still furled against the\nmast.",
+      "location": "paragraph 1",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-005",
+      "entity": "Selkirk",
+      "entity_type": "place",
+      "attribute": "founding",
+      "value": "founded three hundred years ago by a fleet of refugees fleeing the Ashport wars",
+      "excerpt": "Selkirk had been founded three hundred years ago by a fleet of\nrefugees fleeing the Ashport wars",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-006",
+      "entity": "Ashport wars",
+      "entity_type": "event",
+      "attribute": "role",
+      "value": "caused a fleet of refugees to flee and found Selkirk",
+      "excerpt": "refugees fleeing the Ashport wars",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-007",
+      "entity": "Selkirk",
+      "entity_type": "place",
+      "attribute": "development",
+      "value": "grew from a fishing camp into the busiest smuggling port on the western coast",
+      "excerpt": "and over the centuries it had grown\nfrom a fishing camp into the busiest smuggling port on the western coast.",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-008",
+      "entity": "customs office",
+      "entity_type": "organization",
+      "attribute": "founding",
+      "value": "established only forty years ago",
+      "excerpt": "The customs office had been established only forty years ago",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-009",
+      "entity": "customs office",
+      "entity_type": "organization",
+      "attribute": "staffing",
+      "value": "staffed mostly by officials from the capital who did not understand local customs",
+      "excerpt": "staffed\nmostly by officials from the capital who did not understand local\ncustoms",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-010",
+      "entity": "customs office",
+      "entity_type": "organization",
+      "attribute": "chief_turnover",
+      "value": "six different customs chiefs in that time, each more corrupt than the last",
+      "excerpt": "there had been six different customs chiefs in that time,\neach more corrupt than the last",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-011",
+      "entity": "Halvard Voss",
+      "entity_type": "character",
+      "attribute": "role",
+      "value": "current customs chief",
+      "excerpt": "the current chief, a man named\nHalvard Voss",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-012",
+      "entity": "Halvard Voss",
+      "entity_type": "character",
+      "attribute": "inheritance",
+      "value": "inherited his position from his father",
+      "excerpt": "Halvard Voss, had inherited his position from his father",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-013",
+      "entity": "Voss family",
+      "entity_type": "organization",
+      "attribute": "inheritance",
+      "value": "Halvard Voss's father had inherited the customs chief position from an uncle",
+      "excerpt": "who had inherited\nit from an uncle",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-014",
+      "entity": "Voss family",
+      "entity_type": "organization",
+      "attribute": "control_duration",
+      "value": "controlled the customs house for two generations",
+      "excerpt": "the Voss family had controlled the customs house for\ntwo generations",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-015",
+      "entity": "Voss family",
+      "entity_type": "organization",
+      "attribute": "corruption",
+      "value": "took bribes from every smuggling ring in the harbor except the one Mira's uncle ran",
+      "excerpt": "taking bribes from every smuggling ring in the harbor\nexcept, notably, the one Mira's uncle ran",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-016",
+      "entity": "Mira's uncle",
+      "entity_type": "character",
+      "attribute": "occupation",
+      "value": "ran a smuggling ring",
+      "excerpt": "the one Mira's uncle ran",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-017",
+      "entity": "Mira's uncle",
+      "entity_type": "character",
+      "attribute": "possession",
+      "value": "kept a ledger as insurance in case the Voss family ever came for him directly",
+      "excerpt": "uncle had kept a ledger in the first place: insurance, in case the Voss\nfamily ever came for him directly.",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-018",
+      "entity": "Renne",
+      "entity_type": "character",
+      "attribute": "role",
+      "value": "captain",
+      "excerpt": "Captain Renne was waiting at the gangplank, arms crossed.",
+      "location": "paragraph 3",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-019",
+      "entity": "Renne",
+      "entity_type": "character",
+      "attribute": "experience",
+      "value": "had seen a hundred desperate people come aboard with a hundred desperate stories",
+      "excerpt": "Renne had seen\na hundred desperate people come aboard with a hundred desperate stories,",
+      "location": "paragraph 3",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-020",
+      "entity": "Mira",
+      "entity_type": "character",
+      "attribute": "arrival_status",
+      "value": "late",
+      "excerpt": "\"You're late,\" Renne said.",
+      "location": "paragraph 4",
+      "source": "dialogue",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-021",
+      "entity": "Mira",
+      "entity_type": "character",
+      "attribute": "reason_for_lateness",
+      "value": "complications",
+      "excerpt": "\"I had complications,\" Mira said.",
+      "location": "paragraph 5",
+      "source": "dialogue",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-022",
+      "entity": "Renne",
+      "entity_type": "character",
+      "attribute": "reaction",
+      "value": "expression softened, just slightly, while looking at Mira",
+      "excerpt": "something in her expression\nsoftened, just slightly",
+      "location": "paragraph 6",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-023",
+      "entity": "Renne",
+      "entity_type": "character",
+      "attribute": "implied_backstory",
+      "value": "seemed to recognize something of herself in Mira",
+      "excerpt": "in a way that suggested she recognized something\nof herself in this frightened, resourceful young woman.",
+      "location": "paragraph 6",
+      "source": "narration",
+      "confidence": "implied"
+    },
+    {
+      "id": "fact-section_02-024",
+      "entity": "Mira",
+      "entity_type": "character",
+      "attribute": "description",
+      "value": "frightened, resourceful young woman",
+      "excerpt": "of herself in this frightened, resourceful young woman.",
+      "location": "paragraph 6",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-025",
+      "entity": "Renne",
+      "entity_type": "character",
+      "attribute": "instruction",
+      "value": "told Mira to get on board",
+      "excerpt": "\"Get on board,\" Renne said.",
+      "location": "paragraph 7",
+      "source": "dialogue",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-026",
+      "entity": "Renne",
+      "entity_type": "character",
+      "attribute": "payment_arrangement",
+      "value": "payment will be discussed once they're clear of the harbor mouth",
+      "excerpt": "We'll talk about payment once we're clear of\nthe harbor mouth.",
+      "location": "paragraph 7",
+      "source": "dialogue",
+      "confidence": "explicit"
+    }
+  ]
+}

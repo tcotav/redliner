@@ -1,0 +1,75 @@
+{
+  "collisions": [
+    {
+      "entity": "Mira",
+      "attribute": "action",
+      "distinct_values": [
+        "hid in a fish stall behind a crate of herring",
+        "stole the ledger"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_01-004",
+          "section": "section_01",
+          "value": "stole the ledger",
+          "excerpt": "the customs officers had found the ledger she'd stolen from",
+          "location": "paragraph 2",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_01-009",
+          "section": "section_01",
+          "value": "hid in a fish stall behind a crate of herring",
+          "excerpt": "Ducking into a fish stall, Mira crouched behind a crate of herring and",
+          "location": "paragraph 3",
+          "source": "narration",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": true,
+      "any_implied": false,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_01"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
+      "entity": "Mira",
+      "attribute": "eye_color",
+      "distinct_values": [
+        "blue",
+        "green"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_01-003",
+          "section": "section_01",
+          "value": "green",
+          "excerpt": "her green eyes scanning the alleys",
+          "location": "paragraph 2",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-001",
+          "section": "section_02",
+          "value": "blue",
+          "excerpt": "Her blue eyes",
+          "location": "paragraph 1",
+          "source": "narration",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": true,
+      "any_implied": false,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_01",
+        "section_02"
+      ],
+      "likely_unpropagated_revision": false
+    }
+  ]
+}

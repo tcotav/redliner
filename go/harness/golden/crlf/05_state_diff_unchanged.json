@@ -1,0 +1,32 @@
+{
+  "cmd": [
+    "/opt/homebrew/opt/python@3.14/bin/python3.14",
+    "/Volumes/T7/code/ideas/redliner/bin/redliner_state.py",
+    "diff",
+    "/Volumes/T7/code/ideas/redliner/go/harness/.work/crlf"
+  ],
+  "exit_code": 0,
+  "stdout": "{\n  \"verdict\": \"unchanged\",\n  \"added\": [],\n  \"removed\": [],\n  \"changed\": [],\n  \"large_delta\": []\n}\n",
+  "stdout_json": {
+    "verdict": "unchanged",
+    "added": [],
+    "removed": [],
+    "changed": [],
+    "large_delta": []
+  },
+  "stderr": "",
+  "state_dir_snapshot": {
+    "state.json": {
+      "manuscript_dir": "/Volumes/T7/code/ideas/redliner/go/harness/.work/crlf",
+      "domain": "fiction",
+      "phase": "intake",
+      "developmental_round": 0,
+      "section_fingerprints": {
+        "section_01": {
+          "sha256": "7eb109238be79e01cfb3a3a24ce266864cd6f5b460c19612911016fbf689c74f",
+          "words": 18
+        }
+      }
+    }
+  }
+}

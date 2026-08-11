@@ -1,0 +1,15 @@
+{
+  "contradictions": [
+    {
+      "id": "cont-001",
+      "status": "open",
+      "kind": "contradiction",
+      "category": "character_attribute",
+      "severity": "moderate",
+      "entity": "Mira",
+      "attribute": "eye_color",
+      "fact_ids": ["fact-section_01-003", "fact-section_02-001"],
+      "note": "Mira's eyes are described as green in section_01 ('her green eyes scanning the alleys', paragraph 2) and as blue in section_02 ('Her blue eyes', paragraph 1). Both are explicit narration, no indication of unreliable narration, disguise, or in-world change; brief does not flag this as deliberate."
+    }
+  ]
+}
