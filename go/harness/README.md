@@ -68,8 +68,44 @@ marketplace uninstall/reinstall + live Cowork query, the same protocol
 that already caught two real bugs in this project and is not something a
 mocked-up local capture would have caught either time.
 
-## Adding a comparison runner for the Go binary (Phase 3+)
+## The Go-side comparison runner (Phase 3+)
 
-Not built yet. When it exists, it re-runs each fixture's step sequence
-against `../cmd/redliner` binary output instead of `bin/*.py`, and diffs
-against `golden/` using `capture_baseline.comparable()`'s same rule.
+`go/internal/cli/golden_test.go`'s `TestCLI_MatchesPythonGolden` re-runs
+every fixture's step sequence through `cli.Dispatch` **in-process**
+(not by exec'ing a built `cmd/redliner` binary) and diffs the result
+against this directory's `golden/`, using the same comparison rule as
+`capture_baseline.comparable()`: `stdout_json` (timestamp-stripped) for
+JSON-shaped output, exact `stdout` text otherwise. It also re-parses
+every JSON file under the working copy's `.redliner/` after each step
+(mirrors `capture_baseline.py`'s `snapshot_state_dir`) — this is what
+actually verifies `canon reconcile`'s array ordering (per-attribute
+fact lists, each collision's `facts[]`), not just its summary print.
+
+**CLI-shape divergence, by name, not by exit code.** The Go CLI is
+subcommands of one binary (`redliner state status <dir>`), not four
+script names (`redliner_state.py status <dir>`) — see TODO.md's "v1
+plan" for why. This changes exactly one piece of stdout text on purpose:
+`requireState`'s "no state yet" message now says `redliner state init
+<dir>`, tracked as the single entry in `golden_test.go`'s
+`knownDivergentStdout`. Every other non-JSON step's stdout — including
+failure-path messages like `"State already exists at ..."` and
+`"Section file error: ..."` — is compared exactly, regardless of exit
+code. If you add a step whose text legitimately needs to differ, name it
+in `knownDivergentStdout` rather than exempting a whole category (an
+earlier version of this test exempted all nonzero-exit steps and missed
+that 5 of them matched Python byte-for-byte with no code change needed).
+
+**This test only passes from the checkout path the golden data was
+captured from.** The golden files embed `go/harness/.work/<fixture>`'s
+*absolute* path verbatim (state.json's `manuscript_dir`, the
+`"Initialized <path>"`/`"OK <path>"` messages) — real captured Python
+behavior, not something worth normalizing away. The test reuses
+`capture_baseline.py`'s own `.work/<fixture>` working directory (same
+convention, gitignored) so the embedded paths match exactly instead of
+chasing this with path-substitution logic — which means it's checkout-
+path-bound. Running it from a worktree, a second clone, or CI at a
+different path produces failures indistinguishable from real port bugs;
+the test detects this itself and skips with a clear message instead of
+failing silently wrong. **`capture_baseline.py` and this test both own
+`go/harness/.work/<fixture>` and both delete it on run — don't run them
+concurrently.**
