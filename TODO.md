@@ -522,6 +522,149 @@ shipped with (the `SessionStart`-hook-builds-a-venv race on first
 load) — a static Go binary has no dependency to bootstrap, so there's
 nothing left to race.
 
+**v1 plan, 2026-08-10.** Before planning this, checked the *installed*
+`redliner-cowork` cache directly (not just reasoned about it) and found
+a live bug: `domain_loader.py`'s `PLUGIN_ROOT` walk assumed `bin/`'s
+nesting depth (`schemas` -> `bin` -> plugin root) everywhere, but
+`cowork/` *is* its own plugin root once installed (`schemas` -> plugin
+root, one level shallower) — so `domains/` was unreachable and
+`domain_list`/`state_init` were silently broken for real Cowork users.
+Fixed ahead of the Go work (`domain_loader.py` now searches nearby
+ancestor depths for a real `domains/` dir instead of assuming one fixed
+depth; `cowork/domains` symlinked in alongside `schemas`/`agents`/
+`skills`), reverified with a full marketplace remove/reinstall +
+direct cache inspection (not just the dev tree) — same protocol as the
+two bugs Cowork support itself shipped with. Worth remembering as a
+category: **anything computing a path relative to `__file__` needs to
+be re-verified per plugin root**, not just per dev-tree run, because
+`bin/` and `cowork/` don't nest the same way. The Go port's path
+handling (below) is designed around this having bitten us twice now.
+
+**Scope.** ~2,100 lines total: `bin/schemas/{project_state,
+domain_loader, canon_schema, findings_schema}.py`, `bin/redliner_{state,
+canon,domain}.py`, `bin/validate_findings.py`, `cowork/mcp_server.py`.
+All pure stdlib (json, hashlib, pathlib, re) except the MCP server's
+`mcp` dependency, which Go replaces with a real import compiled into the
+binary rather than a runtime dependency — the whole reason this port is
+worth doing.
+
+**Layout: one Go source tree, one binary, two installed copies — not a
+symlink.** `bin/` still can't exist in `redliner-cowork` (Cowork's
+content-policy rejection this whole thing started from, see "Cowork
+support" above), so the built binary lands at both `bin/redliner` and
+`cowork/redliner` as real files, same as `cowork/schemas` etc. already
+get copied rather than symlinked once Claude Code's installer
+dereferences them. Building both from one `go build` invocation with two
+output paths keeps this from becoming two things to maintain.
+
+**CLI shape — decided: subcommands, not argv[0]-dispatched script-name
+symlinks.** `redliner state status <dir>`, `redliner state init <dir>
+[domain]`, `redliner state diff/snapshot/phase`, `redliner canon
+stale/reconcile`, `redliner domain list/show`, `redliner validate
+<dir>`, plus `redliner mcp` for the Cowork stdio-server mode. Checked
+first whether keeping the four old script names (`redliner_state.py`
+etc.) as symlinks would avoid touching call sites — mostly not code,
+just prose (`skills/*/SKILL.md`, `README.md`, `.claude/settings.json`'s
+permission allowlist), a small and mechanical rename either way — and
+symlinks lose on their own terms besides: the cache dereferences them
+into full binary copies, so four names means 4x the binary size per
+plugin root for no benefit. One binary, subcommands, update the handful
+of prose/settings references as part of cutover.
+
+**Path resolution: explicit contract, not a ported `__file__` walk.**
+Given the bug just fixed above, the Go binary doesn't try to infer its
+plugin root by walking a fixed number of parent directories at all.
+Order: `$REDLINER_DOMAINS_DIR` env override, else search upward from
+`os.Executable()` (symlink-resolved) for the nearest `domains/`
+directory that actually exists, else fail with an error naming every
+path it checked. Same pattern for locating `domains/` from either
+`bin/redliner` or `cowork/redliner` without special-casing which plugin
+root it's running from.
+
+**Known porting hazards, not just mechanical translation:**
+- **CRLF hashing mismatch.** Python's `Path.read_text()` does universal
+  newline translation (`\r\n` -> `\n`); Go's `os.ReadFile` doesn't. A
+  Windows-authored or Word-exported manuscript would hash differently
+  under Go and every section would false-flag as "changed" on first
+  `state diff` after cutover. Normalize line endings before hashing and
+  before word-counting; put a CRLF fixture in the differential harness
+  (below) so this is caught by a test, not a user report.
+- **JSON key order.** Go's `map[string]any` marshals keys sorted
+  alphabetically; Python dicts preserve insertion order. Don't chase
+  byte-for-byte parity on `state.json`/`canon.json`/`collisions.json` —
+  nothing but `redliner` itself reads those files, so it's not a real
+  compatibility requirement. Use structs (not maps) for anything with a
+  deliberate field order so the *Go* output is intentional, not an
+  artifact of map iteration.
+- **Timestamps.** Python's `datetime.now(timezone.utc).isoformat()`
+  (`...+00:00`, microseconds) has no exact Go equivalent format; pick an
+  RFC3339 representation and treat the change as intentional, not a
+  parity target.
+- **MCP tool descriptions are a frozen interface, not incidental
+  docstrings.** The Cowork spike's load-bearing result was Claude
+  picking all three correct tools *unprompted*, off the Python
+  docstrings in `mcp_server.py`. Carry the 10 tool names and their full
+  description text over verbatim into the Go MCP SDK's tool
+  registration — a terser auto-generated description degrades tool
+  selection in a way nothing else in this plan would catch.
+- **Human-facing stdout strings are a compatibility surface.** Skill
+  prose and this project's own live-verification habit both
+  pattern-match on exact CLI output (`Canon: N entities, M facts.`,
+  `Phase: X -> Y (...)`, `OK   `/`FAIL ` lines). Preserve these exactly;
+  they're cheap to keep and expensive to silently drift.
+
+**Differential harness — build this first, while Python still exists to
+diff against.** There's no `tests/` directory in this repo; the existing
+regression discipline is the live-verification protocol used throughout
+(see e.g. the two Cowork bugs above, both caught by real install cycles,
+neither by reasoning about docs). Same approach here: run all 10
+operations through both implementations over a fixture set —
+`sample_manuscript`, a CRLF variant, a section-stem collision
+(`SectionCollisionError`), a fresh dir with no state, a double-`init`,
+and a manuscript with `canon/observations/` that actually produces
+collisions — and diff. Compare **parsed JSON with timestamps stripped**
+(not bytes, per the key-order point above); compare **stdout strings
+exactly** for the human-facing prints. This harness is also the gate
+before deleting any Python — not an afterthought after the port "looks
+done."
+
+**Phases:**
+1. Go module scaffold + differential harness against current Python
+   (no Go implementation yet — proves the harness itself is honest).
+2. Port `schemas/` (`project_state`, `domain_loader`,
+   `canon_schema`, `findings_schema`) as a Go package. Pure data +
+   validation, no CLI/MCP surface yet. Handles the CRLF and path-
+   resolution hazards above at this layer so everything built on top
+   inherits the fix.
+3. Port the CLI subcommands (`state`, `canon`, `domain`, `validate`)
+   against schema harness data. Diff against `bin/redliner_*.py` output
+   via the harness.
+4. Port the MCP server (`redliner mcp`) using a Go MCP SDK, tool names
+   and descriptions carried over verbatim (see above). Diff against
+   `cowork/mcp_server.py`'s 10 tools via the harness.
+5. **Gate: full uninstall -> marketplace install -> cache inspect ->
+   live Cowork query cycle**, same protocol that caught both real
+   Cowork-support bugs and the `domains/` bug this session. Not the
+   final step — do this *before* deleting any Python, since the port has
+   the identical failure mode available to it (a fix that's correct in
+   the dev tree and wrong in the installed cache).
+6. Cross-compile for **darwin/arm64 only, to start** (matches the dev
+   machine; other platforms stay on v0/Python until this expands —
+   revisit once the port itself is proven). Commit both `bin/redliner`
+   and `cowork/redliner` as prebuilt binaries — download-on-first-run or
+   build-from-source would both reintroduce the exact runtime-dependency
+   problem this port exists to remove.
+7. Cutover deletions, explicit so nothing gets left half-migrated:
+   `bin/redliner_*.py`, `bin/schemas/`, `cowork/mcp_server.py`,
+   `cowork/hooks/hooks.json` (no venv bootstrap needed — the whole
+   first-load race this shipped with disappears), `cowork/
+   requirements.txt`, and the `schemas`/`redliner_canon.py`/
+   `validate_findings.py`/`domains` symlinks in `cowork/` (now real
+   files inside the Go binary instead). **Keep** `cowork/agents` and
+   `cowork/skills` — markdown doesn't port. Update `.claude/
+   settings.json`'s permission allowlist and the README's copy-paste
+   snippet for the new subcommand names.
+
 ## Obsidian vault integration
 
 **Raised:** 2026-08-08

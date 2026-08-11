@@ -16,9 +16,35 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-# bin/schemas/domain_loader.py -> bin/schemas -> bin -> plugin root
-PLUGIN_ROOT = Path(__file__).resolve().parent.parent.parent
-DOMAINS_DIR = PLUGIN_ROOT / "domains"
+
+def _find_domains_dir() -> Path:
+    """Locate `domains/` relative to this file, without assuming a fixed
+    nesting depth.
+
+    The two plugin roots this file ships from don't nest the same way:
+    `bin/schemas/domain_loader.py` sits two levels under the repo/plugin
+    root (`bin/schemas` -> `bin` -> root, so `domains/` is three levels
+    up), but in the installed `redliner-cowork` plugin, `cowork/` *is*
+    the plugin root itself (`cowork/schemas` -> `cowork`, so `domains/`
+    is only two levels up). A fixed `parent.parent.parent` is correct for
+    the former and silently walks outside the plugin root for the
+    latter — the same path-traversal class that already broke this
+    file's sibling imports once (see TODO.md's "Cowork support" section).
+    Checking each candidate depth and taking the nearest hit that
+    actually exists works for both without hardcoding either layout.
+    """
+    schemas_dir = Path(__file__).resolve().parent
+    for ancestor in (schemas_dir.parent, schemas_dir.parent.parent):
+        candidate = ancestor / "domains"
+        if candidate.is_dir():
+            return candidate
+    # Nothing found at either depth -- fall back to the historical
+    # three-levels-up guess so error messages still point somewhere
+    # plausible rather than crashing on `PLUGIN_ROOT` being undefined.
+    return schemas_dir.parent.parent / "domains"
+
+
+DOMAINS_DIR = _find_domains_dir()
 
 REQUIRED_KEYS = {
     "name",
