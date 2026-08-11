@@ -4,7 +4,8 @@
       "Bash(bin/redliner_state.py *)",
       "Bash(bin/redliner_canon.py *)",
       "Bash(bin/redliner_domain.py *)",
-      "Bash(bin/validate_findings.py *)"
+      "Bash(bin/validate_findings.py *)",
+      "Bash(bin/redliner *)"
     ]
   }
 }
