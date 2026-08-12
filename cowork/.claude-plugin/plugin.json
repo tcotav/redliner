@@ -8,7 +8,10 @@
   "mcpServers": {
     "redliner": {
       "command": "${CLAUDE_PLUGIN_DATA}/bin/redliner",
-      "args": ["mcp"]
+      "args": ["mcp"],
+      "env": {
+        "REDLINER_DOMAINS_DIR": "${CLAUDE_PLUGIN_ROOT}/domains"
+      }
     }
   }
 }

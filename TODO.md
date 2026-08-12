@@ -864,6 +864,59 @@ release/download pipeline for the CLI plugin specifically — the release
 workflow and Cowork's download hook still exist and still matter, just
 not for this front door anymore.
 
+**Two Cowork-breaking bugs, found and fixed 2026-08-12, both shipped to
+`main` before being caught.** Found while checking whether Phase 7 could
+safely delete the `cowork/domains` symlink — i.e. by questioning a
+stated assumption, not by a test that was designed to catch either.
+
+1. **The Cowork MCP server didn't start at all.** Phase 7's item list
+   says the `domains` symlink can go because domains are "now real files
+   inside the Go binary instead." **That is false** — nothing is
+   `go:embed`ed; `schemas.FindDomainsDir()` searches the filesystem,
+   walking up 4 levels from the binary. That worked when the Cowork
+   binary lived at `cowork/redliner`, a sibling of `domains/`. The
+   download-hook change earlier the same day moved it to
+   `${CLAUDE_PLUGIN_DATA}/bin/redliner` — a different tree entirely,
+   with no `domains/` anywhere in its walk-up — and `main.go`'s
+   `runMCP()` returns 1 *before serving a single request* when
+   resolution fails. So Cowork was hard-broken, not degraded. The
+   Phase 5 live-Cowork test that passed ran *before* that move and was
+   never re-run after it: exactly the "correct in the dev tree, wrong in
+   the installed cache" failure mode the Phase 5 gate exists to catch,
+   reintroduced by a later change that didn't re-run the gate.
+   **Fix:** `cowork/.claude-plugin/plugin.json`'s `mcpServers.redliner`
+   now sets `"env": {"REDLINER_DOMAINS_DIR": "${CLAUDE_PLUGIN_ROOT}/domains"}`,
+   bridging the DATA tree (binary) to the ROOT tree (domains). That
+   `env` values get `${CLAUDE_PLUGIN_ROOT}` substitution was **confirmed
+   against Claude Code's plugin reference docs** before relying on it,
+   not assumed — the docs' component table lists `command`, `args`, and
+   `env` as substituting fields for stdio MCP servers.
+
+2. **`cowork/hooks/bootstrap-redliner-binary.sh` was a symlink to the
+   repo-root `hooks/` copy, which the CLI-fallback commit deleted** —
+   leaving it dangling, so Cowork's binary silently stopped downloading
+   at all. That commit's message claiming Cowork was "untouched" was
+   wrong. **Fix:** it's a real file in `cowork/hooks/` now, not a
+   symlink, so a change aimed at the CLI variant can't break Cowork's
+   install again. (The `cowork/` symlinks that *remain* — `agents`,
+   `skills`, `domains`, and the Python ones — are all intra-repo and
+   fine; this one was the odd case of a symlink into a directory only
+   the other plugin needed.)
+
+**Verified end-to-end, not by inspection:** clean uninstall → reinstall
+→ fresh session (hook re-downloads the binary into the DATA dir) →
+`claude mcp list` reports `plugin:redliner-cowork:redliner … ✔ Connected`,
+where it previously reported `✘ Failed to connect`. Connection success
+is itself the proof the domains fix works, since the server exits before
+serving when `FindDomainsDir()` fails and the DATA-tree walk-up
+demonstrably finds nothing.
+
+**Lesson worth keeping for Phase 7:** the deletion list's parenthetical
+justifications are load-bearing claims, and at least one was false.
+Re-verify each against the code before deleting anything — particularly
+anything the Go binary reads from disk at runtime rather than embedding.
+`domains/` must **not** be deleted from either plugin.
+
 ## Obsidian vault integration
 
 **Raised:** 2026-08-08
