@@ -977,6 +977,104 @@ because it's the only honest way to test the hook-size hypothesis, but
 not for bandwidth. See the release-repo note below for the lever that
 does move the number.
 
+## Release repo + publish workflow (sketched 2026-08-12, NOT built)
+
+The lever that actually reduces install cost, per the measurements
+above. Sketched in enough detail to pick up cold; nothing here is
+implemented yet.
+
+**The idea:** a second, generated repo containing *only* plugin content.
+The working repo (`tcotav/redliner`) keeps everything — `go/` source,
+the differential harness, `sample_manuscript/`, Python, docs. The
+release repo holds what a user installs and nothing else, which makes it
+lean **by construction** rather than by remembering to trim.
+
+**Why it's worth doing, stated precisely:** it lets the binary leave the
+tracked tree, because a lean plugin can go back to the download hook.
+~14MB → ~300KB, the same shape and size as `cowork/` (which has a 100%
+hook success rate). Every other lever is worth ~1.2MB or, in the case of
+a history rewrite, exactly zero.
+
+**Shape of the release repo** (`tcotav/redliner-plugins`, say):
+
+```
+.claude-plugin/marketplace.json      two entries, subdir sources:
+                                     ./plugins/redliner, ./plugins/redliner-cowork
+plugins/redliner/                    CLI variant
+  .claude-plugin/plugin.json
+  agents/ skills/ domains/           real files, never symlinks
+  hooks/hooks.json
+  hooks/bootstrap-redliner-binary.sh
+plugins/redliner-cowork/             MCP variant
+  .claude-plugin/plugin.json         mcpServers + the REDLINER_DOMAINS_DIR env fix
+  agents/ skills/ domains/
+  hooks/...
+```
+
+No `go/`, no harness, no `sample_manuscript/`, no `bin/*.py`, no
+committed binary. This also incidentally puts both plugins on
+subdirectory sources, matching what ~48% of the official marketplace
+does and what 0/287 of it does with an inline `"./"` root.
+
+**Publish workflow** (`.github/workflows/publish-plugins.yml`, in the
+*working* repo):
+
+1. Trigger on a `v*.*.*` tag push, after `release-go-binaries.yml` has
+   built and attached the binaries — ordering matters, the plugins are
+   useless if their matching release assets don't exist yet.
+2. Stage the release tree with **`cp -rL`** (dereference symlinks).
+   **This is the step most likely to break Cowork** — `cowork/`'s
+   `agents`/`skills`/`domains`/`schemas` are symlinks that Claude Code's
+   own installer dereferences into real files. Mirror tooling that
+   copies them *as symlinks* produces a plugin that works in the dev
+   tree and dangles once installed: exactly the failure that hit twice
+   on 2026-08-12. Assert no symlinks survive in the staged tree before
+   pushing.
+3. Stamp the version into both `plugin.json`s from the git tag. Side
+   benefit: kills the "version lives in three places" hazard the
+   bootstrap script's comments already worry about.
+4. Push to the release repo (`rsync --delete` into a checkout, commit,
+   tag identically). Needs a PAT or deploy key with push rights, stored
+   as a secret.
+
+**Keep GitHub Releases on the working repo.** The bootstrap script's
+`REPO="tcotav/redliner"` stays as-is, so release *assets* and plugin
+*content* live in different repos. That's fine and worth stating
+explicitly so nobody "fixes" it later.
+
+**The gate before trusting any of this** — the lesson of 2026-08-12,
+where a change that was correct in the dev tree hard-broke the installed
+plugin and the Phase 5 gate wasn't re-run:
+
+- Install from the real GitHub-hosted marketplace, not a local directory
+  (local-directory sources resolve `${CLAUDE_PLUGIN_ROOT}` to the live
+  source dir and skip the cache copy entirely — they cannot reproduce
+  install-time behavior; this is what invalidated the first attempt at
+  the size-hypothesis test).
+- `claude mcp list` must report the Cowork server **Connected** — that
+  alone proves domain resolution, since `runMCP()` exits before serving
+  when `FindDomainsDir()` fails.
+- CLI: a bare `redliner domain list` must work, proving the hook
+  downloaded the binary and PATH picked it up.
+- Confirm no symlinks survived into the installed cache.
+- **Run N clean uninstall/reinstall/session cycles and count hook
+  successes.** This *is* the size-hypothesis experiment, finally under
+  conditions that can reproduce the failure.
+
+**The decision it resolves:** hook reliable at ~300KB → the binary never
+goes back in git, and the CLI plugin's `hooks/` returns. Still failing at
+~300KB → the size hypothesis is dead for good; commit the binary into the
+*release* repo only, leaving the working repo clean. Either outcome is
+better than today's.
+
+**Costs, named up front rather than discovered later:** two repos to keep
+in sync, with the release repo strictly generated (hand-edit it and the
+next publish silently reverts you — worth a `DO NOT EDIT` header in its
+README and in each generated `plugin.json`). Existing users' marketplace
+URL changes, so migration needs a note in the README. And Cowork's
+"only reads a repo's default branch" constraint still applies to the
+release repo, so its default branch must be the one publishes land on.
+
 ## Obsidian vault integration
 
 **Raised:** 2026-08-08
