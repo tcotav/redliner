@@ -14,6 +14,7 @@ hardcoded as fiction vocabulary.
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 
@@ -33,6 +34,22 @@ def _find_domains_dir() -> Path:
     Checking each candidate depth and taking the nearest hit that
     actually exists works for both without hardcoding either layout.
     """
+    # $REDLINER_DOMAINS_DIR override, checked first. Added 2026-08-12
+    # when this reference implementation moved out of the repo-root
+    # `bin/` (which is the CLI plugin's PATH directory) into
+    # go/harness/python-baseline/. The relative search below assumes one
+    # of the two original plugin-root layouts and finds neither from the
+    # new depth, so capture_baseline.py now passes this explicitly. This
+    # mirrors the Go port's own REDLINER_DOMAINS_DIR override, and is a
+    # path-resolution change only -- verified behaviour-neutral by
+    # regenerating the goldens and confirming the sole diff was the
+    # recorded script path in each step's `cmd`.
+    override = os.environ.get("REDLINER_DOMAINS_DIR")
+    if override:
+        candidate = Path(override)
+        if candidate.is_dir():
+            return candidate
+
     schemas_dir = Path(__file__).resolve().parent
     for ancestor in (schemas_dir.parent, schemas_dir.parent.parent):
         candidate = ancestor / "domains"

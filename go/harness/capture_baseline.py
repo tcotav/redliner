@@ -31,6 +31,7 @@ door (deferred to the Phase 5 live-install gate, not faked here).
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -41,7 +42,14 @@ from normalize import strip_timestamps
 
 HARNESS_DIR = Path(__file__).resolve().parent
 REPO_ROOT = HARNESS_DIR.parent.parent
-BIN = REPO_ROOT / "bin"
+# The frozen Python reference implementation. It used to live in the
+# repo-root bin/, but bin/ is the CLI plugin's PATH directory -- leaving
+# executable `*.py` there meant a session could still invoke Python and
+# hit the exact runtime dependency the Go port exists to remove (and
+# skills/run/SKILL.md did in fact still name those commands). Moved here
+# 2026-08-12: off PATH, but still runnable as the oracle these goldens
+# are captured from. Not shipped as a working front door; not maintained.
+BIN = HARNESS_DIR / "python-baseline"
 FIXTURES_DIR = HARNESS_DIR / "fixtures"
 GOLDEN_DIR = HARNESS_DIR / "golden"
 WORK_DIR = HARNESS_DIR / ".work"
@@ -50,7 +58,15 @@ PY = sys.executable
 
 
 def run(cmd: list) -> dict:
-    proc = subprocess.run(cmd, capture_output=True, text=True, cwd=REPO_ROOT)
+    # Point the reference implementation at the repo's real domains/.
+    # Its own relative search assumes it still lives in a plugin root's
+    # bin/schemas or cowork/schemas, and finds neither from
+    # python-baseline/ -- see the BIN comment above and domain_loader's
+    # REDLINER_DOMAINS_DIR override.
+    env = {**os.environ, "REDLINER_DOMAINS_DIR": str(REPO_ROOT / "domains")}
+    proc = subprocess.run(
+        cmd, capture_output=True, text=True, cwd=REPO_ROOT, env=env
+    )
     stdout = proc.stdout
     stdout_json = None
     stripped = stdout.strip()

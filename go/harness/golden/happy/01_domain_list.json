@@ -1,7 +1,7 @@
 {
   "cmd": [
     "/opt/homebrew/opt/python@3.14/bin/python3.14",
-    "/Volumes/T7/code/ideas/redliner/bin/redliner_domain.py",
+    "/Volumes/T7/code/ideas/redliner/go/harness/python-baseline/redliner_domain.py",
     "list"
   ],
   "exit_code": 0,

@@ -1,7 +1,7 @@
 {
   "cmd": [
     "/opt/homebrew/opt/python@3.14/bin/python3.14",
-    "/Volumes/T7/code/ideas/redliner/bin/redliner_state.py",
+    "/Volumes/T7/code/ideas/redliner/go/harness/python-baseline/redliner_state.py",
     "status",
     "/Volumes/T7/code/ideas/redliner/go/harness/.work/happy"
   ],

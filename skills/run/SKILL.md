@@ -32,12 +32,13 @@ sections need continuity re-extraction, reconciling the canon, and
 validating everything under `.redliner/` against the domain's schema.
 These are described here by what they do, not by exact syntax: use
 whichever concrete tool this session actually has for each one (a bare
-`redliner_state.py`/`redliner_canon.py`/`validate_findings.py` command
-on the CLI variant, or the matching MCP tool — `state_status`,
-`state_diff`, `canon_stale`, `canon_reconcile`, `validate_findings`, and
-so on — on the Cowork/MCP variant). Don't guess at exact command syntax
-if you're unsure which mechanism is available; check what's actually
-offered in this session and use that.
+`redliner state status`/`redliner state diff`/`redliner canon stale`/
+`redliner canon reconcile`/`redliner validate` command on the CLI
+variant, or the matching MCP tool — `state_status`, `state_diff`,
+`canon_stale`, `canon_reconcile`, `validate_findings`, and so on — on
+the Cowork/MCP variant). Don't guess at exact command syntax if you're
+unsure which mechanism is available; check what's actually offered in
+this session and use that.
 
 ## Which subagent to Task
 

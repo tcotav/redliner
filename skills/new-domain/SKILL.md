@@ -44,7 +44,7 @@ Interview conversationally, not as a rigid form:
 `"section"` — **do not make these domain-configurable.** Phase names are
 fixed project-wide (see `TODO.md`); `unit_name` is currently descriptive
 only — no code reads it yet, the `section_<NNN>` naming convention is
-still hardcoded in `bin/schemas/project_state.py` (the file *extension*
+still hardcoded in `go/internal/schemas/project_state.go` (the file *extension*
 is flexible — `.txt` or `.md` — but the `section_` stem prefix isn't) —
 so setting `unit_name` to anything but `"section"` would promise
 something the plumbing doesn't deliver yet. Don't ask the author about
@@ -143,8 +143,8 @@ don't contort the example.
 Write `domains/<name>/domain.json` matching
 `domains/fiction/domain.json`'s exact key structure. Then look up the
 full config for the new domain by name (whichever concrete tool this
-session offers for that — a bare `redliner_domain.py show <name>`
-command on the CLI variant, or the matching MCP tool on the Cowork/MCP
+session offers for that — a bare `redliner domain show <name>` command
+on the CLI variant, or the matching MCP tool on the Cowork/MCP
 variant).
 
 This calls the same loader every pass uses — if it errors, the domain

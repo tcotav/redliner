@@ -20,8 +20,8 @@ and what draft stages mean for severity, come from the manuscript's
 active domain config, not from this file. Listing available domains and
 showing one domain's full config are how you read that config — use
 whichever concrete tool this session offers for those two operations
-(bare `redliner_domain.py list`/`show <name>` commands on the CLI
-variant, or the matching MCP tool on the Cowork/MCP variant); don't
+(bare `redliner domain list`/`redliner domain show <name>` commands on
+the CLI variant, or the matching MCP tool on the Cowork/MCP variant); don't
 hardcode fiction's fields here even as a fallback.
 
 ## Steps

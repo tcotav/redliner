@@ -57,9 +57,9 @@ Claude Code CLI have genuinely different constraints on how a plugin is
 allowed to run its deterministic logic — see "Two plugin variants"
 below for why. Install the one matching where you'll actually use it.
 
-**Claude Code CLI** — nothing to install beyond Claude Code itself and
-Python 3 (stdlib only, no `pip install`). Load the plugin from whatever
-directory holds the manuscript you want to work on:
+**Claude Code CLI** — nothing to install beyond Claude Code itself. Load
+the plugin from whatever directory holds the manuscript you want to work
+on:
 
 ```
 claude --plugin-dir /path/to/redliner
@@ -90,14 +90,12 @@ marketplace**, entering `tcotav/redliner`, then installing
 marketplace add` and Cowork's "Add marketplace" look for, and it lists
 both variants.
 
-Requires Python 3 to be reachable on first use — `redliner-cowork`
-installs its own `mcp` dependency into an isolated, persistent location
-automatically (nothing to `pip install` by hand), but that first
-install takes a few real seconds. **If a tool call doesn't work the
-very first time you use it after installing, restart the MCP server and
-try again** — that's a one-time startup race on the very first load,
-not a broken install; every use after that first restart works
-normally.
+No runtime dependencies — no Python, no `pip install`, no build step.
+Both variants run a single self-contained Go binary, downloaded for your
+platform on first session start by a `SessionStart` hook (checksum
+verified; it refuses to install anything that doesn't match). Currently
+built for **darwin/arm64 only** — other platforms need a build added to
+`.github/workflows/release-go-binaries.yml`.
 
 ### Two plugin variants, one shared core
 
@@ -110,8 +108,8 @@ at "Add marketplace" time, because that mechanism is invisible to
 whatever review surface an org admin uses to approve a plugin.
 
 `redliner-cowork` (`cowork/` in this repo) is the same tool, same
-`agents/`, same `skills/`, same underlying `bin/schemas/*.py` logic
-(shared via symlinks, not duplicated) — but exposes the deterministic
+`agents/`, same `skills/`, same underlying Go binary (shared, not a
+fork) — but exposes the deterministic
 operations as an MCP server instead of PATH executables, which Cowork
 does allow. Every skill file is written to describe what it needs
 ("check the manuscript's current state") rather than exact command
@@ -143,7 +141,7 @@ Validate a manuscript's `.redliner/` output directly, without running a
 full pass:
 
 ```
-bin/validate_findings.py <manuscript_dir>
+redliner validate <manuscript_dir>
 ```
 
 ### A manuscript's path through this, end to end
@@ -207,22 +205,29 @@ redliner/                          (plugin root)
 │   ├── design-doc/domain.json
 │   └── serial-fiction/domain.json
 ├── bin/                          on PATH while the plugin is enabled
-│   ├── redliner_state.py          phase, rounds, section fingerprinting/diff
-│   ├── redliner_canon.py          merges per-section facts, finds collisions mechanically
-│   ├── redliner_domain.py         list/show domain configs
-│   ├── validate_findings.py      schema + excerpt-verbatim checks
-│   └── schemas/                  shared vocabulary + validators, imported by all three
-│       └── domain_loader.py      loads domains/<name>/domain.json
+│   └── redliner                  single Go binary, all operations below.
+│                                 Not committed — downloaded per-platform by
+│                                 hooks/bootstrap-redliner-binary.sh from the
+│                                 GitHub Release matching plugin.json's version
+├── hooks/
+│   ├── hooks.json                SessionStart: fetches bin/redliner
+│   └── bootstrap-redliner-binary.sh   verifies checksum, refuses on mismatch
+├── go/                           the implementation
+│   ├── cmd/redliner/             CLI + `redliner mcp` (both front doors, one binary)
+│   ├── internal/schemas/         state, domain loading, validators
+│   ├── internal/cli/  internal/mcpserver/
+│   └── harness/                  differential harness (see go/harness/README.md)
+│       ├── python-baseline/      the frozen pre-port Python, kept as the oracle
+│       │                         the goldens are captured from. Off PATH, not
+│       │                         shipped as a front door, not maintained.
+│       └── golden/               captured baselines the Go tests diff against
 └── cowork/                       (plugin root #2 — see "Setup" above)
-    ├── .claude-plugin/plugin.json   declares mcpServers, no bin/
-    ├── mcp_server.py                same 10 operations as bin/, as MCP tools
-    ├── hooks/hooks.json             SessionStart: bootstraps mcp into a venv
-    ├── requirements.txt
-    ├── schemas -> ../bin/schemas          symlinks: one shared core,
-    ├── redliner_canon.py -> ../bin/...    not a fork — see TODO.md's
-    ├── validate_findings.py -> ../bin/... "Cowork support" section
-    ├── agents -> ../agents
-    └── skills -> ../skills
+    ├── .claude-plugin/plugin.json   declares mcpServers (the Go binary), no bin/
+    ├── hooks/                       SessionStart: fetches the binary into
+    │                                ${CLAUDE_PLUGIN_DATA}/bin/
+    ├── agents -> ../agents          symlinks: one shared core, not a fork
+    ├── skills -> ../skills
+    └── domains -> ../domains
 ```
 
 State lives with the manuscript, not with the tool: every manuscript
@@ -235,7 +240,7 @@ manuscript's editing history travels with it if you move or back it up.
 `redliner` started fiction-specific, but the engine (state machine,
 schemas, validators) doesn't know what "fiction" means anymore — only
 the active **domain** does. A manuscript's `.redliner/state.json` carries
-a `domain` field (defaults to `fiction`); `bin/schemas/domain_loader.py`
+a `domain` field (defaults to `fiction`); the binary's domain loader
 loads `domains/<name>/domain.json` for that manuscript and everything
 downstream (allowed categories for developmental/line findings, the
 continuity layer's entity types/sources/categories, `/redliner:intake`'s
@@ -265,8 +270,8 @@ before calling it done.
 #### `domain.json` format, for hand-editing
 
 Every domain is one JSON file at `domains/<name>/domain.json`, loaded
-and validated by `bin/schemas/domain_loader.py`. All keys below are
-required — `redliner_domain.py show <name>` will say exactly what's
+and validated by `go/internal/schemas/domain_loader.go`. All keys below
+are required — `redliner domain show <name>` will say exactly what's
 missing if not:
 
 | Key | Shape | What it controls |
@@ -275,7 +280,7 @@ missing if not:
 | `display_name` | string | Shown when `/redliner:intake` offers a choice of domains. |
 | `description` | string | One sentence; also shown in that choice. |
 | `round_tracked_phase` | string | Fixed to `"developmental"` for every domain — see `TODO.md` for why this isn't domain-configurable. |
-| `unit_name` | string | Fixed to `"section"` — descriptive only today; the `section_<NNN>` naming convention is still hardcoded in `bin/schemas/project_state.py` (the file extension isn't — `.txt` and `.md` are both supported). |
+| `unit_name` | string | Fixed to `"section"` — descriptive only today; the `section_<NNN>` naming convention is still hardcoded in `go/internal/schemas/project_state.go` (the file extension isn't — `.txt` and `.md` are both supported). |
 | `developmental_categories` | list of strings | Allowed `category` values for whole-document findings. 4–7, each independently disputable, none a severity in disguise. |
 | `line_categories` | list of strings | Same rules, for single-section findings. |
 | `continuity.entity_types` | list of strings | What kinds of things get checkable facts extracted about them. |
@@ -311,10 +316,10 @@ A few things worth knowing if you're debugging or extending this:
 - **Findings are files, not just chat output.** Each subagent writes a
   JSON file with the `Write` tool rather than putting its findings only
   in its final reply — durable, inspectable, and checkable by
-  `validate_findings.py` between steps.
+  `redliner validate` between steps.
 - **Nothing here enforces JSON shape at the API level.** A subagent is
   *told* the schema and could still get it wrong, so
-  `bin/validate_findings.py` checks after the fact — including verifying
+  `redliner validate` checks after the fact — including verifying
   that any `excerpt` field is a genuine verbatim substring of the section
   it claims to quote, not a paraphrase. That check has already caught a
   real fabricated excerpt in this repo's own sample data.
@@ -352,10 +357,7 @@ can't ship inside the plugin. Add this to your own project or user
 {
   "permissions": {
     "allow": [
-      "Bash(redliner_state.py *)",
-      "Bash(redliner_canon.py *)",
-      "Bash(redliner_domain.py *)",
-      "Bash(validate_findings.py *)"
+      "Bash(redliner *)"
     ]
   }
 }
@@ -471,9 +473,10 @@ old one. Deferred deliberately; see `TODO.md` for the design already
 sketched for it (a script-computed carry-forward, not a model guessing
 at a diff).
 
-(Separately, the pre-existing permission-allowlist gap below also needs
-`redliner_domain.py` added wherever it's copied — not new, just one more
-script name.)
+(Separately, the pre-existing permission-allowlist gap below also needed
+`redliner_domain.py` added wherever it's copied. Moot since the Go port:
+there is one command name now, `redliner`, so the allowlist no longer
+grows a line per script.)
 
 Other open items in `TODO.md`: a compiled-binary port, read-only
 Obsidian vault integration as a second source of canon.

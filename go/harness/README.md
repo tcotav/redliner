@@ -22,7 +22,8 @@ harness" paragraph for why this is sequenced first).
   - `empty/` — no sections, no `.redliner/` at all. Exercises the "no
     state yet" and "not a manuscript dir" error paths.
 - `capture_baseline.py` — runs each fixture's operation sequence against
-  a fresh working copy (`.work/`, gitignored) via the real `bin/*.py`
+  a fresh working copy (`.work/`, gitignored) via the real
+  `python-baseline/*.py`
   subprocesses, and records stdout/exit-code/resulting-`.redliner/`-tree
   per step to `golden/<fixture>/<NN>_<op>.json`.
 - `normalize.py` — strips `created_at`/`updated_at` before comparison;
@@ -35,7 +36,8 @@ harness" paragraph for why this is sequenced first).
 
 ## Usage
 
-Regenerate the golden baselines (only needed if `bin/*.py` changes):
+Regenerate the golden baselines (rarely needed — see "The Python
+baseline" below):
 
 ```
 python3 capture_baseline.py
@@ -124,3 +126,33 @@ the test detects this itself and skips with a clear message instead of
 failing silently wrong. **`capture_baseline.py` and this test both own
 `go/harness/.work/<fixture>` and both delete it on run — don't run them
 concurrently.**
+
+
+## The Python baseline
+
+`python-baseline/` is the pre-port Python implementation, moved here from
+the repo-root `bin/` on 2026-08-12. It is **frozen**: not maintained, not
+shipped as a working front door, and deliberately *off* PATH — `bin/` is
+the CLI plugin's PATH directory, so leaving executable `*.py` there meant
+a session could still invoke Python and hit the exact runtime dependency
+the Go port exists to remove. `skills/run/SKILL.md` did in fact still
+name those commands at the time of the move.
+
+It is kept, rather than deleted, because it is the oracle these goldens
+are captured from, and that capability was verified working at the time
+of the move (regenerating reproduced the committed baseline exactly, the
+only diff being timestamps, which `normalize.py` strips by design).
+Deleting it is still an option later; recovering it after deletion means
+archaeology through git history.
+
+The move required one behaviour-neutral change: `schemas/domain_loader.py`
+now honours a `$REDLINER_DOMAINS_DIR` override, mirroring the Go port's,
+because its relative search assumes it still lives in a plugin root's
+`bin/schemas` or `cowork/schemas` and finds `domains/` from neither at
+this depth. `capture_baseline.py` passes it explicitly. Verified neutral
+by regenerating and confirming the only diffs were each step's recorded
+script path.
+
+Regeneration is only genuinely needed to capture a *new* fixture's Python
+behaviour during some future Go-vs-Python divergence hunt — the existing
+23 steps are already committed.

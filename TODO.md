@@ -677,6 +677,33 @@ done."
    settings.json`'s permission allowlist and the README's copy-paste
    snippet for the new subcommand names.
 
+   **DONE 2026-08-12, but not as written — two items here were wrong,
+   and acting on them literally would have broken things:**
+   - `cowork/hooks/hooks.json` was **not** deleted. It was repurposed
+     into the Go binary's download hook; deleting it breaks Cowork's
+     install entirely.
+   - The `cowork/domains` symlink was **not** deleted. Its stated
+     justification ("now real files inside the Go binary") is false —
+     nothing is `go:embed`ed, the binary reads `domains/` off disk.
+     Deleting it hard-breaks the Cowork MCP server, which is exactly the
+     bug that shipped and had to be fixed the same day.
+   - `cowork/requirements.txt` was already gone.
+   - The Python was **relocated, not deleted**: `bin/redliner_*.py` and
+     `bin/schemas/` now live in `go/harness/python-baseline/` as the
+     frozen oracle the goldens are captured from. The mandatory part was
+     getting them out of `bin/`, which is the CLI plugin's PATH
+     directory — executable `*.py` there let a session invoke Python and
+     hit the very runtime dependency this port removes. See
+     `go/harness/README.md`'s "The Python baseline".
+   - Deleted for real: `cowork/mcp_server.py` and the
+     `schemas`/`redliner_canon.py`/`validate_findings.py` symlinks —
+     genuinely dead once `mcpServers.command` became the Go binary, and
+     until now shipped to every Cowork user as unused code.
+   - Allowlist and prose updated: `.claude/settings.json` collapses to
+     `Bash(redliner *)`, and `skills/run`, `skills/intake`,
+     `skills/new-domain` plus the README no longer name `.py` commands.
+     `agents/` needed no changes — it never referenced them.
+
 **Progress, 2026-08-12.** Phases 1–4 done and committed on `go-port-v1`
 (module scaffold + differential harness; `internal/schemas`;
 `internal/cli`; `internal/mcpserver`) — all four verified against real
