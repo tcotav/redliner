@@ -1165,6 +1165,65 @@ leaves the tree, and the release repo, the `plugins/` restructure, and
 the history rewrite are all moot. If it genuinely fails there, *then*
 revisit — with a real failure to diagnose rather than a suspected one.
 
+## RESOLVED: the hook reliability problem was a measurement artifact
+
+**2026-08-12.** The test that settles it was finally run under the
+conditions that had never been used: a **real GitHub-hosted marketplace**
+(`claude plugin marketplace add tcotav/redliner`), with the binary
+un-committed and both plugins on their download hooks.
+
+**7 clean uninstall → reinstall → session cycles: CLI 7/7, Cowork 7/7.**
+No failures. Against an alleged ~1/7 CLI success rate that justified
+committing an 8.3MB binary and sketching an entire release-repo
+architecture.
+
+Both front doors then verified working, not merely present:
+
+- `claude mcp list` → `plugin:redliner-cowork:redliner … ✔ Connected`
+  (which also re-proves the `REDLINER_DOMAINS_DIR` fix, since the server
+  exits before serving if domain resolution fails).
+- A bare `redliner domain list` inside a real session returned the three
+  domains — so the hook-downloaded binary landed in the plugin's `bin/`
+  and PATH picked it up, with no wrapper and no committed binary.
+
+**The original ~1/7 finding is retired.** The leading explanation is the
+measurement artifact described in the validation section above: under a
+**local-directory** marketplace, `${CLAUDE_PLUGIN_ROOT}` resolves to the
+live source directory, while the `~/.claude/plugins/cache/...` copy that
+also exists is *not* what hooks execute against. Checking the cache copy
+shows "no binary" while the hook is succeeding a few directories away.
+The same mistake was made and caught twice on 2026-08-12 before being
+recognized as the likely cause of the original result too.
+
+**Measured payoff, on the real hosted install:**
+
+| | before | after |
+| --- | --- | --- |
+| repo tip | 9.7MB | **1.4MB** |
+| marketplace clone (depth-1, measured) | — | **1.7MB** (344K `.git`) |
+| CLI plugin cache | 10MB | **1.4MB** |
+| Cowork plugin cache | 304K | 256K |
+
+The hosted clone was confirmed shallow (`rev-list --count HEAD` = 1,
+`.git/shallow` present) — the prediction that drove the whole install-cost
+analysis, now verified against this repo rather than inferred from others.
+
+**Therefore, all of the following are moot and should not be built:** the
+release repo + publish workflow, the `plugins/<name>/` restructure, and
+the git history rewrite. Each existed to work around a problem that was
+not real. What remains true and worth keeping is the *reasoning* recorded
+above about why they wouldn't have helped much anyway.
+
+**Methodological note, the actual lesson of the day.** Three separate
+false beliefs drove real decisions here: "domains are embedded in the
+binary" (they are not), "history rewrite reduces install cost" (it does
+not — clones are shallow), and "the download hook is unreliable" (it is
+not — the measurement was wrong). Each was stated confidently in this
+file and each survived because it was never checked against the system.
+The fix that worked, every time, was running the thing rather than
+reasoning about it — and checking *where the system actually writes*
+before concluding it didn't write anything.
+
 ## Obsidian vault integration
 
 **Raised:** 2026-08-08
