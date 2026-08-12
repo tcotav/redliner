@@ -650,10 +650,22 @@ done."
    the dev tree and wrong in the installed cache).
 6. Cross-compile for **darwin/arm64 only, to start** (matches the dev
    machine; other platforms stay on v0/Python until this expands —
-   revisit once the port itself is proven). Commit both `bin/redliner`
-   and `cowork/redliner` as prebuilt binaries — download-on-first-run or
-   build-from-source would both reintroduce the exact runtime-dependency
-   problem this port exists to remove.
+   revisit once the port itself is proven).
+   **Superseded, 2026-08-12:** this item originally said "commit both
+   `bin/redliner` and `cowork/redliner` as prebuilt binaries" as the
+   settled answer, on the reasoning that download-on-first-run or
+   build-from-source would both reintroduce the runtime-dependency
+   problem this port exists to remove. That reasoning still holds for
+   *build*-from-source, but a **download** of a prebuilt static binary
+   isn't the same class of problem as Python's venv/pip bootstrap was
+   (no toolchain, no compiler, one HTTP GET + chmod) — worth a real
+   GitHub Actions release workflow + a lightweight download-on-install
+   hook instead of committing binaries to the tracked tree
+   permanently. Not built yet. Currently: `bin/redliner`/
+   `cowork/redliner` *are* committed on `go-port-v1`, but as a
+   deliberately temporary measure to unblock the Phase 5 live-Cowork
+   test (see the 2026-08-12 progress note below) — not a decision that
+   this is where they'll stay.
 7. Cutover deletions, explicit so nothing gets left half-migrated:
    `bin/redliner_*.py`, `bin/schemas/`, `cowork/mcp_server.py`,
    `cowork/hooks/hooks.json` (no venv bootstrap needed — the whole
@@ -664,6 +676,47 @@ done."
    `cowork/skills` — markdown doesn't port. Update `.claude/
    settings.json`'s permission allowlist and the README's copy-paste
    snippet for the new subcommand names.
+
+**Progress, 2026-08-12.** Phases 1–4 done and committed on `go-port-v1`
+(module scaffold + differential harness; `internal/schemas`;
+`internal/cli`; `internal/mcpserver`) — all four verified against real
+Python-captured golden data, not just read-through, including the
+MCP tool descriptions checked against Python's actual docstrings via
+`ast.get_docstring` rather than a second copy of the same Go constants.
+
+**Phase 5 gate passed for real**, same day: `bin/redliner` and
+`cowork/redliner` built and wired additively into both plugin manifests
+(nothing Python removed — see the two-item exception list below),
+verified against a real local marketplace install/cache first (exec
+bit intact, `domain list`/`state status` correct, a genuine in-process
+MCP stdio round-trip with no `REDLINER_DOMAINS_DIR` override), then
+pushed to `go-port-v1` and tested in the **actual Cowork GUI app** —
+the repo's default branch was temporarily pointed at `go-port-v1`
+(reversible; Cowork's "Add marketplace" only reads a repo's default
+branch, not arbitrary branch URLs, the same finding from the original
+Cowork-support work) since a real GUI install needs a GitHub-hosted
+marketplace, not the local-directory source Claude Code CLI testing
+used. Asked "what domains are available?" and got the three real
+domains back, correctly described, no MCP server restart needed this
+time (the original venv-bootstrap first-load race this was worried
+about inheriting doesn't apply — there's no venv build step left to
+race). This is the test TODO.md itself says nothing else can
+substitute for.
+
+Two exceptions to "nothing Python removed yet": `bin/redliner` and
+`cowork/redliner` (the compiled binaries) are committed to `go-port-v1`
+as a **deliberately temporary** measure to unblock this test —
+committing them now and deleting later does not reclaim git history
+size on its own (blobs persist without a rewrite), accepted for now
+since a history rewrite is cheap before this repo has wider visibility
+and expensive after. Real follow-up, not yet built: a GitHub Actions
+release workflow plus a lightweight download-on-install hook, so
+binaries stop needing to live in the tracked tree at all.
+
+**Remaining before Phase 7's cutover deletions:** the release-automation
+follow-up above; reverting the GitHub default branch back to `main`
+once `go-port-v1` testing is done; and — separately — actually merging
+`go-port-v1`, which hasn't happened yet.
 
 ## Obsidian vault integration
 
