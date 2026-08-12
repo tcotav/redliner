@@ -650,10 +650,22 @@ done."
    the dev tree and wrong in the installed cache).
 6. Cross-compile for **darwin/arm64 only, to start** (matches the dev
    machine; other platforms stay on v0/Python until this expands —
-   revisit once the port itself is proven). Commit both `bin/redliner`
-   and `cowork/redliner` as prebuilt binaries — download-on-first-run or
-   build-from-source would both reintroduce the exact runtime-dependency
-   problem this port exists to remove.
+   revisit once the port itself is proven).
+   **Superseded, 2026-08-12:** this item originally said "commit both
+   `bin/redliner` and `cowork/redliner` as prebuilt binaries" as the
+   settled answer, on the reasoning that download-on-first-run or
+   build-from-source would both reintroduce the runtime-dependency
+   problem this port exists to remove. That reasoning still holds for
+   *build*-from-source, but a **download** of a prebuilt static binary
+   isn't the same class of problem as Python's venv/pip bootstrap was
+   (no toolchain, no compiler, one HTTP GET + chmod) — worth a real
+   GitHub Actions release workflow + a lightweight download-on-install
+   hook instead of committing binaries to the tracked tree
+   permanently. Not built yet. Currently: `bin/redliner`/
+   `cowork/redliner` *are* committed on `go-port-v1`, but as a
+   deliberately temporary measure to unblock the Phase 5 live-Cowork
+   test (see the 2026-08-12 progress note below) — not a decision that
+   this is where they'll stay.
 7. Cutover deletions, explicit so nothing gets left half-migrated:
    `bin/redliner_*.py`, `bin/schemas/`, `cowork/mcp_server.py`,
    `cowork/hooks/hooks.json` (no venv bootstrap needed — the whole
@@ -664,6 +676,193 @@ done."
    `cowork/skills` — markdown doesn't port. Update `.claude/
    settings.json`'s permission allowlist and the README's copy-paste
    snippet for the new subcommand names.
+
+**Progress, 2026-08-12.** Phases 1–4 done and committed on `go-port-v1`
+(module scaffold + differential harness; `internal/schemas`;
+`internal/cli`; `internal/mcpserver`) — all four verified against real
+Python-captured golden data, not just read-through, including the
+MCP tool descriptions checked against Python's actual docstrings via
+`ast.get_docstring` rather than a second copy of the same Go constants.
+
+**Phase 5 gate passed for real**, same day: `bin/redliner` and
+`cowork/redliner` built and wired additively into both plugin manifests
+(nothing Python removed — see the two-item exception list below),
+verified against a real local marketplace install/cache first (exec
+bit intact, `domain list`/`state status` correct, a genuine in-process
+MCP stdio round-trip with no `REDLINER_DOMAINS_DIR` override), then
+pushed to `go-port-v1` and tested in the **actual Cowork GUI app** —
+the repo's default branch was temporarily pointed at `go-port-v1`
+(reversible; Cowork's "Add marketplace" only reads a repo's default
+branch, not arbitrary branch URLs, the same finding from the original
+Cowork-support work) since a real GUI install needs a GitHub-hosted
+marketplace, not the local-directory source Claude Code CLI testing
+used. Asked "what domains are available?" and got the three real
+domains back, correctly described, no MCP server restart needed this
+time (the original venv-bootstrap first-load race this was worried
+about inheriting doesn't apply — there's no venv build step left to
+race). This is the test TODO.md itself says nothing else can
+substitute for.
+
+Two exceptions to "nothing Python removed yet": `bin/redliner` and
+`cowork/redliner` (the compiled binaries) are committed to `go-port-v1`
+as a **deliberately temporary** measure to unblock this test —
+committing them now and deleting later does not reclaim git history
+size on its own (blobs persist without a rewrite), accepted for now
+since a history rewrite is cheap before this repo has wider visibility
+and expensive after. Real follow-up, not yet built: a GitHub Actions
+release workflow plus a lightweight download-on-install hook, so
+binaries stop needing to live in the tracked tree at all.
+
+**Remaining before Phase 7's cutover deletions:** the release-automation
+follow-up above; reverting the GitHub default branch back to `main`
+once `go-port-v1` testing is done; and — separately — actually merging
+`go-port-v1`, which hasn't happened yet.
+
+*(Update, 2026-08-12: the release-automation follow-up is done — see the
+section below. The default branch is back on `main`, done manually
+outside this repo's history, confirmed via the GitHub API. Merging
+`go-port-v1` is still outstanding.)*
+
+**Release automation + download hooks, done, 2026-08-12** (the item
+right above, now built): `.github/workflows/release-go-binaries.yml`
+cross-compiles `go/cmd/redliner` on `ubuntu-latest` (Go doesn't need a
+matching-OS runner) and attaches the binary + `checksums.txt` to a
+GitHub Release on a `v*.*.*` tag push, or uploads as a build artifact on
+manual `workflow_dispatch` for testing without cutting a real release —
+verified both paths for real (a `workflow_dispatch` test run, then a
+real `v0.1.0` tag) before wiring anything to depend on it. The
+`bin/redliner`/`cowork/redliner` binaries committed on 2026-08-12 as a
+stopgap are now removed from the tracked tree — replaced by
+`hooks/bootstrap-redliner-binary.sh`, a `SessionStart` hook script that
+downloads the release asset matching the plugin's own
+`.claude-plugin/plugin.json` version, verifies its checksum, and installs
+it, refusing to install anything that doesn't check out.
+
+**The two front doors needed genuinely different destinations, not the
+same fix copy-pasted**, because of a fact checked against Claude Code's
+own docs rather than assumed: `${CLAUDE_PLUGIN_DATA}`/`${CLAUDE_PLUGIN_ROOT}`
+are exported to hook and MCP/LSP subprocess commands *only* — never to a
+bare `bin/`-invoked executable's own environment. So a `bin/redliner`
+wrapper script can't locate a `${CLAUDE_PLUGIN_DATA}`-based path at
+invocation time no matter how it's written. The fix: the hook (which
+does get the env vars) downloads straight into
+`${CLAUDE_PLUGIN_ROOT}/bin/redliner` for the CLI plugin — overwriting/
+creating the real file in place, confirmed writable at runtime by a live
+test before committing to the design, not assumed — so by the time any
+command runs, it's just a real binary on PATH, no wrapper and no
+runtime env-var dependency. The Cowork plugin has it easier:
+`mcpServers.command` supports the same `${CLAUDE_PLUGIN_DATA}`
+substitution a hook gets, so the hook downloads to
+`${CLAUDE_PLUGIN_DATA}/bin/redliner` and the manifest just points there
+directly, same shape as the venv hook it replaces
+(`cowork/hooks/hooks.json`'s old venv-bootstrap command is gone; so is
+`cowork/requirements.txt`).
+
+**A genuinely unresolved reliability problem, disclosed rather than
+downplayed:** across roughly seven clean uninstall → reinstall →
+one-shot-session test cycles, the CLI plugin's (`redliner`, source
+`"./"`) `SessionStart` hook fired successfully exactly **once**; the
+Cowork plugin's (`redliner-cowork`, source `"./cowork"`) identically-
+shaped hook fired successfully **every single time**, no exceptions.
+This is not the one-time first-load race the venv-era caveat described
+— a second session after a failure did not reliably fix it either.
+Ruled out as causes: JSON syntax, exec bits, an explicit `"hooks"`
+field in `plugin.json`, the other plugin's presence or absence,
+inline-vs-external-script hook commands, `bash <script>` vs direct
+execution, and simple retry (a second session sometimes still fails
+right after a first failure). None of these changed the outcome.
+
+**Leading unconfirmed hypothesis:** the CLI plugin's source is the
+entire repo root — including `go/`'s full source tree, `README.md`,
+`TODO.md`, `sample_manuscript/`, and a full nested copy of `cowork/`
+itself — while the Cowork plugin's source is just the lean `cowork/`
+subdirectory. If plugin content scanning/copying time affects whether a
+`SessionStart` hook completes before some internal deadline, the much
+larger plugin would be exactly the one to see this. Not verified by a
+controlled test (e.g., trimming the CLI plugin's shipped content and
+re-measuring hook success rate) — that's the next real step if this
+gets picked back up, not committing to the theory further without it.
+
+**Practical implication, worse than originally written here:** this
+isn't "a restart fixes it" — it's "the CLI plugin's binary may simply
+not be there most of the time, for reasons not yet understood, and a
+user hitting `command not found` has no documented recovery step beyond
+retrying." **Not safe to treat as solved.** Before this ships to anyone
+but the maintainer: either confirm and fix the root cause, or fall back
+to committing `bin/redliner` for the CLI plugin specifically while
+keeping the Cowork plugin on the (reliably-working) download hook —
+a partial, honest middle ground rather than a design that silently
+fails most of the time.
+
+Not yet done: reflecting this in `README.md`'s existing "first
+use may need one MCP server restart" caveat (needs generalizing to
+cover the CLI plugin too, now that it has the same class of race) — a
+Phase 7 README pass, not done here.
+
+**The size hypothesis, tested 2026-08-12: inconclusive, and the test
+method itself turned out to be the wrong instrument.** Built a trimmed
+spike plugin (`redliner-lean`, ~47 files/312KB — comparable to
+Cowork's ~43 files/300KB, vs the full CLI plugin's 127 files/~1.6MB
+installed) registered as its own local-directory marketplace, then ran
+repeated clean cycles (`rm` the downloaded binary, fresh `claude -p`
+one-shot session, check for the binary) against both the lean and
+full-size plugin. First pass falsely showed 0/6 and 0/3 — checking the
+wrong path, caught before drawing conclusions from it (a marker line
+added to the top of a spike copy of the bootstrap script proved the
+hook *was* firing every time; it was writing into `$CLAUDE_PLUGIN_ROOT`,
+which for a local-directory-source marketplace resolves to the live
+source directory, not the `~/.claude/plugins/cache/...` copy that
+exists alongside it — that cache copy appears to be vestigial for local
+dev sources, not what hooks actually execute against). After fixing the
+check path: **6/6 successes**, lean and full alike, no failures at all.
+
+That result doesn't confirm the size hypothesis, but it doesn't
+resurrect it either — the original 1/7-vs-7/7 finding was likely
+observed via real interactive one-shot sessions (open a session, send
+one message, close), while this retest used `claude -p` headless
+one-shot invocations against local-directory marketplace sources
+exclusively. Both differences are real candidate confounds: `-p` mode
+may not race the same internal deadline an interactive session start
+does, and a local-directory source skips whatever
+scanning/copying-into-cache step a real git/GitHub-hosted marketplace
+install goes through (which is what the original test's "clean
+uninstall → reinstall" cycles likely exercised, and what the CLI
+plugin's real users will always go through — nobody installs redliner
+from a local directory). So this test answered "does trimming help
+under `-p` + local-directory sources" (no signal either way, everything
+passed) without touching the conditions that produced the original
+failure.
+
+**Decision: not pursuing this further right now.** A test that actually
+reproduces the original conditions would need either a real interactive-
+session harness or a GitHub-hosted marketplace pointed at a trimmed
+branch/tag — both bigger lifts than this spike, for a bug that already
+has a named, working fallback. Taking the fallback instead: commit
+`bin/redliner` for the CLI plugin specifically (stop depending on its
+`SessionStart` hook), keep the Cowork plugin on the download hook,
+which has never failed. Root cause stays open for whoever hits this
+again with more budget to spend on it — the local-directory-source
+caveat above (cache copy isn't what hooks run against) is worth keeping
+regardless of what happens with the size question, since it'll trip up
+any future local-marketplace test the same way it tripped up this one.
+
+**Fallback implemented, 2026-08-12.** `bin/redliner` and
+`bin/redliner.version` are committed directly again (removed from
+`.gitignore`, which now only excludes `cowork/redliner*`); the CLI
+plugin's `hooks/hooks.json` and `hooks/bootstrap-redliner-binary.sh` are
+deleted outright rather than left as dead weight, since nothing calls
+them once the binary ships in the tree. This reintroduces the ~8.3MB
+binary into git history (same tradeoff Phase 5 accepted the first time:
+a history rewrite is cheap now, expensive after wider visibility — still
+true). The Cowork plugin is untouched: its own `cowork/hooks/` copy of
+the same hook/script and its download-on-install path are unaffected.
+Verified `./bin/redliner domain list` runs correctly post-change.
+Re-bumping `bin/redliner` on future Go changes now means rebuilding and
+re-committing it directly (`go build -o bin/redliner ./go/cmd/redliner`
+or whatever the current build command is) instead of relying on the
+release/download pipeline for the CLI plugin specifically — the release
+workflow and Cowork's download hook still exist and still matter, just
+not for this front door anymore.
 
 ## Obsidian vault integration
 

@@ -1,0 +1,1276 @@
+{
+  "cmd": [
+    "/opt/homebrew/opt/python@3.14/bin/python3.14",
+    "/Volumes/T7/code/ideas/redliner/bin/redliner_state.py",
+    "status",
+    "/Volumes/T7/code/ideas/redliner/go/harness/.work/happy"
+  ],
+  "exit_code": 0,
+  "stdout": "{\n  \"manuscript_dir\": \"sample_manuscript\",\n  \"domain\": \"fiction\",\n  \"phase\": \"developmental\",\n  \"developmental_round\": 1,\n  \"section_fingerprints\": {\n    \"section_01\": {\n      \"sha256\": \"3e441ea69387d0825df6f6b6a62918bbda0b8fedcd53e3e4485d38316d74620c\",\n      \"words\": 207\n    },\n    \"section_02\": {\n      \"sha256\": \"40026bb31a1420f2e6b85e122ab40c02e932c4692fe31b35f9ad73409a6e6d76\",\n      \"words\": 281\n    }\n  },\n  \"created_at\": \"2026-08-08T22:55:47.125803+00:00\",\n  \"updated_at\": \"2026-08-09T03:23:16.547546+00:00\"\n}\n",
+  "stdout_json": {
+    "manuscript_dir": "sample_manuscript",
+    "domain": "fiction",
+    "phase": "developmental",
+    "developmental_round": 1,
+    "section_fingerprints": {
+      "section_01": {
+        "sha256": "3e441ea69387d0825df6f6b6a62918bbda0b8fedcd53e3e4485d38316d74620c",
+        "words": 207
+      },
+      "section_02": {
+        "sha256": "40026bb31a1420f2e6b85e122ab40c02e932c4692fe31b35f9ad73409a6e6d76",
+        "words": 281
+      }
+    }
+  },
+  "stderr": "",
+  "state_dir_snapshot": {
+    "canon/canon.json": {
+      "entities": {
+        "Selkirk": {
+          "entity_type": "place",
+          "attributes": {
+            "type": [
+              {
+                "value": "harbor town",
+                "section": "section_01",
+                "fact_id": "fact-section_01-001",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ],
+            "founding": [
+              {
+                "value": "founded three hundred years ago by a fleet of refugees fleeing the Ashport wars",
+                "section": "section_02",
+                "fact_id": "fact-section_02-005",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ],
+            "development": [
+              {
+                "value": "grew from a fishing camp into the busiest smuggling port on the western coast",
+                "section": "section_02",
+                "fact_id": "fact-section_02-007",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ]
+          }
+        },
+        "Mira": {
+          "entity_type": "character",
+          "attributes": {
+            "origin": [
+              {
+                "value": "Selkirk",
+                "section": "section_01",
+                "fact_id": "fact-section_01-002",
+                "source": "narration",
+                "confidence": "implied"
+              }
+            ],
+            "eye_color": [
+              {
+                "value": "green",
+                "section": "section_01",
+                "fact_id": "fact-section_01-003",
+                "source": "narration",
+                "confidence": "explicit"
+              },
+              {
+                "value": "blue",
+                "section": "section_02",
+                "fact_id": "fact-section_02-001",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ],
+            "action": [
+              {
+                "value": "stole the ledger",
+                "section": "section_01",
+                "fact_id": "fact-section_01-004",
+                "source": "narration",
+                "confidence": "explicit"
+              },
+              {
+                "value": "hid in a fish stall behind a crate of herring",
+                "section": "section_01",
+                "fact_id": "fact-section_01-009",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ],
+            "emotional_state": [
+              {
+                "value": "scared",
+                "section": "section_01",
+                "fact_id": "fact-section_01-008",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ],
+            "physical_state": [
+              {
+                "value": "heart pounding",
+                "section": "section_01",
+                "fact_id": "fact-section_01-010",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ],
+            "duration_hiding": [
+              {
+                "value": "about an hour",
+                "section": "section_01",
+                "fact_id": "fact-section_01-011",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ],
+            "goal": [
+              {
+                "value": "reach the Gray Gull before it sails",
+                "section": "section_01",
+                "fact_id": "fact-section_01-016",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ],
+            "arrival": [
+              {
+                "value": "reached the docks just as dawn broke over the water",
+                "section": "section_02",
+                "fact_id": "fact-section_02-002",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ],
+            "arrival_status": [
+              {
+                "value": "late",
+                "section": "section_02",
+                "fact_id": "fact-section_02-020",
+                "source": "dialogue",
+                "confidence": "explicit"
+              }
+            ],
+            "reason_for_lateness": [
+              {
+                "value": "complications",
+                "section": "section_02",
+                "fact_id": "fact-section_02-021",
+                "source": "dialogue",
+                "confidence": "explicit"
+              }
+            ],
+            "description": [
+              {
+                "value": "frightened, resourceful young woman",
+                "section": "section_02",
+                "fact_id": "fact-section_02-024",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ]
+          }
+        },
+        "ledger": {
+          "entity_type": "object",
+          "attributes": {
+            "origin": [
+              {
+                "value": "her uncle's shop",
+                "section": "section_01",
+                "fact_id": "fact-section_01-005",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ],
+            "contents": [
+              {
+                "value": "names every smuggler in Selkirk, including her uncle",
+                "section": "section_01",
+                "fact_id": "fact-section_01-012",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ],
+            "value_assessment": [
+              {
+                "value": "worth more than Renne knew",
+                "section": "section_01",
+                "fact_id": "fact-section_01-020",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ]
+          }
+        },
+        "harbor bell": {
+          "entity_type": "object",
+          "attributes": {
+            "action": [
+              {
+                "value": "ringing the alarm",
+                "section": "section_01",
+                "fact_id": "fact-section_01-006",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ]
+          }
+        },
+        "customs office": {
+          "entity_type": "organization",
+          "attributes": {
+            "action": [
+              {
+                "value": "found the ledger",
+                "section": "section_01",
+                "fact_id": "fact-section_01-007",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ],
+            "consequence_if_ledger_obtained": [
+              {
+                "value": "half the harbor would be in chains by morning",
+                "section": "section_01",
+                "fact_id": "fact-section_01-015",
+                "source": "character_thought",
+                "confidence": "implied"
+              }
+            ],
+            "founding": [
+              {
+                "value": "established only forty years ago",
+                "section": "section_02",
+                "fact_id": "fact-section_02-008",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ],
+            "staffing": [
+              {
+                "value": "staffed mostly by officials from the capital who did not understand local customs",
+                "section": "section_02",
+                "fact_id": "fact-section_02-009",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ],
+            "chief_turnover": [
+              {
+                "value": "six different customs chiefs in that time, each more corrupt than the last",
+                "section": "section_02",
+                "fact_id": "fact-section_02-010",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ]
+          }
+        },
+        "Mira's uncle": {
+          "entity_type": "character",
+          "attributes": {
+            "identity": [
+              {
+                "value": "named as a smuggler in the ledger",
+                "section": "section_01",
+                "fact_id": "fact-section_01-013",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ],
+            "owns": [
+              {
+                "value": "a shop",
+                "section": "section_01",
+                "fact_id": "fact-section_01-014",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ],
+            "occupation": [
+              {
+                "value": "ran a smuggling ring",
+                "section": "section_02",
+                "fact_id": "fact-section_02-016",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ],
+            "possession": [
+              {
+                "value": "kept a ledger as insurance in case the Voss family ever came for him directly",
+                "section": "section_02",
+                "fact_id": "fact-section_02-017",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ]
+          }
+        },
+        "Gray Gull": {
+          "entity_type": "object",
+          "attributes": {
+            "type": [
+              {
+                "value": "a ship",
+                "section": "section_01",
+                "fact_id": "fact-section_01-017",
+                "source": "narration",
+                "confidence": "implied"
+              }
+            ],
+            "location": [
+              {
+                "value": "at the docks",
+                "section": "section_02",
+                "fact_id": "fact-section_02-003",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ],
+            "sail_state": [
+              {
+                "value": "sails still furled against the mast",
+                "section": "section_02",
+                "fact_id": "fact-section_02-004",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ]
+          }
+        },
+        "Captain Renne": {
+          "entity_type": "character",
+          "attributes": {
+            "role": [
+              {
+                "value": "captain",
+                "section": "section_01",
+                "fact_id": "fact-section_01-018",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ],
+            "promise": [
+              {
+                "value": "promised Mira passage out, no questions asked, provided she brought something worth the risk",
+                "section": "section_01",
+                "fact_id": "fact-section_01-019",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ]
+          }
+        },
+        "Ashport wars": {
+          "entity_type": "event",
+          "attributes": {
+            "role": [
+              {
+                "value": "caused a fleet of refugees to flee and found Selkirk",
+                "section": "section_02",
+                "fact_id": "fact-section_02-006",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ]
+          }
+        },
+        "Halvard Voss": {
+          "entity_type": "character",
+          "attributes": {
+            "role": [
+              {
+                "value": "current customs chief",
+                "section": "section_02",
+                "fact_id": "fact-section_02-011",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ],
+            "inheritance": [
+              {
+                "value": "inherited his position from his father",
+                "section": "section_02",
+                "fact_id": "fact-section_02-012",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ]
+          }
+        },
+        "Voss family": {
+          "entity_type": "organization",
+          "attributes": {
+            "inheritance": [
+              {
+                "value": "Halvard Voss's father had inherited the customs chief position from an uncle",
+                "section": "section_02",
+                "fact_id": "fact-section_02-013",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ],
+            "control_duration": [
+              {
+                "value": "controlled the customs house for two generations",
+                "section": "section_02",
+                "fact_id": "fact-section_02-014",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ],
+            "corruption": [
+              {
+                "value": "took bribes from every smuggling ring in the harbor except the one Mira's uncle ran",
+                "section": "section_02",
+                "fact_id": "fact-section_02-015",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ]
+          }
+        },
+        "Renne": {
+          "entity_type": "character",
+          "attributes": {
+            "role": [
+              {
+                "value": "captain",
+                "section": "section_02",
+                "fact_id": "fact-section_02-018",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ],
+            "experience": [
+              {
+                "value": "had seen a hundred desperate people come aboard with a hundred desperate stories",
+                "section": "section_02",
+                "fact_id": "fact-section_02-019",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ],
+            "reaction": [
+              {
+                "value": "expression softened, just slightly, while looking at Mira",
+                "section": "section_02",
+                "fact_id": "fact-section_02-022",
+                "source": "narration",
+                "confidence": "explicit"
+              }
+            ],
+            "implied_backstory": [
+              {
+                "value": "seemed to recognize something of herself in Mira",
+                "section": "section_02",
+                "fact_id": "fact-section_02-023",
+                "source": "narration",
+                "confidence": "implied"
+              }
+            ],
+            "instruction": [
+              {
+                "value": "told Mira to get on board",
+                "section": "section_02",
+                "fact_id": "fact-section_02-025",
+                "source": "dialogue",
+                "confidence": "explicit"
+              }
+            ],
+            "payment_arrangement": [
+              {
+                "value": "payment will be discussed once they're clear of the harbor mouth",
+                "section": "section_02",
+                "fact_id": "fact-section_02-026",
+                "source": "dialogue",
+                "confidence": "explicit"
+              }
+            ]
+          }
+        }
+      },
+      "fact_count": 46,
+      "sections_covered": [
+        "section_01",
+        "section_02"
+      ]
+    },
+    "canon/collisions.json": {
+      "collisions": [
+        {
+          "entity": "Mira",
+          "attribute": "action",
+          "distinct_values": [
+            "hid in a fish stall behind a crate of herring",
+            "stole the ledger"
+          ],
+          "facts": [
+            {
+              "id": "fact-section_01-004",
+              "section": "section_01",
+              "value": "stole the ledger",
+              "excerpt": "the customs officers had found the ledger she'd stolen from",
+              "location": "paragraph 2",
+              "source": "narration",
+              "confidence": "explicit"
+            },
+            {
+              "id": "fact-section_01-009",
+              "section": "section_01",
+              "value": "hid in a fish stall behind a crate of herring",
+              "excerpt": "Ducking into a fish stall, Mira crouched behind a crate of herring and",
+              "location": "paragraph 3",
+              "source": "narration",
+              "confidence": "explicit"
+            }
+          ],
+          "all_narration": true,
+          "any_implied": false,
+          "sections_edited_since_snapshot": [],
+          "sections_untouched_since_snapshot": [
+            "section_01"
+          ],
+          "likely_unpropagated_revision": false
+        },
+        {
+          "entity": "Mira",
+          "attribute": "eye_color",
+          "distinct_values": [
+            "blue",
+            "green"
+          ],
+          "facts": [
+            {
+              "id": "fact-section_01-003",
+              "section": "section_01",
+              "value": "green",
+              "excerpt": "her green eyes scanning the alleys",
+              "location": "paragraph 2",
+              "source": "narration",
+              "confidence": "explicit"
+            },
+            {
+              "id": "fact-section_02-001",
+              "section": "section_02",
+              "value": "blue",
+              "excerpt": "Her blue eyes",
+              "location": "paragraph 1",
+              "source": "narration",
+              "confidence": "explicit"
+            }
+          ],
+          "all_narration": true,
+          "any_implied": false,
+          "sections_edited_since_snapshot": [],
+          "sections_untouched_since_snapshot": [
+            "section_01",
+            "section_02"
+          ],
+          "likely_unpropagated_revision": false
+        }
+      ]
+    },
+    "canon/continuity.json": {
+      "contradictions": [
+        {
+          "id": "cont-001",
+          "status": "open",
+          "kind": "contradiction",
+          "category": "character_attribute",
+          "severity": "moderate",
+          "entity": "Mira",
+          "attribute": "eye_color",
+          "fact_ids": [
+            "fact-section_01-003",
+            "fact-section_02-001"
+          ],
+          "note": "Mira's eyes are described as green in section_01 ('her green eyes scanning the alleys', paragraph 2) and as blue in section_02 ('Her blue eyes', paragraph 1). Both are explicit narration, no indication of unreliable narration, disguise, or in-world change; brief does not flag this as deliberate."
+        }
+      ]
+    },
+    "canon/observations/section_01.json": {
+      "section": "section_01",
+      "section_sha256": "3e441ea69387d0825df6f6b6a62918bbda0b8fedcd53e3e4485d38316d74620c",
+      "facts": [
+        {
+          "id": "fact-section_01-001",
+          "entity": "Selkirk",
+          "entity_type": "place",
+          "attribute": "type",
+          "value": "harbor town",
+          "excerpt": "the harbor town of Selkirk",
+          "location": "paragraph 1",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_01-002",
+          "entity": "Mira",
+          "entity_type": "character",
+          "attribute": "origin",
+          "value": "Selkirk",
+          "excerpt": "she would leave the harbor town of Selkirk",
+          "location": "paragraph 1",
+          "source": "narration",
+          "confidence": "implied"
+        },
+        {
+          "id": "fact-section_01-003",
+          "entity": "Mira",
+          "entity_type": "character",
+          "attribute": "eye_color",
+          "value": "green",
+          "excerpt": "her green eyes scanning the alleys",
+          "location": "paragraph 2",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_01-004",
+          "entity": "Mira",
+          "entity_type": "character",
+          "attribute": "action",
+          "value": "stole the ledger",
+          "excerpt": "the customs officers had found the ledger she'd stolen from",
+          "location": "paragraph 2",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_01-005",
+          "entity": "ledger",
+          "entity_type": "object",
+          "attribute": "origin",
+          "value": "her uncle's shop",
+          "excerpt": "her uncle's shop",
+          "location": "paragraph 2",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_01-006",
+          "entity": "harbor bell",
+          "entity_type": "object",
+          "attribute": "action",
+          "value": "ringing the alarm",
+          "excerpt": "the harbor bell was ringing the alarm,",
+          "location": "paragraph 2",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_01-007",
+          "entity": "customs office",
+          "entity_type": "organization",
+          "attribute": "action",
+          "value": "found the ledger",
+          "excerpt": "the customs officers had found the ledger",
+          "location": "paragraph 2",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_01-008",
+          "entity": "Mira",
+          "entity_type": "character",
+          "attribute": "emotional_state",
+          "value": "scared",
+          "excerpt": "She was scared. She was very scared, and she felt fear",
+          "location": "paragraph 2",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_01-009",
+          "entity": "Mira",
+          "entity_type": "character",
+          "attribute": "action",
+          "value": "hid in a fish stall behind a crate of herring",
+          "excerpt": "Ducking into a fish stall, Mira crouched behind a crate of herring and",
+          "location": "paragraph 3",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_01-010",
+          "entity": "Mira",
+          "entity_type": "character",
+          "attribute": "physical_state",
+          "value": "heart pounding",
+          "excerpt": "Her heart was pounding. It was pounding very hard, like a drum,",
+          "location": "paragraph 3",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_01-011",
+          "entity": "Mira",
+          "entity_type": "character",
+          "attribute": "duration_hiding",
+          "value": "about an hour",
+          "excerpt": "for the first time in an hour",
+          "location": "paragraph 4",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_01-012",
+          "entity": "ledger",
+          "entity_type": "object",
+          "attribute": "contents",
+          "value": "names every smuggler in Selkirk, including her uncle",
+          "excerpt": "The ledger named every smuggler in Selkirk, including her uncle.",
+          "location": "paragraph 4",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_01-013",
+          "entity": "Mira's uncle",
+          "entity_type": "character",
+          "attribute": "identity",
+          "value": "named as a smuggler in the ledger",
+          "excerpt": "including her uncle",
+          "location": "paragraph 4",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_01-014",
+          "entity": "Mira's uncle",
+          "entity_type": "character",
+          "attribute": "owns",
+          "value": "a shop",
+          "excerpt": "her uncle's shop",
+          "location": "paragraph 2",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_01-015",
+          "entity": "customs office",
+          "entity_type": "organization",
+          "attribute": "consequence_if_ledger_obtained",
+          "value": "half the harbor would be in chains by morning",
+          "excerpt": "the customs office got hold of it before she did, half the harbor would be",
+          "location": "paragraph 4",
+          "source": "character_thought",
+          "confidence": "implied"
+        },
+        {
+          "id": "fact-section_01-016",
+          "entity": "Mira",
+          "entity_type": "character",
+          "attribute": "goal",
+          "value": "reach the Gray Gull before it sails",
+          "excerpt": "She needed to get to the Gray Gull before it sailed.",
+          "location": "paragraph 5",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_01-017",
+          "entity": "Gray Gull",
+          "entity_type": "object",
+          "attribute": "type",
+          "value": "a ship",
+          "excerpt": "before it sailed",
+          "location": "paragraph 5",
+          "source": "narration",
+          "confidence": "implied"
+        },
+        {
+          "id": "fact-section_01-018",
+          "entity": "Captain Renne",
+          "entity_type": "character",
+          "attribute": "role",
+          "value": "captain",
+          "excerpt": "Captain Renne had",
+          "location": "paragraph 5",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_01-019",
+          "entity": "Captain Renne",
+          "entity_type": "character",
+          "attribute": "promise",
+          "value": "promised Mira passage out, no questions asked, provided she brought something worth the risk",
+          "excerpt": "promised her passage out, no questions asked, provided she brought",
+          "location": "paragraph 5",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_01-020",
+          "entity": "ledger",
+          "entity_type": "object",
+          "attribute": "value_assessment",
+          "value": "worth more than Renne knew",
+          "excerpt": "The ledger was worth more than Renne knew.",
+          "location": "paragraph 5",
+          "source": "narration",
+          "confidence": "explicit"
+        }
+      ]
+    },
+    "canon/observations/section_02.json": {
+      "section": "section_02",
+      "section_sha256": "40026bb31a1420f2e6b85e122ab40c02e932c4692fe31b35f9ad73409a6e6d76",
+      "facts": [
+        {
+          "id": "fact-section_02-001",
+          "entity": "Mira",
+          "entity_type": "character",
+          "attribute": "eye_color",
+          "value": "blue",
+          "excerpt": "Her blue eyes",
+          "location": "paragraph 1",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-002",
+          "entity": "Mira",
+          "entity_type": "character",
+          "attribute": "arrival",
+          "value": "reached the docks just as dawn broke over the water",
+          "excerpt": "Mira reached the docks just as dawn broke over the water.",
+          "location": "paragraph 1",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-003",
+          "entity": "Gray Gull",
+          "entity_type": "object",
+          "attribute": "location",
+          "value": "at the docks",
+          "excerpt": "found the Gray Gull immediately,",
+          "location": "paragraph 1",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-004",
+          "entity": "Gray Gull",
+          "entity_type": "object",
+          "attribute": "sail_state",
+          "value": "sails still furled against the mast",
+          "excerpt": "its sails still furled against the\nmast.",
+          "location": "paragraph 1",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-005",
+          "entity": "Selkirk",
+          "entity_type": "place",
+          "attribute": "founding",
+          "value": "founded three hundred years ago by a fleet of refugees fleeing the Ashport wars",
+          "excerpt": "Selkirk had been founded three hundred years ago by a fleet of\nrefugees fleeing the Ashport wars",
+          "location": "paragraph 2",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-006",
+          "entity": "Ashport wars",
+          "entity_type": "event",
+          "attribute": "role",
+          "value": "caused a fleet of refugees to flee and found Selkirk",
+          "excerpt": "refugees fleeing the Ashport wars",
+          "location": "paragraph 2",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-007",
+          "entity": "Selkirk",
+          "entity_type": "place",
+          "attribute": "development",
+          "value": "grew from a fishing camp into the busiest smuggling port on the western coast",
+          "excerpt": "and over the centuries it had grown\nfrom a fishing camp into the busiest smuggling port on the western coast.",
+          "location": "paragraph 2",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-008",
+          "entity": "customs office",
+          "entity_type": "organization",
+          "attribute": "founding",
+          "value": "established only forty years ago",
+          "excerpt": "The customs office had been established only forty years ago",
+          "location": "paragraph 2",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-009",
+          "entity": "customs office",
+          "entity_type": "organization",
+          "attribute": "staffing",
+          "value": "staffed mostly by officials from the capital who did not understand local customs",
+          "excerpt": "staffed\nmostly by officials from the capital who did not understand local\ncustoms",
+          "location": "paragraph 2",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-010",
+          "entity": "customs office",
+          "entity_type": "organization",
+          "attribute": "chief_turnover",
+          "value": "six different customs chiefs in that time, each more corrupt than the last",
+          "excerpt": "there had been six different customs chiefs in that time,\neach more corrupt than the last",
+          "location": "paragraph 2",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-011",
+          "entity": "Halvard Voss",
+          "entity_type": "character",
+          "attribute": "role",
+          "value": "current customs chief",
+          "excerpt": "the current chief, a man named\nHalvard Voss",
+          "location": "paragraph 2",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-012",
+          "entity": "Halvard Voss",
+          "entity_type": "character",
+          "attribute": "inheritance",
+          "value": "inherited his position from his father",
+          "excerpt": "Halvard Voss, had inherited his position from his father",
+          "location": "paragraph 2",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-013",
+          "entity": "Voss family",
+          "entity_type": "organization",
+          "attribute": "inheritance",
+          "value": "Halvard Voss's father had inherited the customs chief position from an uncle",
+          "excerpt": "who had inherited\nit from an uncle",
+          "location": "paragraph 2",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-014",
+          "entity": "Voss family",
+          "entity_type": "organization",
+          "attribute": "control_duration",
+          "value": "controlled the customs house for two generations",
+          "excerpt": "the Voss family had controlled the customs house for\ntwo generations",
+          "location": "paragraph 2",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-015",
+          "entity": "Voss family",
+          "entity_type": "organization",
+          "attribute": "corruption",
+          "value": "took bribes from every smuggling ring in the harbor except the one Mira's uncle ran",
+          "excerpt": "taking bribes from every smuggling ring in the harbor\nexcept, notably, the one Mira's uncle ran",
+          "location": "paragraph 2",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-016",
+          "entity": "Mira's uncle",
+          "entity_type": "character",
+          "attribute": "occupation",
+          "value": "ran a smuggling ring",
+          "excerpt": "the one Mira's uncle ran",
+          "location": "paragraph 2",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-017",
+          "entity": "Mira's uncle",
+          "entity_type": "character",
+          "attribute": "possession",
+          "value": "kept a ledger as insurance in case the Voss family ever came for him directly",
+          "excerpt": "uncle had kept a ledger in the first place: insurance, in case the Voss\nfamily ever came for him directly.",
+          "location": "paragraph 2",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-018",
+          "entity": "Renne",
+          "entity_type": "character",
+          "attribute": "role",
+          "value": "captain",
+          "excerpt": "Captain Renne was waiting at the gangplank, arms crossed.",
+          "location": "paragraph 3",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-019",
+          "entity": "Renne",
+          "entity_type": "character",
+          "attribute": "experience",
+          "value": "had seen a hundred desperate people come aboard with a hundred desperate stories",
+          "excerpt": "Renne had seen\na hundred desperate people come aboard with a hundred desperate stories,",
+          "location": "paragraph 3",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-020",
+          "entity": "Mira",
+          "entity_type": "character",
+          "attribute": "arrival_status",
+          "value": "late",
+          "excerpt": "\"You're late,\" Renne said.",
+          "location": "paragraph 4",
+          "source": "dialogue",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-021",
+          "entity": "Mira",
+          "entity_type": "character",
+          "attribute": "reason_for_lateness",
+          "value": "complications",
+          "excerpt": "\"I had complications,\" Mira said.",
+          "location": "paragraph 5",
+          "source": "dialogue",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-022",
+          "entity": "Renne",
+          "entity_type": "character",
+          "attribute": "reaction",
+          "value": "expression softened, just slightly, while looking at Mira",
+          "excerpt": "something in her expression\nsoftened, just slightly",
+          "location": "paragraph 6",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-023",
+          "entity": "Renne",
+          "entity_type": "character",
+          "attribute": "implied_backstory",
+          "value": "seemed to recognize something of herself in Mira",
+          "excerpt": "in a way that suggested she recognized something\nof herself in this frightened, resourceful young woman.",
+          "location": "paragraph 6",
+          "source": "narration",
+          "confidence": "implied"
+        },
+        {
+          "id": "fact-section_02-024",
+          "entity": "Mira",
+          "entity_type": "character",
+          "attribute": "description",
+          "value": "frightened, resourceful young woman",
+          "excerpt": "of herself in this frightened, resourceful young woman.",
+          "location": "paragraph 6",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-025",
+          "entity": "Renne",
+          "entity_type": "character",
+          "attribute": "instruction",
+          "value": "told Mira to get on board",
+          "excerpt": "\"Get on board,\" Renne said.",
+          "location": "paragraph 7",
+          "source": "dialogue",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-026",
+          "entity": "Renne",
+          "entity_type": "character",
+          "attribute": "payment_arrangement",
+          "value": "payment will be discussed once they're clear of the harbor mouth",
+          "excerpt": "We'll talk about payment once we're clear of\nthe harbor mouth.",
+          "location": "paragraph 7",
+          "source": "dialogue",
+          "confidence": "explicit"
+        }
+      ]
+    },
+    "findings/developmental.json": {
+      "scope": "Full manuscript (sections 1-2)",
+      "round": 1,
+      "assumptions": [
+        {
+          "assumption": "The brief refers to 'Chapter 1' and 'Chapter 2'; the manuscript files are section_01.txt and section_02.txt. Treated as a 1:1 mapping (section_01 = Chapter 1, section_02 = Chapter 2).",
+          "because": "No other section files exist and the brief's 'known problem areas' and questions describe content that matches section_02 exactly (the history exposition).",
+          "affects": [
+            "dev-001",
+            "dev-002",
+            "dev-003",
+            "dev-004",
+            "dev-005",
+            "dev-006",
+            "dev-007",
+            "dev-008",
+            "dev-009"
+          ]
+        },
+        {
+          "assumption": "The brief states the ending is unwritten and these two sections are the opening only. Findings below assess opening/setup function (hook, motivation legibility, forward pressure) and cannot speak to arc payoff or resolution.",
+          "because": "Brief explicitly scopes this round to the opening; judging unresolved threads as 'unresolved' would misread intent.",
+          "affects": [
+            "dev-003",
+            "dev-004",
+            "dev-007"
+          ]
+        }
+      ],
+      "findings": [
+        {
+          "id": "dev-001",
+          "status": "open",
+          "category": "character_arc",
+          "severity": "major",
+          "location": "Section 2, lines 20-22 and 28-30",
+          "note": "Two sentences hand the reader Renne's interior read, which spends the opacity the brief says is deliberate for Act 1. Line 20-22: \"Renne had seen a hundred desperate people come aboard with a hundred desperate stories, and this one would be no different\" is Renne's own assessment delivered as flat narration, not filtered through Mira's tight-third POV at all. Line 28-30 is softer but still asserts Renne's interior state as fact: \"something in her expression softened... in a way that suggested she recognized something of herself in this frightened, resourceful young woman.\" Both give the reader access to what Renne thinks and feels, which undercuts the intended uncertainty about her motives before it has a chance to build.",
+          "suggestion": "Keep everything strictly as Mira's external observation and inference. E.g. replace the flat narration in lines 20-22 with something Mira could actually perceive (Renne's flat, practiced stare; the way she doesn't react to being asked twice). For lines 28-30, hedge harder or cut the payoff clause -- 'something in her expression shifted, and Mira couldn't read it' preserves the moment without resolving what it means."
+        },
+        {
+          "id": "dev-002",
+          "status": "open",
+          "category": "structure",
+          "severity": "major",
+          "location": "Section 2, lines 5-19",
+          "note": "The history dump (Selkirk's founding, the customs office's 40-year history, the Voss family dynasty) sits in one block and stops the story to explain background at the exact moment Mira reaches the dock. Answering the author's question 3 directly: the material splits into three destinations with different urgency. (1) The uncle's ledger-as-insurance motive ('the whole reason her uncle had kept a ledger in the first place') is load-bearing -- it's the reason the plot object exists -- and belongs early, ideally worked into Mira's hiding beat in Section 1 or into the Renne exchange where payment/danger is being negotiated. (2) The Voss family dynasty belongs at the point Voss (or a Voss deputy) first appears on the page as an active antagonist, not before. (3) Selkirk's founding and the customs office's institutional history are ambient world-building that can be seeded in fragments across later chapters, or cut, without loss to this scene.",
+          "suggestion": "Split the block along the three lines above; move the uncle's-motive fragment earlier, hold Voss for his on-page entrance, and cut or thin the founding/institutional history to a sentence or two seeded elsewhere."
+        },
+        {
+          "id": "dev-003",
+          "status": "open",
+          "category": "structure",
+          "severity": "major",
+          "location": "Section 2, line 5",
+          "note": "The sentence 'Before she could board, she needed to understand everything that had led her here' is the seam where the exposition dump gets attached, and it's a false motivation: Mira doesn't need anything at this moment except to get on the boat. It's the narrator's need to explain, given to the character as a want. This sentence is the most direct thing to point at when relocating the material in dev-002, since removing or replacing it removes the dump's anchor.",
+          "suggestion": "Cut the sentence, or replace it with an actual, in-scene want (e.g. Mira needing Renne to move faster, or needing to decide how much to tell her) so the paragraph break doesn't announce an exposition detour."
+        },
+        {
+          "id": "dev-004",
+          "status": "open",
+          "category": "character_arc",
+          "severity": "major",
+          "location": "Section 1, lines 1-8, 20-22",
+          "note": "Directly answers the author's question 2. The stakes of the ledger (half the harbor in chains) are established before the reader knows why Mira, personally, wants out of Selkirk or what she stands to lose. 'Mira had always known she would leave the harbor town of Selkirk' asserts a longstanding want but gives no grounding for it -- no wound, no specific future she's running toward, no cost to staying. The reader is told what she's doing (running, stealing, seeking passage) well before understanding why she wants it badly enough to risk this. Note: the brief's disorientation-by-design covers the chase opening, not the absence of a personal want underneath it -- the two are separable, and it's the want that's currently missing.",
+          "suggestion": "One line grounding Mira's want in something concrete and personal (not just plot mechanics) would let the chase read as an expression of that want rather than a random emergency. Doesn't need to be exposition -- a single image or thought while she's hiding in the fish stall would do it."
+        },
+        {
+          "id": "dev-005",
+          "status": "open",
+          "category": "stakes",
+          "severity": "moderate",
+          "location": "Section 1, lines 14-18",
+          "note": "The only consequence stated for the ledger falling into customs hands is collective and impersonal: 'half the harbor would be in chains by morning.' The logline names the uncle as a source of personal danger to Mira, but the prose never states what happens to Mira specifically, or what her uncle might do to her, if she's caught or if he catches up with her first. Without a personal stake, the citywide one reads abstract.",
+          "suggestion": "Add a clause naming what customs (or her uncle) does to her specifically if she's caught -- even a single phrase makes the danger personal rather than civic."
+        },
+        {
+          "id": "dev-006",
+          "status": "open",
+          "category": "pacing",
+          "severity": "moderate",
+          "location": "Section 2, lines 24-33",
+          "note": "'You're late' implies a prearranged time the reader was never told existed, so there's no clock the reader can feel ticking. This is the direct answer to the author's question 1: the forward pressure exists in the author's head (a deadline, a schedule) but never lands on the page as something the reader can count down. Compounding it, the alarm bell and active pursuit from Section 1 evaporate with no bridge -- Section 2 opens with Mira simply 'arriving at dawn,' and the boarding itself is frictionless (no lookout, no near-miss, no sense that the chase from Section 1 is still live).",
+          "suggestion": "Either seed the deadline earlier (a specific hour or tide Mira is racing) so 'You're late' pays off a promise already made, or cut the line. Separately, consider one beat bridging the chase to the dock -- a glance over her shoulder, a bell still audible in the distance -- so the urgency established in Section 1 doesn't just stop."
+        },
+        {
+          "id": "dev-007",
+          "status": "open",
+          "category": "plot",
+          "severity": "moderate",
+          "location": "Section 1, line 22; Section 2, lines 20-33",
+          "note": "Section 1 ends on real leverage and danger: 'The ledger was worth more than Renne knew.' That's a planted promise of a coming complication (Renne doesn't know what she's carrying, or what it's worth, or what it will cost her to have it aboard). Section 2 doesn't cash it -- Renne's payment demand is deferred ('We'll talk about payment once we're clear of the harbor mouth'), and nothing in the boarding scene escalates or even references the gap in knowledge the chapter break promised. The chapter-break hook currently deflates instead of building.",
+          "suggestion": "Use the boarding scene to actively cash or extend the promise -- a moment where Mira has to lie about what she's carrying, or where Renne asks a question that shows she suspects there's more to this than a desperate passenger, would carry the hook's tension across the scene break instead of dropping it."
+        },
+        {
+          "id": "dev-008",
+          "status": "open",
+          "category": "deferred_to_line",
+          "severity": "moderate",
+          "location": "Section 1, lines 7-8, 10-12",
+          "note": "Two consecutive beats use the same pattern -- name the emotion, restate it as intensified, then restate it again as physical sensation: 'She was scared. She was very scared, and she felt fear in her chest as she ran.' / 'Her heart was pounding. It was pounding very hard, like a drum, and she could hear it pounding in her ears.' This is a repeated structural pattern (redundant restatement plus naming the emotion directly) rather than an isolated line slip, and rather than the brief's protected choice of short, clipped, fragmentary sentences during action -- these sentences aren't fragments, they're three-beat repetitions of the same information.",
+          "suggestion": "Cut each triplet to a single concrete image or action that implies the emotion without naming it (e.g. cut straight from the pounding heart to what she does next)."
+        },
+        {
+          "id": "dev-009",
+          "status": "open",
+          "category": "deferred_to_line",
+          "severity": "minor",
+          "location": "Section 1, line 4; Section 2, line 1",
+          "note": "Mira's eye color is given as green in Section 1 ('her green eyes scanning the alleys') and blue in Section 2 ('Her blue eyes found the Gray Gull'). Likely a continuity slip rather than an intentional detail.",
+          "suggestion": "Pick one eye color and track it in a canon/continuity reference for future chapters."
+        }
+      ]
+    },
+    "findings/editorial_letter.json": {
+      "summary": "The opening has a real hook and a legitimate craft problem sitting right next to it: Section 2's history dump stops the story cold at the moment it should be accelerating, and two POV leaks let Renne's opacity collapse before the uncertainty around her has a chance to build. Underneath both is a thinner issue -- Mira's want is asserted rather than grounded, so the chase reads as an emergency rather than a choice. None of this is a rewrite; it's relocation, cuts, and a few grounding lines.",
+      "top_priorities": [
+        "[dev-002] History-dump block in Section 2 halts the story at the exact moment Mira reaches the dock; its three components (uncle's motive, Voss dynasty, town history) need three different homes, not one.",
+        "[dev-003] The sentence anchoring that dump ('Before she could board, she needed to understand everything that had led her here') hands the narrator's need to the character as a want -- cut or replace it to remove the dump's anchor point.",
+        "[dev-001] Two lines hand the reader Renne's actual interior read, spending the deliberate opacity the brief protects before it's had a chance to do its work.",
+        "[dev-004] Mira's want is asserted, not grounded -- no wound or personal cost gives the reader a reason to feel the chase as hers rather than a plot mechanic.",
+        "[dev-006] 'You're late' promises a clock the reader was never shown, and the Section 1 pursuit evaporates with no bridge into Section 2's frictionless boarding.",
+        "[dev-007] Section 1's closing hook ('The ledger was worth more than Renne knew') is planted and then not cashed in the boarding scene -- nothing replaces it.",
+        "[dev-005] Stated stakes are civic only ('half the harbor... in chains'); no line names what happens to Mira personally if she's caught."
+      ],
+      "developmental_notes": "Three findings answer the questions you asked directly, and I've kept them at the top for that reason.\n\nWhere the history material should go (dev-002, dev-003): the block doesn't have one problem, it has three, and they don't belong in the same place. The uncle's-ledger-as-insurance motive is load-bearing -- it's the reason the ledger exists as a plot object -- and needs to land early, worked into the Section 1 hiding beat or into the Renne exchange where payment is being negotiated. The Voss family dynasty should wait for Voss (or a deputy) to appear on the page as an active threat; introducing the family before the man does the opposite of what the material is for. Selkirk's founding and the customs office's institutional history are the only genuinely optional part -- seed it in fragments later or cut it. The sentence that currently invites all three onto the page at once, 'Before she could board, she needed to understand everything that had led her here,' is a narrator's need dressed as a character's want. Cut it and the dump loses its excuse to be there.\n\nIs Mira's motivation legible before the stakes are explained (dev-004, dev-005): not yet. You've given the reader what she's doing -- running, stealing, seeking passage -- well before why she wants it badly enough to risk this much. 'Mira had always known she would leave the harbor town of Selkirk' asserts a longstanding want with no wound or specific future underneath it, and the only stated consequence for getting caught ('half the harbor would be in chains by morning') is collective, not personal -- your logline promises the uncle is a danger to Mira specifically, and the prose doesn't say what he, or customs, does to her if he catches up. One concrete image while she's hiding in the fish stall would ground the want; one clause naming the personal cost of capture would make the civic stakes land.\n\nDoes the opening create enough forward pressure (dev-006, dev-007): partially, and it's losing what it has. 'You're late' implies a schedule the reader was never given, so there's no clock to feel ticking -- either seed the deadline earlier so the line pays off a promise, or cut it. Separately, the chase and the alarm bell from Section 1 vanish with no bridge; Section 2 opens at a frictionless dawn boarding that doesn't acknowledge the pursuit was ever live. And the hook you close Section 1 on -- 'The ledger was worth more than Renne knew' -- is a real promise of complication that Section 2 doesn't cash; Renne's payment demand gets deferred instead of used to extend the tension across the chapter break.\n\nOne finding outside your three questions, but worth flagging at the same priority: dev-001 catches two places where Renne's interiority leaks onto the page despite your note that her opacity is deliberate. Line 20-22 states her private assessment of Mira as flat narration, entirely outside Mira's POV. Line 28-30 is softer but still resolves what her expression means rather than leaving it unread. Both spend the uncertainty you're protecting before Act 1 has used it. These aren't a case for developing Renne -- they're POV discipline slips that undercut the choice you've already made.",
+      "line_notes": "Not covered: this is a developmental-phase letter; line editing comes after structure settles."
+    },
+    "findings/line_section_01.json": {
+      "section": "section_01",
+      "findings": [
+        {
+          "id": "line-prose_rhythm-001",
+          "status": "open",
+          "category": "prose_rhythm",
+          "severity": "minor",
+          "location": "para 2",
+          "excerpt": "She was scared. She was very scared",
+          "note": "The repeated 'scared' beats read as filler rather than escalation -- consider varying the second clause to actually intensify."
+        }
+      ]
+    },
+    "state.json": {
+      "manuscript_dir": "sample_manuscript",
+      "domain": "fiction",
+      "phase": "developmental",
+      "developmental_round": 1,
+      "section_fingerprints": {
+        "section_01": {
+          "sha256": "3e441ea69387d0825df6f6b6a62918bbda0b8fedcd53e3e4485d38316d74620c",
+          "words": 207
+        },
+        "section_02": {
+          "sha256": "40026bb31a1420f2e6b85e122ab40c02e932c4692fe31b35f9ad73409a6e6d76",
+          "words": 281
+        }
+      }
+    }
+  }
+}

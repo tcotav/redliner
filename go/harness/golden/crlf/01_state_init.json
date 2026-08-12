@@ -1,0 +1,21 @@
+{
+  "cmd": [
+    "/opt/homebrew/opt/python@3.14/bin/python3.14",
+    "/Volumes/T7/code/ideas/redliner/bin/redliner_state.py",
+    "init",
+    "/Volumes/T7/code/ideas/redliner/go/harness/.work/crlf"
+  ],
+  "exit_code": 0,
+  "stdout": "Initialized /Volumes/T7/code/ideas/redliner/go/harness/.work/crlf/.redliner/state.json (domain: fiction, phase: intake)\n",
+  "stdout_json": null,
+  "stderr": "",
+  "state_dir_snapshot": {
+    "state.json": {
+      "manuscript_dir": "/Volumes/T7/code/ideas/redliner/go/harness/.work/crlf",
+      "domain": "fiction",
+      "phase": "intake",
+      "developmental_round": 0,
+      "section_fingerprints": {}
+    }
+  }
+}

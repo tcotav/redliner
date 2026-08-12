@@ -1,0 +1,192 @@
+package cli
+
+import (
+	"fmt"
+	"io"
+	"os"
+	"strings"
+
+	"github.com/tcotav/redliner/go/internal/schemas"
+)
+
+const stateUsage = `Usage:
+  redliner state init <manuscript_dir> [domain]   # domain defaults to "fiction"
+  redliner state status   <manuscript_dir>
+  redliner state diff     <manuscript_dir>
+  redliner state snapshot <manuscript_dir>            # record current text as assessed
+  redliner state phase    <manuscript_dir> <phase>`
+
+// RunState mirrors redliner_state.py's main(), reshaped for the
+// `redliner state <subcommand> <dir> ...` argv layout decided in
+// TODO.md's "v1 plan" (one binary, subcommands, not four script-name
+// symlinks).
+func RunState(args []string, stdout io.Writer) int {
+	if len(args) < 2 {
+		fmt.Fprintln(stdout, stateUsage)
+		return 1
+	}
+	command, manuscriptDir := args[0], args[1]
+	info, err := os.Stat(manuscriptDir)
+	if err != nil || !info.IsDir() {
+		fmt.Fprintf(stdout, "No such directory: %s\n", manuscriptDir)
+		return 1
+	}
+
+	switch command {
+	case "init":
+		domain := schemas.DefaultDomain
+		if len(args) > 2 {
+			domain = args[2]
+		}
+		return cmdStateInit(manuscriptDir, domain, stdout)
+	case "status":
+		return cmdStateStatus(manuscriptDir, stdout)
+	case "diff":
+		return cmdStateDiff(manuscriptDir, stdout)
+	case "snapshot":
+		return cmdStateSnapshot(manuscriptDir, stdout)
+	case "phase":
+		if len(args) < 3 {
+			fmt.Fprintln(stdout, "phase requires a target phase")
+			return 1
+		}
+		return cmdStatePhase(manuscriptDir, args[2], stdout)
+	default:
+		fmt.Fprintf(stdout, "Unknown command %s\n", pyReprStr(command))
+		fmt.Fprintln(stdout, stateUsage)
+		return 1
+	}
+}
+
+// requireState prints the "no state yet" message and returns ok=false
+// if none exists -- mirrors redliner_state.py's _require_state. The
+// message itself names the new `redliner state init` invocation, not
+// the old `redliner_state.py init` -- an intentional, documented
+// divergence from Python's exact text since the CLI surface changed;
+// see go/harness/README.md's note on the CLI-shape decision.
+func requireState(manuscriptDir string, stdout io.Writer) (*schemas.State, bool) {
+	state, err := schemas.LoadState(manuscriptDir)
+	if err != nil {
+		fmt.Fprintf(stdout, "Error reading state: %v\n", err)
+		return nil, false
+	}
+	if state == nil {
+		fmt.Fprintf(stdout, "No redliner state in %s. Run: redliner state init %s\n", manuscriptDir, manuscriptDir)
+		return nil, false
+	}
+	return state, true
+}
+
+func reportSectionError(err error, stdout io.Writer) int {
+	if _, ok := err.(*schemas.SectionCollisionError); ok {
+		fmt.Fprintf(stdout, "Section file error: %s\n", err.Error())
+		return 1
+	}
+	fmt.Fprintf(stdout, "Error: %v\n", err)
+	return 1
+}
+
+func cmdStateInit(manuscriptDir, domain string, stdout io.Writer) int {
+	if existing, err := schemas.LoadState(manuscriptDir); err == nil && existing != nil {
+		fmt.Fprintf(stdout, "State already exists at %s\n", schemas.StatePath(manuscriptDir))
+		return 1
+	}
+
+	domainsDir, err := schemas.FindDomainsDir()
+	if err != nil {
+		fmt.Fprintf(stdout, "Domain config error: %v\n", err)
+		return 1
+	}
+	// Fail fast on a typo'd/missing domain, not at first use -- mirrors
+	// cmd_init's load_domain() call whose only purpose is this check.
+	if _, err := schemas.LoadDomain(domainsDir, domain); err != nil {
+		fmt.Fprintf(stdout, "Domain config error: %v\n", err)
+		return 1
+	}
+
+	state := schemas.NewState(manuscriptDir, domain)
+	path, err := schemas.SaveState(manuscriptDir, state)
+	if err != nil {
+		fmt.Fprintf(stdout, "Error saving state: %v\n", err)
+		return 1
+	}
+	fmt.Fprintf(stdout, "Initialized %s (domain: %s, phase: intake)\n", path, domain)
+	return 0
+}
+
+func cmdStateStatus(manuscriptDir string, stdout io.Writer) int {
+	state, ok := requireState(manuscriptDir, stdout)
+	if !ok {
+		return 1
+	}
+	return printJSON(stdout, state)
+}
+
+func cmdStateDiff(manuscriptDir string, stdout io.Writer) int {
+	state, ok := requireState(manuscriptDir, stdout)
+	if !ok {
+		return 1
+	}
+	diff, err := schemas.DiffManuscript(manuscriptDir, state)
+	if err != nil {
+		return reportSectionError(err, stdout)
+	}
+	return printJSON(stdout, diff)
+}
+
+func cmdStateSnapshot(manuscriptDir string, stdout io.Writer) int {
+	state, ok := requireState(manuscriptDir, stdout)
+	if !ok {
+		return 1
+	}
+	fingerprints, err := schemas.FingerprintManuscript(manuscriptDir)
+	if err != nil {
+		return reportSectionError(err, stdout)
+	}
+	state.SectionFingerprints = fingerprints
+	if _, err := schemas.SaveState(manuscriptDir, state); err != nil {
+		fmt.Fprintf(stdout, "Error saving state: %v\n", err)
+		return 1
+	}
+	fmt.Fprintf(stdout, "Snapshotted %d sections as assessed.\n", len(fingerprints))
+	return 0
+}
+
+func cmdStatePhase(manuscriptDir, phase string, stdout io.Writer) int {
+	if !schemas.IsValidPhase(phase) {
+		fmt.Fprintf(stdout, "Unknown phase %s. Must be one of: %s\n", pyReprStr(phase), strings.Join(schemas.Phases, ", "))
+		return 1
+	}
+	state, ok := requireState(manuscriptDir, stdout)
+	if !ok {
+		return 1
+	}
+
+	domainsDir, err := schemas.FindDomainsDir()
+	if err != nil {
+		fmt.Fprintf(stdout, "Domain config error: %v\n", err)
+		return 1
+	}
+	domain, err := schemas.LoadDomain(domainsDir, state.DomainName())
+	if err != nil {
+		fmt.Fprintf(stdout, "Domain config error: %v\n", err)
+		return 1
+	}
+	roundTrackedPhase := domain.RoundTrackedPhase()
+
+	previous := state.Phase
+	state.Phase = phase
+	// Entering the domain's round-tracked phase (fiction: "developmental")
+	// from anywhere else starts a new round -- mirrors cmd_phase exactly,
+	// including reading the phase name from domain config rather than a
+	// hardcoded string.
+	if phase == roundTrackedPhase && previous != roundTrackedPhase {
+		state.DevelopmentalRound++
+	}
+	if _, err := schemas.SaveState(manuscriptDir, state); err != nil {
+		fmt.Fprintf(stdout, "Error saving state: %v\n", err)
+		return 1
+	}
+	fmt.Fprintf(stdout, "Phase: %s -> %s (developmental_round: %d)\n", previous, phase, state.DevelopmentalRound)
+	return 0
+}

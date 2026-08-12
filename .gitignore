@@ -13,3 +13,13 @@ venv/
 # so this matches under any manuscript directory, not just the repo root.
 **/.redliner/findings/
 **/.redliner/canon/
+
+# cowork/redliner is downloaded by cowork/hooks/bootstrap-redliner-binary.sh
+# (a SessionStart hook) -- never source, always regenerable from the
+# matching GitHub Release. bin/redliner is NOT listed here: the CLI
+# plugin's own SessionStart download hook proved unreliable (see
+# TODO.md's "genuinely unresolved reliability problem" -- ~1/7 success
+# rate across clean install cycles), so bin/redliner is committed
+# directly instead, same as before the download-hook mechanism existed.
+/cowork/redliner
+/cowork/redliner.version

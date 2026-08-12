@@ -1,0 +1,27 @@
+{
+  "cmd": [
+    "/opt/homebrew/opt/python@3.14/bin/python3.14",
+    "/Volumes/T7/code/ideas/redliner/bin/redliner_state.py",
+    "status",
+    "/Volumes/T7/code/ideas/redliner/go/harness/.work/crlf"
+  ],
+  "exit_code": 0,
+  "stdout": "{\n  \"manuscript_dir\": \"/Volumes/T7/code/ideas/redliner/go/harness/.work/crlf\",\n  \"domain\": \"fiction\",\n  \"phase\": \"intake\",\n  \"developmental_round\": 0,\n  \"section_fingerprints\": {},\n  \"created_at\": \"2026-08-11T21:43:11.124032+00:00\",\n  \"updated_at\": \"2026-08-11T21:43:11.124235+00:00\"\n}\n",
+  "stdout_json": {
+    "manuscript_dir": "/Volumes/T7/code/ideas/redliner/go/harness/.work/crlf",
+    "domain": "fiction",
+    "phase": "intake",
+    "developmental_round": 0,
+    "section_fingerprints": {}
+  },
+  "stderr": "",
+  "state_dir_snapshot": {
+    "state.json": {
+      "manuscript_dir": "/Volumes/T7/code/ideas/redliner/go/harness/.work/crlf",
+      "domain": "fiction",
+      "phase": "intake",
+      "developmental_round": 0,
+      "section_fingerprints": {}
+    }
+  }
+}

@@ -7,8 +7,8 @@
   },
   "mcpServers": {
     "redliner": {
-      "command": "${CLAUDE_PLUGIN_DATA}/venv/bin/python3",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp_server.py"]
+      "command": "${CLAUDE_PLUGIN_DATA}/bin/redliner",
+      "args": ["mcp"]
     }
   }
 }

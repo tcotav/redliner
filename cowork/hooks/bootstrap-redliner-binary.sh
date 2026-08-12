@@ -1,0 +1,1 @@
+../../hooks/bootstrap-redliner-binary.sh
