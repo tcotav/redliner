@@ -392,8 +392,8 @@ count, so expect a full manuscript to take considerably longer.
 long pass starts, and reports each step as it completes, so a long
 silent stretch is distinguishable from a hang.
 
-That run also spent ~45K output tokens across 113 API calls, with prompt
-caching accounting for a ~74% reduction in token cost. `TODO.md` has the
+That run also spent ~39K output tokens across 53 API calls, with prompt
+caching accounting for a ~71% reduction in token cost. `TODO.md` has the
 per-step breakdown. Note the agents specify `model: inherit`, so passes
 run on whatever model your session uses — that choice affects cost more
 than anything else, and on a Pro/Max subscription usage draws against

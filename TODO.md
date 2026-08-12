@@ -1373,8 +1373,16 @@ minutes. Nothing anywhere sets that expectation.
 **Token cost of that same run, from the session transcripts.** Claude
 Code writes per-message `usage` into `~/.claude/projects/<cwd>/<session>.jsonl`,
 with one `subagents/agent-*.jsonl` per Task call — so a run can be costed
-exactly, per step, after the fact. For this run: **113 API calls,
-45,347 output tokens, 241,744 cache-write, 2,516,921 cache-read.**
+exactly, per step, after the fact. For this run: **53 API calls,
+39,009 output tokens, 112,617 cache-write, 1,293,469 cache-read.**
+
+> **Dedupe by `message.id` before summing `usage`.** An assistant message
+> is written to the JSONL **once per content block** — same `message.id`
+> and `requestId`, different `uuid`. Summing every usage-bearing record
+> double-counts: this run has 33 such records in the main session but
+> only **18 distinct API calls** (one message repeated up to 4×). The
+> first pass at these numbers made exactly that mistake and overstated
+> the run by ~68%.
 
 > ⚠️ **Any dollar figure here is an estimate, not a bill.** The *token
 > counts* are measured; the money is those tokens valued at published
@@ -1388,25 +1396,25 @@ exactly, per step, after the fact. For this run: **113 API calls,
 > indicative.
 
 At `claude-opus-5` rates ($5/M in, $25/M out, cache write 1.25×, cache
-read 0.1×) the run values at **~$3.91**, split:
+read 0.1×) the run values at **~$2.33**, split:
 
 | step | calls | cost |
 | --- | ---: | ---: |
-| coordinator (main session) | 33 | $1.64 |
-| developmental editor | 17 | $0.47 |
-| continuity extractor ×3 | 31 | $1.03 |
-| continuity adjudicator | 11 | $0.22 |
-| editorial aggregator | 21 | $0.55 |
+| coordinator (main session) | 18 | $0.81 |
+| developmental editor | 6 | $0.26 |
+| continuity extractor ×3 | 14 | $0.75 |
+| continuity adjudicator | 5 | $0.13 |
+| editorial aggregator | 10 | $0.38 |
 
 **Three findings that hold regardless of anyone's billing
 arrangement:**
 
 1. **Prompt caching is doing most of the work.** The identical run
-   without caching values at **$14.93** — caching accounts for a **74%**
+   without caching values at **$8.01** — caching accounts for a **71%**
    reduction. Anything that invalidates the cached prefix (reordering
    the agent prompt, injecting a timestamp) would cost roughly 4× more,
    silently.
-2. **The coordinator is the single largest line item at 42%** — more
+2. **The coordinator is the single largest line item at 35%** — more
    than the developmental editor and aggregator combined. That is
    *orchestration overhead*, not editorial work: 33 calls re-reading an
    accumulating session context. It is the obvious optimization target
@@ -1415,10 +1423,10 @@ arrangement:**
    that scales cleanly.** The developmental read, aggregator, and
    coordinator all scale with *total* manuscript length, and the
    coordinator's context grows as the run proceeds — so it scales worse
-   than linearly. A 40-chapter novel is ~$14 in extractors alone, plus
+   than linearly. A 40-chapter novel is ~$10 in extractors alone, plus
    whole-manuscript passes on top. **Do not extrapolate the total from
    this fixture** — 750 words is far too small to model context growth
-   honestly; measure a real manuscript instead.
+   honestly; measure a real manuscript instead. (~$0.25/section measured.)
 
 **Model choice is the biggest single lever, and redliner deliberately
 does not pull it.** All fifteen agent files specify `model: inherit`, so
