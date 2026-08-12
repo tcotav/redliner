@@ -14,12 +14,14 @@ venv/
 **/.redliner/findings/
 **/.redliner/canon/
 
-# cowork/redliner is downloaded by cowork/hooks/bootstrap-redliner-binary.sh
-# (a SessionStart hook) -- never source, always regenerable from the
-# matching GitHub Release. bin/redliner is NOT listed here: the CLI
-# plugin's own SessionStart download hook proved unreliable (see
-# TODO.md's "genuinely unresolved reliability problem" -- ~1/7 success
-# rate across clean install cycles), so bin/redliner is committed
-# directly instead, same as before the download-hook mechanism existed.
+# Both binaries are downloaded by the plugins' SessionStart bootstrap
+# hooks -- never source, always regenerable from the matching GitHub
+# Release. bin/redliner was briefly committed on 2026-08-12 as a fallback
+# for a suspected hook-reliability problem; that suspicion is now believed
+# to have been a measurement artifact (see TODO.md's "Validating the
+# release-repo plan"), and un-committing it takes the repo tip from 9.7MB
+# back to 1.3MB.
+/bin/redliner
+/bin/redliner.version
 /cowork/redliner
 /cowork/redliner.version
