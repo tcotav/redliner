@@ -718,6 +718,11 @@ follow-up above; reverting the GitHub default branch back to `main`
 once `go-port-v1` testing is done; and — separately — actually merging
 `go-port-v1`, which hasn't happened yet.
 
+*(Update, 2026-08-12: the release-automation follow-up is done — see the
+section below. The default branch is back on `main`, done manually
+outside this repo's history, confirmed via the GitHub API. Merging
+`go-port-v1` is still outstanding.)*
+
 **Release automation + download hooks, done, 2026-08-12** (the item
 right above, now built): `.github/workflows/release-go-binaries.yml`
 cross-compiles `go/cmd/redliner` on `ubuntu-latest` (Go doesn't need a
