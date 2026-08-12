@@ -979,6 +979,17 @@ does move the number.
 
 ## Release repo + publish workflow (sketched 2026-08-12, NOT built)
 
+> **DOWNGRADED the same day, before any of it was built — read
+> "Validating the release-repo plan" below first.** Measuring the thing
+> this plan was justified by showed the binary alone accounts for
+> essentially all of the install cost: repo tip is **9.7MB with the
+> committed binary, 1.3MB without it**. A release repo saves only
+> ~0.9MB *beyond* simply not committing the binary, which does not
+> justify a content-mirroring CI pipeline and a second repo to keep in
+> sync. Keep this section for the mechanics (the `cp -rL` symlink trap
+> and the validation gate are still correct and still worth reusing),
+> but **do not build it as the next step.**
+
 The lever that actually reduces install cost, per the measurements
 above. Sketched in enough detail to pick up cold; nothing here is
 implemented yet.
@@ -1074,6 +1085,85 @@ README and in each generated `plugin.json`). Existing users' marketplace
 URL changes, so migration needs a note in the README. And Cowork's
 "only reads a repo's default branch" constraint still applies to the
 release repo, so its default branch must be the one publishes land on.
+
+## Validating the release-repo plan (2026-08-12) — it didn't survive
+
+The plan above was written, then stress-tested before building anything.
+Most of its *mechanics* held up; its *justification* did not. Recorded in
+full because the wrong version is the intuitive one and will otherwise
+get re-derived.
+
+**What held up:**
+
+- Staging the release tree with `cp -rL` works: the staged two-plugin
+  tree is **376K**, and `find -type l` over it returns nothing, so
+  Cowork's symlinks do get dereferenced into real files as required.
+- `git-subdir` plugin sources persist as **content only** — installing
+  `airtable@claude-plugins-official` (a `git-subdir` entry) produced a
+  500K content directory with no `.git` anywhere, and left no clone of
+  the upstream repo behind. Whether the *transient* fetch pulls the whole
+  repo was not determined (the test repo was only 178K — too small to
+  discriminate); don't claim either way.
+
+**What killed the plan — one measurement.** `git archive` of the tip
+with and without the committed binary:
+
+| repo tip | size |
+| --- | --- |
+| current `HEAD` (binary committed) | **9.7MB** |
+| `0ce8548` (before the binary) | **1.3MB** |
+
+So the binary *is* the install-cost problem, essentially in full.
+Dropping it makes the whole repo small enough that **no restructuring
+and no second repo are needed at all** — a plain shallow clone would be
+~2MB. The release repo's remaining advantage over "just don't commit the
+binary" is ~0.9MB, against the cost of a mirroring pipeline, a second
+repo that must be treated as generated, and a marketplace-URL migration
+for existing users. Not worth it. This was an over-engineered answer
+reached by anchoring on the 14MB figure without first asking how much of
+it was one file.
+
+**Which puts the whole question downstream of a single decision:** is
+the binary committed, or downloaded by the hook? Everything else was
+architecture astronomy on top of that.
+
+**And the reason the binary is committed is now itself in doubt.** The
+`SessionStart` hook's alleged ~1/7 CLI success rate was the sole
+justification. Three findings from the same day undercut it:
+
+1. **`bin/` does *not* need to exist at plugin load for PATH to work** —
+   the leading alternative root cause, and it's false. Tested directly
+   with a throwaway plugin (`pathtest`) shipping **no `bin/` directory**
+   and a `SessionStart` hook that creates `bin/pathtool` at startup: in
+   that *same* session, `command -v pathtool` resolved to the
+   hook-created file. PATH is not frozen at load time. The docs are
+   silent on this, so it had to be tested, not looked up.
+2. **No documented plugin-size limit** affects plugin load or hook
+   execution (checked against the official plugins/hooks reference), and
+   the default command-hook timeout is **600 seconds** — far too generous
+   for "plugin content scanning pushed the hook past a deadline" to be
+   plausible. The size hypothesis is now very weak, independent of the
+   inconclusive lean-vs-full test.
+3. **The CLI hook succeeded 3/3 once measured at the right path.** The
+   earlier 0/6 and 0/3 results were an artifact of checking the
+   `~/.claude/plugins/cache/...` copy, while a local-directory
+   marketplace actually resolves `${CLAUDE_PLUGIN_ROOT}` to the live
+   source directory.
+
+**Leading hypothesis now: the original ~1/7 was a measurement artifact**
+of exactly the same kind as #3 — checking the cache copy while the
+binary was landing in the source tree. Not proven; the original
+conditions (real GitHub-hosted marketplace, repeated clean installs)
+have never been re-run, and that's the *only* test that settles it.
+
+**So the actual next step is small, not architectural:**
+restore the CLI plugin's `hooks/` (deleted earlier the same day),
+un-commit `bin/redliner`, and verify with **real GitHub-hosted
+marketplace install cycles** — the one condition never properly tested.
+If the hook holds up there, the repo tip drops to ~1.3MB, the binary
+leaves the tree, and the release repo, the `plugins/` restructure, and
+the history rewrite are all moot. If it genuinely fails there, *then*
+revisit — with a real failure to diagnose rather than a suspected one.
 
 ## Obsidian vault integration
 
