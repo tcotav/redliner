@@ -70,6 +70,57 @@ Check the manuscript's current state. If there's no state, or no
 `.redliner/brief.md`, stop and tell the author to run `/redliner:intake`
 first — every pass depends on the brief.
 
+## Say what's about to happen, before starting a long pass
+
+Applies to `assess`, `recheck`, `line`, and `continuity` — the
+subcommands that Task subagents. **Not** `status`, `work`, or `resolve`,
+which are fast; announcing those is just noise.
+
+These passes take **minutes to hours**, and almost all of it is spent
+inside subagents with no output. The author sees a ticking timer and a
+token count, which says *something is happening* but not *how long this
+should take* or *how far along it is*. Without that, a normal eight-minute
+stretch is indistinguishable from a hang — this caught out the tool's own
+author, so assume it will catch out a novelist.
+
+Before step 1, tell them, briefly:
+
+- **The steps this pass will run**, counted for this manuscript — e.g.
+  for `assess` on 12 sections: "one developmental read of the whole
+  manuscript, continuity extraction on 12 sections, then reconcile,
+  adjudication if collisions are found, and the editorial letter."
+- **A rough duration**, computed from the real section count.
+- **That long silent stretches are expected**, and that the timer
+  ticking means it's alive.
+
+**Estimating.** `assess` runs roughly **N + 3** model steps for N
+sections (one whole-manuscript developmental read, N continuity
+extractions, adjudication only if a collision is found, one letter).
+`line` is about **N + 1**; standalone `continuity` about **N + 1**;
+`recheck` varies with how much changed, and is usually smaller.
+
+Budget **~2–3 minutes per step** as a rough figure. Say it as a range,
+never a countdown — and be honest that it's an estimate. Its basis is a
+single measurement: **~13 minutes for 3 short sections (~250 words
+each)**, so longer sections run longer and a full manuscript is
+comfortably into hours. Don't present that number as more precise than
+it is, and don't re-derive a smaller number to sound better.
+
+If the estimate exceeds roughly half an hour, say so plainly and offer
+the alternative — a `continuity`-only pass, or assessing a subset — so
+the author can choose rather than discovering the cost at minute forty.
+
+**Then report each step as it finishes**, in one short line naming the
+step and its position — "developmental read done (1/6); extracting
+continuity facts from section_01 (2/6)". You are the coordinator
+between Task calls, so this costs nothing and needs no status-line
+configuration: it is simply text emitted between steps, and it turns an
+opaque wait into visible progress.
+
+Keep it to one line per step. Don't summarize findings mid-pass — the
+letter does that at the end, and a running commentary of findings
+invites the author to start reacting to a half-finished picture.
+
 ## `/redliner:run assess`
 
 1. Move the manuscript to the developmental phase (this increments the

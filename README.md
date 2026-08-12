@@ -387,9 +387,10 @@ extractions name the same thing differently (`tide clock` vs `the tide
 clock`) — which is written up in `TODO.md` and **not yet fixed**.
 
 **That run took ~13.5 minutes for ~750 words**, and scales with section
-count, so expect a full manuscript to take considerably longer. There is
-currently no progress indicator beyond Claude Code's own subagent panel;
-see `TODO.md` for what's planned.
+count, so expect a full manuscript to take considerably longer.
+`/redliner:run` now states the step list and a rough duration before any
+long pass starts, and reports each step as it completes, so a long
+silent stretch is distinguishable from a hang.
 
 **The Go port is done and merged.** Every deterministic operation —
 both front doors, CLI and MCP — is one statically-linked binary with no

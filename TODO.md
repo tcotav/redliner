@@ -1375,13 +1375,22 @@ own run, could not tell whether it had hung. Two things are true at once:
 
 - Much of that was a **testing artifact** — the run was driven with
   `claude -p`, which has no TUI and buffers all output until exit.
-  Interactive Claude Code shows an agent panel below the prompt with a
-  live row per subagent (default body `name · description · token
-  count`). **This has not yet been confirmed by an interactive re-run**,
-  and should be before building anything.
-- But the default row is a token counter. It does not say "step 3 of 5"
-  or how long this has been going, and a number ticking upward for two
-  hours does not answer "is it stuck?" for a novelist.
+- **Confirmed by an interactive re-run, and it works differently than
+  first written here.** redliner's subagents run in the **foreground**,
+  so they do *not* appear as rows in the background-agent panel. They
+  render inline as a labelled tool-call tree — `redliner:fiction-
+  developmental-editor(Developmental pass round 1)` with its `Read(...)`
+  calls nested underneath — above the main spinner, which shows elapsed
+  time and streaming token count (`1m 32s · ↓ 2.1k tokens`). That is
+  more informative than the panel row this section originally predicted:
+  you can see *which* subagent is running and *what it is doing*.
+  Corrected rather than deleted, because the original claim was wrong in
+  a way worth not repeating: `subagentStatusLine` and the agent panel
+  govern **background** subagents, which is not how this tool runs.
+- **What's genuinely missing is scale, not liveness.** The timer proves
+  something is happening; it can't say how long the pass *should* take,
+  or how far through it you are. At minute eight of thirteen, a ticking
+  clock and "is it stuck?" look identical.
 
 **Options, researched against Claude Code's docs, none implemented:**
 
@@ -1404,11 +1413,28 @@ own run, could not tell whether it had hung. Two things are true at once:
 - Status lines require **workspace trust** and render nothing, silently,
   without it — so this can't be the only signal.
 
-**Cheapest fix, independent of all of the above, and probably first:**
-have `/redliner:run` state the expected duration before it starts, now
-that there's a measured number to quote. Prose, ships immediately, and
-works in the trust-disabled and headless cases where no status line
-renders at all.
+**Cheapest fix — DONE 2026-08-12, and it made the status line
+unnecessary for now.** `skills/run/SKILL.md` gained a "Say what's about
+to happen, before starting a long pass" section: before any subagent-
+Tasking subcommand (`assess`/`recheck`/`line`/`continuity`, explicitly
+not the fast ones), state the step list counted for *this* manuscript,
+a rough duration computed from the real section count, and that silent
+stretches are expected. Estimation guidance is **N + 3** model steps for
+`assess` (N + 1 for `line`/`continuity`), budgeted at ~2–3 minutes each,
+stated as a range and explicitly flagged as extrapolated from a single
+measurement on short sections.
+
+It also tells the coordinator to **report each step as it completes**
+("developmental read done (1/6)"). That is the piece that actually
+answers "how far along is this", and it needs no `subagentStatusLine`,
+no hook, no `refreshInterval`, and no workspace trust — the coordinator
+is already sitting between the Task calls, so it is just text.
+
+**So the status-line work above is deferred, not planned.** Revisit only
+if the prose proves insufficient in real use. Building it first would
+have meant shipping the fragile mechanism (trust-gated, silently
+degrading, stale without `refreshInterval`) to solve a problem that
+plain text solves.
 
 ## Obsidian vault integration
 
