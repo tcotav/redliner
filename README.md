@@ -212,6 +212,9 @@ redliner/                          (plugin root)
 ├── hooks/
 │   ├── hooks.json                SessionStart: fetches bin/redliner
 │   └── bootstrap-redliner-binary.sh   verifies checksum, refuses on mismatch
+├── sample_manuscript/            two-section fixture with seeded issues
+├── .github/workflows/            release-go-binaries.yml — cross-compiles
+│                                 and publishes what the hooks download
 ├── go/                           the implementation
 │   ├── cmd/redliner/             CLI + `redliner mcp` (both front doors, one binary)
 │   ├── internal/schemas/         state, domain loading, validators
@@ -349,7 +352,7 @@ A few things worth knowing if you're debugging or extending this:
 
 Claude Code plugin-root `settings.json` only honors the `agent` and
 `subagentStatusLine` keys — not permission rules. So the allowlist that
-stops `bin/`'s scripts from triggering a permission prompt on every call
+stops `bin/redliner` from triggering a permission prompt on every call
 can't ship inside the plugin. Add this to your own project or user
 `settings.json` if you want that:
 
@@ -377,19 +380,42 @@ Not yet done: a full `/redliner:intake` → `/redliner:run assess` pass
 through the real Task-orchestrated pipeline, start to finish, on a fresh
 manuscript.
 
-**Cowork support (see "Setup" above) is done, v0/Python.** A second
-plugin variant (`redliner-cowork`) exposes the same 10 deterministic
-operations as MCP tools instead of `bin/`-on-PATH, which Cowork's
-content policy otherwise rejects outright. Verified for real, not just
-locally: after installing `redliner-cowork` in actual Cowork and one
-restart (a known first-load rough edge — see `TODO.md`), a real tool
-call answered correctly. One shared set of skill/agent files, phrased by
-intent, drives either the CLI or MCP variant — proven by a live spike
-before committing to that design, not assumed. See `TODO.md`'s "Cowork
-support via an MCP server variant" section for the two real bugs this
-build caught (a path-traversal import bug only a real install-cycle
-test surfaced, and a dependency-bootstrap gap) and the known first-use
-restart caveat.
+**The Go port is done and merged.** Every deterministic operation —
+both front doors, CLI and MCP — is one statically-linked binary with no
+runtime dependencies, replacing the original Python. It was ported
+against a differential harness built *before* any Go existed: 23
+captured operation sequences across four fixtures, diffed against the
+real Python implementation rather than against a read-through of the
+ported code. That Python is kept, frozen, at
+`go/harness/python-baseline/` as the oracle those baselines are captured
+from. `go test ./...` covers the CLI, the MCP server, and the schema
+layer against those goldens.
+
+Distribution is download-on-install: `.github/workflows/release-go-binaries.yml`
+cross-compiles on a tag push and attaches the binary plus `checksums.txt`
+to a GitHub Release, and each plugin's `SessionStart` hook fetches the
+asset matching its own `plugin.json` version, verifying the checksum and
+refusing to install on mismatch. No binary is committed to this repo.
+
+**Cowork support (see "Setup" above) is done.** A second plugin variant
+(`redliner-cowork`) exposes the same 10 deterministic operations as MCP
+tools instead of `bin/`-on-PATH, which Cowork's content policy otherwise
+rejects outright. Verified for real, not just locally: installed in
+actual Cowork, a real tool call answered correctly. One shared set of
+skill/agent files, phrased by intent, drives either the CLI or MCP
+variant — proven by a live spike before committing to that design, not
+assumed. See `TODO.md`'s "Cowork support via an MCP server variant"
+section for the two real bugs that build caught (a path-traversal import
+bug only a real install-cycle test surfaced, and a dependency-bootstrap
+gap).
+
+An earlier caveat here — that first use might need one MCP server
+restart — is **gone with the venv it came from**. Verified 2026-08-12
+across seven clean uninstall → reinstall → session cycles from a real
+GitHub-hosted marketplace: both plugins' hooks fetched their binary 7/7,
+and the Cowork MCP server reported connected with no restart. `TODO.md`
+records why the reliability problem this replaced turned out to be a
+measurement artifact rather than a real bug.
 
 **Domain generalization (see "Domains" above) is done.** The engine
 loads category vocabulary from `domains/<name>/domain.json` instead of
@@ -399,7 +425,8 @@ from whichever domain is active instead of hardcoding fiction's. Two
 more real domains exist beyond fiction: `design-doc`, verified two ways
 — its `domain.json` and a hand-built findings/canon fixture (the
 concrete "the summary says Q3, the timeline section says Q4" test case)
-both pass `validate_findings.py` with zero model calls — and
+both pass the schema validator with zero model calls (then
+`validate_findings.py`, now `redliner validate`) — and
 `serial-fiction`. Every domain's five generated agents (fifteen total
 across the three) were confirmed live (`claude --plugin-dir`) to
 actually register and respond under their expected `redliner:<domain>-*`
@@ -456,7 +483,8 @@ adjudicator entirely (no model call) when there's nothing to judge.
 Verified live end to end, not against a hand-built fixture: a real
 two-section manuscript with a deliberately planted contradiction (an eye
 color stated two ways) went through extraction and adjudication by the
-actual agents, `validate_findings.py` passed including the
+actual agents, the schema validator passed (then `validate_findings.py`,
+now `redliner validate`) including the
 excerpt-verbatim check against text the agents chose themselves (not
 text a fixture author copied by hand), a matching clean manuscript
 confirmed the zero-collision path writes `{"contradictions": []}`
@@ -478,5 +506,6 @@ at a diff).
 there is one command name now, `redliner`, so the allowlist no longer
 grows a line per script.)
 
-Other open items in `TODO.md`: a compiled-binary port, read-only
-Obsidian vault integration as a second source of canon.
+Other open items in `TODO.md`: read-only Obsidian vault integration as
+a second source of canon, and carrying contradiction ids forward across
+`recheck` runs (above).

@@ -5,8 +5,8 @@ name: Release Go binaries
 # distribution mechanism TODO.md's "Port to a compiled language" section
 # settled on in place of committing binaries to the tracked tree
 # permanently (see the 2026-08-12 "Superseded" note there) -- the
-# download-on-install hook in bin/hooks/ and cowork/hooks/ fetches
-# exactly what this workflow publishes.
+# download-on-install hooks in hooks/ and cowork/hooks/ fetch exactly
+# what this workflow publishes.
 #
 # Platform scope matches the project's own Phase 6 decision: darwin/arm64
 # only, to start (matches the maintainer's dev machine; expand the
