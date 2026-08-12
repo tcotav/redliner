@@ -753,23 +753,41 @@ directly, same shape as the venv hook it replaces
 (`cowork/hooks/hooks.json`'s old venv-bootstrap command is gone; so is
 `cowork/requirements.txt`).
 
-**A genuinely unresolved wrinkle, disclosed rather than papered over:**
-during live testing, the CLI plugin's hook failed to fire silently
-across several consecutive rapid reinstall-and-test cycles (marker
-files never appeared, no error, `--debug` showed nothing), then
-succeeded reliably on a single clean uninstall → reinstall → one-shot
-test. Ruled out as causes: JSON syntax, exec bits, an explicit `"hooks"`
-field in `plugin.json`, the other plugin's presence, inline-vs-external-
-script hook commands, and `bash <script>` vs direct execution — none of
-these changed the outcome. The working theory is some kind of
-debounce/dedup in Claude Code's own hook execution tied to rapid
-repeated invocations against the same plugin, not a flaw in this
-design, but that's a theory, not a confirmed root cause. **Practical
-implication, same shape as the already-known MCP first-load race**: a
-brand-new install's very first session might not get the binary
-downloaded in time; a restart resolves it, same as the venv-era caveat
-this replaces. Worth a real fix (or at least a documented workaround)
-before wide distribution, not before.
+**A genuinely unresolved reliability problem, disclosed rather than
+downplayed:** across roughly seven clean uninstall → reinstall →
+one-shot-session test cycles, the CLI plugin's (`redliner`, source
+`"./"`) `SessionStart` hook fired successfully exactly **once**; the
+Cowork plugin's (`redliner-cowork`, source `"./cowork"`) identically-
+shaped hook fired successfully **every single time**, no exceptions.
+This is not the one-time first-load race the venv-era caveat described
+— a second session after a failure did not reliably fix it either.
+Ruled out as causes: JSON syntax, exec bits, an explicit `"hooks"`
+field in `plugin.json`, the other plugin's presence or absence,
+inline-vs-external-script hook commands, `bash <script>` vs direct
+execution, and simple retry (a second session sometimes still fails
+right after a first failure). None of these changed the outcome.
+
+**Leading unconfirmed hypothesis:** the CLI plugin's source is the
+entire repo root — including `go/`'s full source tree, `README.md`,
+`TODO.md`, `sample_manuscript/`, and a full nested copy of `cowork/`
+itself — while the Cowork plugin's source is just the lean `cowork/`
+subdirectory. If plugin content scanning/copying time affects whether a
+`SessionStart` hook completes before some internal deadline, the much
+larger plugin would be exactly the one to see this. Not verified by a
+controlled test (e.g., trimming the CLI plugin's shipped content and
+re-measuring hook success rate) — that's the next real step if this
+gets picked back up, not committing to the theory further without it.
+
+**Practical implication, worse than originally written here:** this
+isn't "a restart fixes it" — it's "the CLI plugin's binary may simply
+not be there most of the time, for reasons not yet understood, and a
+user hitting `command not found` has no documented recovery step beyond
+retrying." **Not safe to treat as solved.** Before this ships to anyone
+but the maintainer: either confirm and fix the root cause, or fall back
+to committing `bin/redliner` for the CLI plugin specifically while
+keeping the Cowork plugin on the (reliably-working) download hook —
+a partial, honest middle ground rather than a design that silently
+fails most of the time.
 
 Not yet done: reflecting this in `README.md`'s existing "first
 use may need one MCP server restart" caveat (needs generalizing to
