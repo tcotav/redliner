@@ -794,6 +794,71 @@ use may need one MCP server restart" caveat (needs generalizing to
 cover the CLI plugin too, now that it has the same class of race) — a
 Phase 7 README pass, not done here.
 
+**The size hypothesis, tested 2026-08-12: inconclusive, and the test
+method itself turned out to be the wrong instrument.** Built a trimmed
+spike plugin (`redliner-lean`, ~47 files/312KB — comparable to
+Cowork's ~43 files/300KB, vs the full CLI plugin's 127 files/~1.6MB
+installed) registered as its own local-directory marketplace, then ran
+repeated clean cycles (`rm` the downloaded binary, fresh `claude -p`
+one-shot session, check for the binary) against both the lean and
+full-size plugin. First pass falsely showed 0/6 and 0/3 — checking the
+wrong path, caught before drawing conclusions from it (a marker line
+added to the top of a spike copy of the bootstrap script proved the
+hook *was* firing every time; it was writing into `$CLAUDE_PLUGIN_ROOT`,
+which for a local-directory-source marketplace resolves to the live
+source directory, not the `~/.claude/plugins/cache/...` copy that
+exists alongside it — that cache copy appears to be vestigial for local
+dev sources, not what hooks actually execute against). After fixing the
+check path: **6/6 successes**, lean and full alike, no failures at all.
+
+That result doesn't confirm the size hypothesis, but it doesn't
+resurrect it either — the original 1/7-vs-7/7 finding was likely
+observed via real interactive one-shot sessions (open a session, send
+one message, close), while this retest used `claude -p` headless
+one-shot invocations against local-directory marketplace sources
+exclusively. Both differences are real candidate confounds: `-p` mode
+may not race the same internal deadline an interactive session start
+does, and a local-directory source skips whatever
+scanning/copying-into-cache step a real git/GitHub-hosted marketplace
+install goes through (which is what the original test's "clean
+uninstall → reinstall" cycles likely exercised, and what the CLI
+plugin's real users will always go through — nobody installs redliner
+from a local directory). So this test answered "does trimming help
+under `-p` + local-directory sources" (no signal either way, everything
+passed) without touching the conditions that produced the original
+failure.
+
+**Decision: not pursuing this further right now.** A test that actually
+reproduces the original conditions would need either a real interactive-
+session harness or a GitHub-hosted marketplace pointed at a trimmed
+branch/tag — both bigger lifts than this spike, for a bug that already
+has a named, working fallback. Taking the fallback instead: commit
+`bin/redliner` for the CLI plugin specifically (stop depending on its
+`SessionStart` hook), keep the Cowork plugin on the download hook,
+which has never failed. Root cause stays open for whoever hits this
+again with more budget to spend on it — the local-directory-source
+caveat above (cache copy isn't what hooks run against) is worth keeping
+regardless of what happens with the size question, since it'll trip up
+any future local-marketplace test the same way it tripped up this one.
+
+**Fallback implemented, 2026-08-12.** `bin/redliner` and
+`bin/redliner.version` are committed directly again (removed from
+`.gitignore`, which now only excludes `cowork/redliner*`); the CLI
+plugin's `hooks/hooks.json` and `hooks/bootstrap-redliner-binary.sh` are
+deleted outright rather than left as dead weight, since nothing calls
+them once the binary ships in the tree. This reintroduces the ~8.3MB
+binary into git history (same tradeoff Phase 5 accepted the first time:
+a history rewrite is cheap now, expensive after wider visibility — still
+true). The Cowork plugin is untouched: its own `cowork/hooks/` copy of
+the same hook/script and its download-on-install path are unaffected.
+Verified `./bin/redliner domain list` runs correctly post-change.
+Re-bumping `bin/redliner` on future Go changes now means rebuilding and
+re-committing it directly (`go build -o bin/redliner ./go/cmd/redliner`
+or whatever the current build command is) instead of relying on the
+release/download pipeline for the CLI plugin specifically — the release
+workflow and Cowork's download hook still exist and still matter, just
+not for this front door anymore.
+
 ## Obsidian vault integration
 
 **Raised:** 2026-08-08
