@@ -709,7 +709,10 @@ as a **deliberately temporary** measure to unblock this test —
 committing them now and deleting later does not reclaim git history
 size on its own (blobs persist without a rewrite), accepted for now
 since a history rewrite is cheap before this repo has wider visibility
-and expensive after. Real follow-up, not yet built: a GitHub Actions
+and expensive after. **Correction, 2026-08-12: the install-cost half of
+that reasoning is wrong — see "What installing actually costs" below.
+Marketplace clones are shallow, so historical blobs are never fetched
+and a rewrite buys nothing for users.** Real follow-up, not yet built: a GitHub Actions
 release workflow plus a lightweight download-on-install hook, so
 binaries stop needing to live in the tracked tree at all.
 
@@ -854,8 +857,15 @@ deleted outright rather than left as dead weight, since nothing calls
 them once the binary ships in the tree. This reintroduces the ~8.3MB
 binary into git history (same tradeoff Phase 5 accepted the first time:
 a history rewrite is cheap now, expensive after wider visibility — still
-true). The Cowork plugin is untouched: its own `cowork/hooks/` copy of
-the same hook/script and its download-on-install path are unaffected.
+true). **Correction, 2026-08-12: that parenthetical is wrong about
+install cost, twice repeated and load-bearing, so stated plainly here —
+what a rewrite would fix is repo size for full-clone contributors, not
+anything a plugin user downloads. See "What installing actually costs"
+below.** The Cowork plugin was **not** untouched, contrary to what this
+paragraph originally claimed — deleting the repo-root `hooks/` script
+left `cowork/hooks/bootstrap-redliner-binary.sh` (a symlink to it)
+dangling and silently stopped Cowork's binary from downloading at all.
+Fixed the same day; see the two-bug entry above.
 Verified `./bin/redliner domain list` runs correctly post-change.
 Re-bumping `bin/redliner` on future Go changes now means rebuilding and
 re-committing it directly (`go build -o bin/redliner ./go/cmd/redliner`
@@ -916,6 +926,56 @@ justifications are load-bearing claims, and at least one was false.
 Re-verify each against the code before deleting anything — particularly
 anything the Go binary reads from disk at runtime rather than embedding.
 `domains/` must **not** be deleted from either plugin.
+
+## What installing actually costs (measured, 2026-08-12)
+
+Written because two separate decisions above were justified by a belief
+about install cost that turned out to be false, and the belief kept
+getting restated. Numbers here are measured on this machine, not
+reasoned from how git "should" work.
+
+**Marketplace repos are cloned shallow.** `~/.claude/plugins/marketplaces/
+thedotmack` is a depth-1 clone (`git rev-list --count HEAD` = 1, `.git/
+shallow` present); `anthropic-agent-skills` likewise shallow at 12
+commits. `claude-plugins-official` isn't a git clone at all — no `.git`,
+a `.gcs-sha` marker instead, so it's fetched as a snapshot from object
+storage. **Consequence: historical blobs are never fetched.** The ~8.3MB
+binaries sitting in this repo's history cost a plugin user exactly
+nothing, and a history rewrite would not change a single byte they
+download. A rewrite is only worth doing for full-clone contributors —
+a real but different problem.
+
+**A depth-1 clone of this repo, measured directly:** 4.6MB `.git` +
+~9.4MB worktree ≈ **14MB**, against 16MB of `.git` in the working tree
+that a shallow clone never touches. What dominates is the *tip snapshot*:
+the committed `bin/redliner` (8.3MB) is most of it. Incidental baggage
+in the CLI plugin's shipped content (`go/` ~992K, `sample_manuscript/`
+88K, the nested `cowork/` 52K, docs ~84K) totals only ~1.2MB.
+
+**So the levers, in order of actual effect:**
+1. Not committing the binary — 8.3MB, dwarfs everything else.
+2. Trimming baggage — ~1.2MB.
+3. Rewriting history — **0 bytes** for users.
+
+**Convention check, since it kept coming up:** across the 287 plugins in
+`claude-plugins-official`, ~52% use a whole-repo source (`url`/`github`)
+and ~48% scope to a subdirectory (`git-subdir` 29%, an inline subdir
+path 18.5%). **Zero** use an inline `"./"` root — which is what this
+repo's CLI plugin does. The whole-repo half are dedicated plugin repos,
+where the repo *is* the plugin. Sizes vary hugely (Anthropic's own
+`example-skills` installs at 33MB; `rust-analyzer-lsp` at 92K), so the
+convention is not "make it small" — it's "the source is the plugin and
+not much else." `cowork/` at 304K already satisfies this; the repo-root
+CLI plugin at ~10MB does not.
+
+**Implication for the restructure idea (`plugins/redliner` +
+`plugins/redliner-cowork`):** it would *not* reduce what anyone
+downloads, because the marketplace is this repo — adding it clones the
+whole thing at depth 1 regardless of internal layout. It only shrinks
+the local cache *copy*. Worth doing for convention-conformance and
+because it's the only honest way to test the hook-size hypothesis, but
+not for bandwidth. See the release-repo note below for the lever that
+does move the number.
 
 ## Obsidian vault integration
 
