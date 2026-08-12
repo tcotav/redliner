@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/bootstrap-redliner-binary.sh\" \"${CLAUDE_PLUGIN_DATA}/bin/redliner\""
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/bootstrap-redliner-binary.sh\" \"${CLAUDE_PLUGIN_ROOT}/bin/redliner\""
           }
         ]
       }

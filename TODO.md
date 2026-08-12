@@ -718,6 +718,64 @@ follow-up above; reverting the GitHub default branch back to `main`
 once `go-port-v1` testing is done; and — separately — actually merging
 `go-port-v1`, which hasn't happened yet.
 
+**Release automation + download hooks, done, 2026-08-12** (the item
+right above, now built): `.github/workflows/release-go-binaries.yml`
+cross-compiles `go/cmd/redliner` on `ubuntu-latest` (Go doesn't need a
+matching-OS runner) and attaches the binary + `checksums.txt` to a
+GitHub Release on a `v*.*.*` tag push, or uploads as a build artifact on
+manual `workflow_dispatch` for testing without cutting a real release —
+verified both paths for real (a `workflow_dispatch` test run, then a
+real `v0.1.0` tag) before wiring anything to depend on it. The
+`bin/redliner`/`cowork/redliner` binaries committed on 2026-08-12 as a
+stopgap are now removed from the tracked tree — replaced by
+`hooks/bootstrap-redliner-binary.sh`, a `SessionStart` hook script that
+downloads the release asset matching the plugin's own
+`.claude-plugin/plugin.json` version, verifies its checksum, and installs
+it, refusing to install anything that doesn't check out.
+
+**The two front doors needed genuinely different destinations, not the
+same fix copy-pasted**, because of a fact checked against Claude Code's
+own docs rather than assumed: `${CLAUDE_PLUGIN_DATA}`/`${CLAUDE_PLUGIN_ROOT}`
+are exported to hook and MCP/LSP subprocess commands *only* — never to a
+bare `bin/`-invoked executable's own environment. So a `bin/redliner`
+wrapper script can't locate a `${CLAUDE_PLUGIN_DATA}`-based path at
+invocation time no matter how it's written. The fix: the hook (which
+does get the env vars) downloads straight into
+`${CLAUDE_PLUGIN_ROOT}/bin/redliner` for the CLI plugin — overwriting/
+creating the real file in place, confirmed writable at runtime by a live
+test before committing to the design, not assumed — so by the time any
+command runs, it's just a real binary on PATH, no wrapper and no
+runtime env-var dependency. The Cowork plugin has it easier:
+`mcpServers.command` supports the same `${CLAUDE_PLUGIN_DATA}`
+substitution a hook gets, so the hook downloads to
+`${CLAUDE_PLUGIN_DATA}/bin/redliner` and the manifest just points there
+directly, same shape as the venv hook it replaces
+(`cowork/hooks/hooks.json`'s old venv-bootstrap command is gone; so is
+`cowork/requirements.txt`).
+
+**A genuinely unresolved wrinkle, disclosed rather than papered over:**
+during live testing, the CLI plugin's hook failed to fire silently
+across several consecutive rapid reinstall-and-test cycles (marker
+files never appeared, no error, `--debug` showed nothing), then
+succeeded reliably on a single clean uninstall → reinstall → one-shot
+test. Ruled out as causes: JSON syntax, exec bits, an explicit `"hooks"`
+field in `plugin.json`, the other plugin's presence, inline-vs-external-
+script hook commands, and `bash <script>` vs direct execution — none of
+these changed the outcome. The working theory is some kind of
+debounce/dedup in Claude Code's own hook execution tied to rapid
+repeated invocations against the same plugin, not a flaw in this
+design, but that's a theory, not a confirmed root cause. **Practical
+implication, same shape as the already-known MCP first-load race**: a
+brand-new install's very first session might not get the binary
+downloaded in time; a restart resolves it, same as the venv-era caveat
+this replaces. Worth a real fix (or at least a documented workaround)
+before wide distribution, not before.
+
+Not yet done: reflecting this in `README.md`'s existing "first
+use may need one MCP server restart" caveat (needs generalizing to
+cover the CLI plugin too, now that it has the same class of race) — a
+Phase 7 README pass, not done here.
+
 ## Obsidian vault integration
 
 **Raised:** 2026-08-08

@@ -13,3 +13,11 @@ venv/
 # so this matches under any manuscript directory, not just the repo root.
 **/.redliner/findings/
 **/.redliner/canon/
+
+# Downloaded by hooks/bootstrap-redliner-binary.sh (a SessionStart hook,
+# real-installed or local-directory-marketplace-tested alike) -- never
+# source, always regenerable from the matching GitHub Release.
+/bin/redliner
+/bin/redliner.version
+/cowork/redliner
+/cowork/redliner.version

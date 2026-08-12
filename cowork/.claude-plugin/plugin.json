@@ -7,7 +7,7 @@
   },
   "mcpServers": {
     "redliner": {
-      "command": "${CLAUDE_PLUGIN_ROOT}/redliner",
+      "command": "${CLAUDE_PLUGIN_DATA}/bin/redliner",
       "args": ["mcp"]
     }
   }
