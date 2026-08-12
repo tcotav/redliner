@@ -376,9 +376,20 @@ load against a scratch manuscript with no relationship to this repo, not
 just statically — that test caught and fixed the bare-vs-namespaced
 subagent bug mentioned above.
 
-Not yet done: a full `/redliner:intake` → `/redliner:run assess` pass
+A full `/redliner:intake` → `/redliner:run assess` pass has now been run
 through the real Task-orchestrated pipeline, start to finish, on a fresh
-manuscript.
+three-section manuscript written for the purpose with no relationship to
+this repo. Intake and both passes completed; the draft-stage gate
+correctly suppressed line findings; the continuity adjudicator correctly
+dismissed two false positives on its own. It also found a real bug in
+the continuity layer — contradictions are missed when two sections'
+extractions name the same thing differently (`tide clock` vs `the tide
+clock`) — which is written up in `TODO.md` and **not yet fixed**.
+
+**That run took ~13.5 minutes for ~750 words**, and scales with section
+count, so expect a full manuscript to take considerably longer. There is
+currently no progress indicator beyond Claude Code's own subagent panel;
+see `TODO.md` for what's planned.
 
 **The Go port is done and merged.** Every deterministic operation —
 both front doors, CLI and MCP — is one statically-linked binary with no

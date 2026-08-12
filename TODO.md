@@ -1251,6 +1251,165 @@ The fix that worked, every time, was running the thing rather than
 reasoning about it — and checking *where the system actually writes*
 before concluding it didn't write anything.
 
+## Continuity misses contradictions when extractions name things differently
+
+**Raised 2026-08-12, from the first full pass on a fresh manuscript
+(below). Not fixed.** This is a **recall** bug, and the more serious of
+the two findings from that run, because nothing downstream catches it.
+
+A contradiction was deliberately planted in a scratch manuscript: a tide
+clock described as stopped for **eleven years** in section 1 and
+**fifteen years** in section 3. The continuity layer extracted both facts
+correctly and then **never collided them**:
+
+| | section_01 | section_03 |
+| --- | --- | --- |
+| `entity` | `tide clock` | `the tide clock` |
+| `attribute` | `duration_not_working` | `stopped_duration` |
+| `value` | `eleven years` | `fifteen years` |
+
+Collision detection requires an exact match on **both** entity and
+attribute. The definite article differs, and the two attribute names are
+synonyms chosen independently. So a genuine, blatant contradiction — the
+exact error class this layer exists to catch — passed silently.
+
+**This is structural, not a typo.** The design splits deliberately into
+"a model extracts facts" and "a script finds collisions exactly,"
+precisely so the detection half is trustworthy rather than guessed at.
+But the script matches on *free-text strings the model invents*, once per
+section, in independent calls with no knowledge of what the other
+sections called the same thing. The determinism is real and the
+vocabulary underneath it isn't. Those two halves are in tension, and the
+seam is invisible from either side.
+
+**Why this never showed up before.** Every prior test ran against
+`sample_manuscript`, whose vocabulary was authored alongside the tool —
+consistent naming came for free. Only genuinely fresh material, written
+without the extractor in mind, exposes it. That is an argument about test
+fixtures generally, not just this bug.
+
+**The asymmetry that makes it dangerous:** adjudication reviews every
+collision the script reports, so over-reporting gets caught — in the same
+run, the adjudicator correctly dismissed two false positives on its own
+(see below). Nothing whatsoever reviews what the script *failed* to
+report. A missed contradiction produces no artifact, no log line, and no
+finding. It looks exactly like a clean manuscript.
+
+**Candidate fixes, in rough order of strength — none implemented, and
+the first two are palliatives, not solutions:**
+
+1. **Normalize before matching** (lowercase, strip leading articles).
+   Fixes `tide clock`/`the tide clock`. Does nothing for
+   `duration_not_working`/`stopped_duration`. Cheap; strictly an
+   improvement; not sufficient alone.
+2. **Constrain attribute vocabulary per domain**, the way
+   `domain.json` already constrains `entity_types`, `sources`, and
+   category lists. Narrows synonym drift but can't anticipate every
+   attribute a real manuscript needs, and an over-tight list would
+   silently drop facts that don't fit — trading a recall bug for a
+   different recall bug.
+3. **Give the extractor the canon so far**, so section N reuses the
+   entity/attribute names sections 1..N-1 already established, and
+   naming is consistent *by construction* rather than by coincidence.
+   This is the real fix. It costs the per-section independence the
+   current design gets for free (sections can currently be extracted in
+   any order, and re-extracted individually after an edit), so it needs
+   actual thought about ordering and about what happens on re-extraction
+   — not a small change.
+4. **Mark set-valued attributes as non-colliding** (`owns`, `contains`,
+   `knows`). This addresses the *precision* half seen in the same run,
+   not this recall bug. Worth doing, separately.
+
+**Do not treat this as fixed by adding a test to `sample_manuscript`.**
+The fixture would then be written to match whatever naming the fix
+produces, which is the same blind spot that hid the bug. It needs a
+fresh manuscript, or a fixture written by someone not looking at the
+extractor's output.
+
+## First full intake → assess pass on a fresh manuscript (DONE, 2026-08-12)
+
+The item `README.md` had carried as "not yet done" since the beginning:
+a complete `/redliner:intake` → `/redliner:run assess` run through the
+real Task-orchestrated pipeline, on a manuscript with no relationship to
+this repo. Run against a purpose-written three-section literary-fantasy
+scratch manuscript (~750 words) with two issues deliberately seeded: one
+crisp factual contradiction, and one ambiguous in-dialogue disagreement
+that *should* require judgment rather than mechanical detection.
+
+**What worked, and is now evidence rather than assumption:**
+
+- Intake completed end to end from a single non-interactive prompt,
+  wrote `state.json` and `brief.md`, marked the four fields it wasn't
+  given as explicitly unspecified rather than inventing them or letting
+  "off-limits" read as *nothing is off-limits*.
+- Intake noticed the planted contradiction while reading and
+  **deliberately kept it out of the brief**, reasoning that filing it
+  under "known problem areas" would tell later passes not to report it,
+  and would attribute it to the author as already-known. That is
+  genuinely good judgment and was not prompted for.
+- Assess produced 4 developmental findings (2 moderate, 2 minor) across
+  `pacing`/`plot`/`structure`/`stakes` — specific to the text, not
+  generic advice — and **zero line-level findings**, correctly gated by
+  the `exploratory / partial` draft stage.
+- The continuity layer built canon from 60 facts across 16 entities and
+  found 3 collisions. Adjudication kept 1 (the dialogue disagreement,
+  correctly left open as author-intent) and **dismissed 2 false
+  positives on its own**, correctly diagnosing them as reconcile
+  treating set-valued attributes (`owns`, `contains`) as single-valued.
+- The excerpt-verbatim check held against text the agents chose
+  themselves.
+- `likely_unpropagated_revision` correctly reported as *not applicable*
+  on a first-ever assess rather than as a clean result — the distinction
+  the flag is supposed to make.
+
+**What it found:** the recall bug above. Worth stating plainly that the
+run's most valuable output was a defect in the tool, not the editorial
+letter.
+
+**Duration, measured: ~13.5 minutes for three sections / ~750 words.**
+This scales with section count, so a full novel is **hours**, not
+minutes. Nothing anywhere sets that expectation.
+
+**The UX problem this surfaced.** The author of this tool, watching his
+own run, could not tell whether it had hung. Two things are true at once:
+
+- Much of that was a **testing artifact** — the run was driven with
+  `claude -p`, which has no TUI and buffers all output until exit.
+  Interactive Claude Code shows an agent panel below the prompt with a
+  live row per subagent (default body `name · description · token
+  count`). **This has not yet been confirmed by an interactive re-run**,
+  and should be before building anything.
+- But the default row is a token counter. It does not say "step 3 of 5"
+  or how long this has been going, and a number ticking upward for two
+  hours does not answer "is it stuck?" for a novelist.
+
+**Options, researched against Claude Code's docs, none implemented:**
+
+- **`subagentStatusLine`** is plugin-shippable — notably one of the only
+  two keys a plugin-root `settings.json` honours, the same fact behind
+  this file's permission-allowlist gap. Shape:
+  `{"subagentStatusLine": {"type": "command", "command": "..."}}`. The
+  script receives a `tasks[]` array on stdin (each with `startTime`,
+  `status`, `description`, `tokenCount`, `contextWindowSize`) and emits
+  `{"id": ..., "content": ...}` per row. `startTime` is what gives
+  elapsed time.
+- **`SubagentStart`/`SubagentStop` hooks** can write progress state that
+  the status line then renders, which is what "step 2 of 5, section 2 of
+  3" would require.
+- **`refreshInterval` is load-bearing, not optional.** The docs are
+  explicit that event-driven status updates go quiet while a coordinator
+  waits on background subagents — which is redliner's entire runtime. A
+  first implementation without it would freeze the display at precisely
+  the moment the user starts wondering whether it hung.
+- Status lines require **workspace trust** and render nothing, silently,
+  without it — so this can't be the only signal.
+
+**Cheapest fix, independent of all of the above, and probably first:**
+have `/redliner:run` state the expected duration before it starts, now
+that there's a measured number to quote. Prose, ships immediately, and
+works in the trust-disabled and headless cases where no status line
+renders at all.
+
 ## Obsidian vault integration
 
 **Raised:** 2026-08-08
