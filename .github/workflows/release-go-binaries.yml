@@ -1,0 +1,87 @@
+name: Release Go binaries
+
+# Builds the go/cmd/redliner binary for every platform in the matrix and
+# attaches it to a GitHub Release, plus a checksums.txt. This is the
+# distribution mechanism TODO.md's "Port to a compiled language" section
+# settled on in place of committing binaries to the tracked tree
+# permanently (see the 2026-08-12 "Superseded" note there) -- the
+# download-on-install hook in bin/hooks/ and cowork/hooks/ fetches
+# exactly what this workflow publishes.
+#
+# Platform scope matches the project's own Phase 6 decision: darwin/arm64
+# only, to start (matches the maintainer's dev machine; expand the
+# matrix below once the download-hook side is proven, not before).
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to build (without a leading v), e.g. 0.1.0 -- for a manual test run, not tied to a real tag"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go/go.mod
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build binaries
+        # Go cross-compiles without a matching-OS runner -- GOOS/GOARCH
+        # env vars are all `go build` needs, so this runs on the cheapest
+        # available runner (ubuntu) rather than requiring a macOS one
+        # just to produce a darwin binary.
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.version }}"
+          mkdir -p dist
+          # (GOOS, GOARCH) pairs -- add entries here to expand platform
+          # coverage; see this workflow's header comment for why it's
+          # darwin/arm64-only for now.
+          PLATFORMS="darwin/arm64"
+          cd go
+          for platform in $PLATFORMS; do
+            GOOS="${platform%/*}"
+            GOARCH="${platform#*/}"
+            OUT="../dist/redliner-${VERSION}-${GOOS}-${GOARCH}"
+            echo "Building $OUT"
+            GOOS="$GOOS" GOARCH="$GOARCH" CGO_ENABLED=0 go build -o "$OUT" ./cmd/redliner
+          done
+
+      - name: Checksums
+        run: |
+          cd dist
+          shasum -a 256 * > checksums.txt
+          cat checksums.txt
+
+      - name: Create release (real tag push only)
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+
+      - name: Upload build artifacts (manual dispatch runs, no release)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: redliner-binaries-${{ steps.version.outputs.version }}
+          path: dist/
