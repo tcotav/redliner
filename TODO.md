@@ -1370,6 +1370,67 @@ letter.
 This scales with section count, so a full novel is **hours**, not
 minutes. Nothing anywhere sets that expectation.
 
+**Token cost of that same run, from the session transcripts.** Claude
+Code writes per-message `usage` into `~/.claude/projects/<cwd>/<session>.jsonl`,
+with one `subagents/agent-*.jsonl` per Task call — so a run can be costed
+exactly, per step, after the fact. For this run: **113 API calls,
+45,347 output tokens, 241,744 cache-write, 2,516,921 cache-read.**
+
+> ⚠️ **Any dollar figure here is an estimate, not a bill.** The *token
+> counts* are measured; the money is those tokens valued at published
+> per-token API rates. **Most Claude Code users are on a Pro/Max
+> subscription**, where usage draws against plan limits rather than
+> being charged per token — for them these numbers are a *relative*
+> measure of how expensive a pass is, not an amount anyone is billed.
+> Rates also change over time, and this run's rates were for
+> `claude-opus-5` specifically. Treat the ratios (which step dominates,
+> what caching saves) as the durable finding and the totals as
+> indicative.
+
+At `claude-opus-5` rates ($5/M in, $25/M out, cache write 1.25×, cache
+read 0.1×) the run values at **~$3.91**, split:
+
+| step | calls | cost |
+| --- | ---: | ---: |
+| coordinator (main session) | 33 | $1.64 |
+| developmental editor | 17 | $0.47 |
+| continuity extractor ×3 | 31 | $1.03 |
+| continuity adjudicator | 11 | $0.22 |
+| editorial aggregator | 21 | $0.55 |
+
+**Three findings that hold regardless of anyone's billing
+arrangement:**
+
+1. **Prompt caching is doing most of the work.** The identical run
+   without caching values at **$14.93** — caching accounts for a **74%**
+   reduction. Anything that invalidates the cached prefix (reordering
+   the agent prompt, injecting a timestamp) would cost roughly 4× more,
+   silently.
+2. **The coordinator is the single largest line item at 42%** — more
+   than the developmental editor and aggregator combined. That is
+   *orchestration overhead*, not editorial work: 33 calls re-reading an
+   accumulating session context. It is the obvious optimization target
+   and it is invisible if you only think in terms of "the five agents."
+3. **The per-section extractor cost (~$0.34/section) is the only part
+   that scales cleanly.** The developmental read, aggregator, and
+   coordinator all scale with *total* manuscript length, and the
+   coordinator's context grows as the run proceeds — so it scales worse
+   than linearly. A 40-chapter novel is ~$14 in extractors alone, plus
+   whole-manuscript passes on top. **Do not extrapolate the total from
+   this fixture** — 750 words is far too small to model context growth
+   honestly; measure a real manuscript instead.
+
+**Model choice is the biggest single lever, and redliner deliberately
+does not pull it.** All fifteen agent files specify `model: inherit`, so
+every pass runs on whatever model the user's session is using — this run
+was `claude-opus-5` only because the harness driving it defaulted there.
+A Sonnet-tier session runs the same pass for roughly half. Pinning a
+cheaper model in the agent frontmatter would make cost predictable at
+the price of overriding a choice the user has already made, and the
+editorial quality of these passes is the whole product. **Left as
+`inherit` on purpose; revisit only with evidence that a cheaper model
+holds finding quality.**
+
 **The UX problem this surfaced.** The author of this tool, watching his
 own run, could not tell whether it had hung. Two things are true at once:
 

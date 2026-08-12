@@ -392,6 +392,13 @@ count, so expect a full manuscript to take considerably longer.
 long pass starts, and reports each step as it completes, so a long
 silent stretch is distinguishable from a hang.
 
+That run also spent ~45K output tokens across 113 API calls, with prompt
+caching accounting for a ~74% reduction in token cost. `TODO.md` has the
+per-step breakdown. Note the agents specify `model: inherit`, so passes
+run on whatever model your session uses — that choice affects cost more
+than anything else, and on a Pro/Max subscription usage draws against
+plan limits rather than being billed per token.
+
 **The Go port is done and merged.** Every deterministic operation —
 both front doors, CLI and MCP — is one statically-linked binary with no
 runtime dependencies, replacing the original Python. It was ported
