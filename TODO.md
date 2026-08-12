@@ -1311,14 +1311,39 @@ the first two are palliatives, not solutions:**
 3. **Give the extractor the canon so far**, so section N reuses the
    entity/attribute names sections 1..N-1 already established, and
    naming is consistent *by construction* rather than by coincidence.
-   This is the real fix. It costs the per-section independence the
-   current design gets for free (sections can currently be extracted in
-   any order, and re-extracted individually after an edit), so it needs
-   actual thought about ordering and about what happens on re-extraction
-   — not a small change.
+   Originally called "the real fix" here; **downgraded 2026-08-12** on
+   noticing what it costs: section N needs 1..N-1 finished first, so
+   extraction becomes **sequential**. Measured against the current
+   design, that is a large price — see "parallelism is already load-
+   bearing" below.
 4. **Mark set-valued attributes as non-colliding** (`owns`, `contains`,
    `knows`). This addresses the *precision* half seen in the same run,
    not this recall bug. Worth doing, separately.
+5. **Loosen the matcher instead of tightening extraction — the current
+   recommendation.** Keep extractors independent, parallel and
+   per-section exactly as they are; normalize entity strings and match
+   attributes through a synonym map rather than exact string equality.
+   Fixes recall *globally* rather than within any window, and changes
+   only the deterministic layer.
+
+   **Why it is safe to make the matcher fuzzier, when that would
+   normally be alarming:** the two failure directions have unequal
+   consequences here, and the 2026-08-12 run demonstrated both. Every
+   collision the matcher reports is reviewed by the adjudicator, which
+   correctly dismissed 2 of 3 and diagnosed the set-valued-attribute
+   cause unprompted. **Over-reporting has a proven reviewer;
+   under-reporting has nothing at all** — a missed contradiction
+   produces no artifact and looks exactly like a clean manuscript. So
+   push ambiguity toward the side of the pipeline that already has a
+   safety net.
+
+   Stated generally, because it is the more useful form: the present
+   design puts a *fuzzy* stage (a model naming things freely) upstream
+   of a *strict* one (exact-match collision detection), which is the
+   wrong order — the strict stage silently drops what the fuzzy stage
+   phrased differently. Strict extraction → fuzzy matching → model
+   adjudication puts each stage's failure mode somewhere downstream can
+   catch it.
 
 **Do not treat this as fixed by adding a test to `sample_manuscript`.**
 The fixture would then be written to match whatever naming the fix
@@ -1504,6 +1529,65 @@ if the prose proves insufficient in real use. Building it first would
 have meant shipping the fragile mechanism (trust-gated, silently
 degrading, stale without `refreshInterval`) to solve a problem that
 plain text solves.
+
+## Cost/latency optimization: what's worth doing (analyzed 2026-08-12)
+
+From costing the assess run (above). Recorded because one attractive
+idea was analyzed and **rejected**, and it will look attractive again.
+
+**Parallelism is already load-bearing — check before trading it away.**
+The three continuity extractors were spawned **in a single assistant
+message**, so they ran concurrently. Any change that consolidates
+per-section extraction (batching sections per call, or feeding each
+extractor the canon so far) converts N short parallel agents into fewer
+long sequential ones. On a run whose complaint is wall-clock latency,
+that is a real cost, and it is invisible unless you look at how the
+spawns group by `message.id`.
+
+**REJECTED: batching several sections per extractor call.** It looked
+like a rare cost + latency + correctness win. It is none of the three:
+
+- **Cost:** output is **65%** of an extractor's cost ($0.161 of $0.248);
+  batching saves the *prefix*, not the work — 5 sections produce ~5× the
+  facts either way. Saves ~28% of the extractor line (~$2.80 on a
+  40-chapter novel), not a step change.
+- **Latency:** *negative*. It serializes work that is already parallel.
+- **Correctness:** near-useless for the recall bug. Batching makes naming
+  consistent only *within* a batch, and the contradictions that matter
+  are the far-apart ones (chapter 1 vs chapter 30) — exactly what a
+  batch window misses. That is also the case a human author cannot hold
+  in their head, i.e. the reason the layer exists.
+- **Also breaks `recheck`:** per-section granularity is what lets a
+  re-check re-extract only what changed. Batching means editing one
+  chapter re-extracts its whole batch — trading a cheap repeated path
+  for a modest saving on the expensive rare one.
+
+**WORTH DOING — caching regression guard.** Prompt caching is carrying a
+**71%** reduction and is currently safe *by accident*, not by design:
+agent files and skills are static, and `state.json`'s timestamps only
+ever appear in tool results (late in the prefix). The coordinator's
+read ratio is 96% with cache-writes averaging ~2K/call — healthy
+incremental growth, no silent invalidator. Nothing to reclaim here; the
+risk is **breaking** it. A prefix-invalidating edit would raise cost ~4×
+silently. Guard against: interpolating a timestamp/run-id/absolute path
+into agent frontmatter or `SKILL.md`; reordering or conditionally
+including agent-file sections; changing the tool set mid-run (tools
+render at position 0 — the MCP-vs-CLI split makes this a live hazard).
+
+**WORTH DOING — composite commands to cut coordinator round trips.** The
+coordinator is the largest single line item (35%): 18 calls × ~50K
+cache-read = 905K reads, and *half those calls are Bash*. The transcript
+shows real waste — `redliner domain show fiction` ran **twice back to
+back** (the second piped through `python3` to extract fields it already
+had), and `redliner validate` ran **four times**, once per phase. Each
+round trip costs ~50K cache-read *and* a full latency cycle. A
+`redliner assess-prep <dir>` returning status + diff + stale + domain
+config as one JSON, plus a single post-phase `redliner check`, plausibly
+removes 4–5 calls. Same shape as the existing Go subcommands, no design
+tradeoff.
+
+**Largest lever, deliberately not pulled:** model choice — see the
+`model: inherit` note above.
 
 ## Obsidian vault integration
 
