@@ -1,0 +1,281 @@
+{
+  "section": "section_03",
+  "section_sha256": "c7e363fc427464000f3020ad57759f10ee7eb4070db37b80feb53dff64e71ce8",
+  "facts": [
+    {
+      "id": "fact-section_03-001",
+      "entity": "Ren",
+      "entity_type": "character",
+      "attribute": "intended_length_of_stay",
+      "value": "four days",
+      "excerpt": "She meant to stay four days.",
+      "location": "paragraph 1",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-002",
+      "entity": "Ren",
+      "entity_type": "character",
+      "attribute": "actual_length_of_stay",
+      "value": "stayed through October",
+      "excerpt": "She stayed through October.",
+      "location": "paragraph 1",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-003",
+      "entity": "Ren",
+      "entity_type": "character",
+      "attribute": "residence",
+      "value": "rented room above the hardware store",
+      "excerpt": "She rented the room above the hardware store",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-004",
+      "entity": "room above the hardware store",
+      "entity_type": "place",
+      "attribute": "rent",
+      "value": "two hundred a month",
+      "excerpt": "rented the room above the hardware store for two hundred a month",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-005",
+      "entity": "the shop",
+      "entity_type": "place",
+      "attribute": "heating",
+      "value": "kerosene heater",
+      "excerpt": "worked in the shop with the doors open and a kerosene heater going",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-006",
+      "entity": "Ren",
+      "entity_type": "character",
+      "attribute": "skill",
+      "value": "boatbuilding, relearned slowly and badly",
+      "excerpt": "she learned, slowly and badly, what her hands had forgotten",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-007",
+      "entity": "Ren",
+      "entity_type": "character",
+      "attribute": "taught_by",
+      "value": "her father, before she was seventeen",
+      "excerpt": "Her father had taught her all of it before she was seventeen",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-008",
+      "entity": "Ren",
+      "entity_type": "character",
+      "attribute": "years_away_from_town",
+      "value": "twenty-three years",
+      "excerpt": "she had been away twenty-three years",
+      "location": "paragraph 3",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-009",
+      "entity": "girl at the marina counter",
+      "entity_type": "character",
+      "attribute": "birth_relative_to_Ren_leaving",
+      "value": "not born when Ren left town",
+      "excerpt": "the girl at the marina counter who sold her bronze ring nails had not been born when Ren left town",
+      "location": "paragraph 3",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-010",
+      "entity": "Ren",
+      "entity_type": "character",
+      "attribute": "purchase",
+      "value": "bronze ring nails from the marina counter",
+      "excerpt": "the girl at the marina counter who sold her bronze ring nails",
+      "location": "paragraph 3",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-011",
+      "entity": "Ren's father",
+      "entity_type": "character",
+      "attribute": "age_at_death",
+      "value": "two months short of seventy-seven",
+      "excerpt": "her father had died two months short of his seventy-seventh birthday",
+      "location": "paragraph 4",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-012",
+      "entity": "Ren's father",
+      "entity_type": "character",
+      "attribute": "status",
+      "value": "dead",
+      "excerpt": "her father had died",
+      "location": "paragraph 4",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-013",
+      "entity": "duck skiff",
+      "entity_type": "object",
+      "attribute": "location",
+      "value": "behind the shop, under a tarp",
+      "excerpt": "His boat sat behind the shop under a tarp of its own",
+      "location": "paragraph 5",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-014",
+      "entity": "duck skiff",
+      "entity_type": "object",
+      "attribute": "type",
+      "value": "flat-bottomed duck skiff",
+      "excerpt": "the flat-bottomed duck skiff he had built in one weekend",
+      "location": "paragraph 5",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-015",
+      "entity": "duck skiff",
+      "entity_type": "object",
+      "attribute": "year_built",
+      "value": "1988",
+      "excerpt": "he had built in one weekend in 1988 out of marine ply and spite",
+      "location": "paragraph 5",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-016",
+      "entity": "duck skiff",
+      "entity_type": "object",
+      "attribute": "material",
+      "value": "marine ply",
+      "excerpt": "out of marine ply and spite",
+      "location": "paragraph 5",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-017",
+      "entity": "duck skiff",
+      "entity_type": "object",
+      "attribute": "build_duration",
+      "value": "one weekend",
+      "excerpt": "he had built in one weekend",
+      "location": "paragraph 5",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-018",
+      "entity": "Hammond Bay",
+      "entity_type": "place",
+      "attribute": "exists_as_location",
+      "value": "town where a man doubted the skiff could be built in a weekend",
+      "excerpt": "after a man in Hammond Bay told him a boat like that couldn't be built in a weekend",
+      "location": "paragraph 5",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-019",
+      "entity": "duck skiff",
+      "entity_type": "object",
+      "attribute": "condition_when_uncovered",
+      "value": "four inches of black water and a frog",
+      "excerpt": "found four inches of black water in it and a frog",
+      "location": "paragraph 5",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-020",
+      "entity": "Ren",
+      "entity_type": "character",
+      "attribute": "action",
+      "value": "bailed out the skiff",
+      "excerpt": "She bailed it, because bailing was something she knew how to do without instruction",
+      "location": "paragraph 5",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-021",
+      "entity": "duck skiff",
+      "entity_type": "object",
+      "attribute": "pencil_marks_location",
+      "value": "inside of the transom, a column of dates",
+      "excerpt": "she found his pencil marks on the inside of the transom, a column of dates going back years",
+      "location": "paragraph 6",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-022",
+      "entity": "Ren",
+      "entity_type": "character",
+      "attribute": "date_found_pencil_marks",
+      "value": "the twenty-second",
+      "excerpt": "On the twenty-second she found his pencil marks",
+      "location": "paragraph 6",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-023",
+      "entity": "transom date column",
+      "entity_type": "object",
+      "attribute": "last_completed_entry",
+      "value": "March fourth",
+      "excerpt": "The last entry was March fourth.",
+      "location": "paragraph 6",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-024",
+      "entity": "transom date column",
+      "entity_type": "object",
+      "attribute": "future_date_entry",
+      "value": "a fifth date written two lines below March fourth that had not yet happened",
+      "excerpt": "Two lines below it, in the same soft pencil, he had written a fifth date that had not happened yet",
+      "location": "paragraph 6",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-025",
+      "entity": "transom date column",
+      "entity_type": "object",
+      "attribute": "meaning_of_dates",
+      "value": "each date marks the day he finished a small piece (a rib, a plank, a scarf joint)",
+      "excerpt": "each one the day he'd finished some small piece: a rib, a plank, a scarf joint",
+      "location": "paragraph 6",
+      "source": "narration",
+      "confidence": "explicit"
+    }
+  ]
+}

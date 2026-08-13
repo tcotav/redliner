@@ -1,0 +1,644 @@
+{
+  "collisions": [
+    {
+      "entity": "the boat",
+      "attribute": "launch_date",
+      "distinct_values": [
+        "november 14",
+        "travel lift with slings"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_04-001",
+          "section": "section_04",
+          "value": "November 14",
+          "excerpt": "They put her in the water on the fourteenth of November",
+          "location": "paragraph 1",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_04-007",
+          "section": "section_04",
+          "value": "travel lift with slings",
+          "excerpt": "men in waders swore cheerfully at the travel lift",
+          "location": "paragraph 2",
+          "source": "narration",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": true,
+      "any_implied": false,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_04"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
+      "entity": "duck skiff",
+      "attribute": "location",
+      "distinct_values": [
+        "behind the shop, under a tarp",
+        "inside of the transom, a column of dates"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_03-013",
+          "section": "section_03",
+          "value": "behind the shop, under a tarp",
+          "excerpt": "His boat sat behind the shop under a tarp of its own",
+          "location": "paragraph 5",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_03-021",
+          "section": "section_03",
+          "value": "inside of the transom, a column of dates",
+          "excerpt": "she found his pencil marks on the inside of the transom, a column of dates going back years",
+          "location": "paragraph 6",
+          "source": "narration",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": true,
+      "any_implied": false,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_03"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
+      "entity": "Emil",
+      "attribute": "death_date",
+      "distinct_values": [
+        "march",
+        "night before march 5, after the two o'clock check",
+        "still restoring the boat the morning he died"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_01-013",
+          "section": "section_01",
+          "value": "March",
+          "excerpt": "Emil had died in March",
+          "location": "paragraph 3",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_01-032",
+          "section": "section_01",
+          "value": "still restoring the boat the morning he died",
+          "excerpt": "He had been restoring it, she supposed, the morning he died",
+          "location": "paragraph 5",
+          "source": "character_thought",
+          "confidence": "implied"
+        },
+        {
+          "id": "fact-section_04-009",
+          "section": "section_04",
+          "value": "night before March 5, after the two o'clock check",
+          "excerpt": "phoned Kaja at six in the morning on the fifth of March to say that Emil had gone in the night, alone, sometime after the two o'clock check",
+          "location": "paragraph 4",
+          "source": "narration",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": false,
+      "any_implied": true,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_01",
+        "section_04"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
+      "entity": "Emil",
+      "attribute": "age_at_death",
+      "distinct_values": [
+        "eighty-one",
+        "still restoring the boat the morning he died"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_01-014",
+          "section": "section_01",
+          "value": "eighty-one",
+          "excerpt": "eighty-one years old",
+          "location": "paragraph 3",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_01-032",
+          "section": "section_01",
+          "value": "still restoring the boat the morning he died",
+          "excerpt": "He had been restoring it, she supposed, the morning he died",
+          "location": "paragraph 5",
+          "source": "character_thought",
+          "confidence": "implied"
+        }
+      ],
+      "all_narration": false,
+      "any_implied": true,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_01"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
+      "entity": "Emil",
+      "attribute": "place_of_death",
+      "distinct_values": [
+        "hospice",
+        "hospice wing of the county hospital",
+        "still restoring the boat the morning he died"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_01-015",
+          "section": "section_01",
+          "value": "hospice wing of the county hospital",
+          "excerpt": "in the hospice wing of the county hospital",
+          "location": "paragraph 3",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_01-032",
+          "section": "section_01",
+          "value": "still restoring the boat the morning he died",
+          "excerpt": "He had been restoring it, she supposed, the morning he died",
+          "location": "paragraph 5",
+          "source": "character_thought",
+          "confidence": "implied"
+        },
+        {
+          "id": "fact-section_04-010",
+          "section": "section_04",
+          "value": "hospice",
+          "excerpt": "The hospice nurse had phoned Kaja",
+          "location": "paragraph 4",
+          "source": "narration",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": false,
+      "any_implied": true,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_01",
+        "section_04"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
+      "entity": "Emil",
+      "attribute": "death_date",
+      "distinct_values": [
+        "eighty-one",
+        "march",
+        "night before march 5, after the two o'clock check"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_01-013",
+          "section": "section_01",
+          "value": "March",
+          "excerpt": "Emil had died in March",
+          "location": "paragraph 3",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_01-014",
+          "section": "section_01",
+          "value": "eighty-one",
+          "excerpt": "eighty-one years old",
+          "location": "paragraph 3",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_04-009",
+          "section": "section_04",
+          "value": "night before March 5, after the two o'clock check",
+          "excerpt": "phoned Kaja at six in the morning on the fifth of March to say that Emil had gone in the night, alone, sometime after the two o'clock check",
+          "location": "paragraph 4",
+          "source": "narration",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": true,
+      "any_implied": false,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_01",
+        "section_04"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
+      "entity": "Emil",
+      "attribute": "age_at_death",
+      "distinct_values": [
+        "eighty-one",
+        "hospice",
+        "hospice wing of the county hospital"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_01-014",
+          "section": "section_01",
+          "value": "eighty-one",
+          "excerpt": "eighty-one years old",
+          "location": "paragraph 3",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_01-015",
+          "section": "section_01",
+          "value": "hospice wing of the county hospital",
+          "excerpt": "in the hospice wing of the county hospital",
+          "location": "paragraph 3",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_04-010",
+          "section": "section_04",
+          "value": "hospice",
+          "excerpt": "The hospice nurse had phoned Kaja",
+          "location": "paragraph 4",
+          "source": "narration",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": true,
+      "any_implied": false,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_01",
+        "section_04"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
+      "entity": "Emil",
+      "attribute": "death_date",
+      "distinct_values": [
+        "hospice",
+        "hospice wing of the county hospital",
+        "march",
+        "night before march 5, after the two o'clock check"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_01-013",
+          "section": "section_01",
+          "value": "March",
+          "excerpt": "Emil had died in March",
+          "location": "paragraph 3",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_01-015",
+          "section": "section_01",
+          "value": "hospice wing of the county hospital",
+          "excerpt": "in the hospice wing of the county hospital",
+          "location": "paragraph 3",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_04-009",
+          "section": "section_04",
+          "value": "night before March 5, after the two o'clock check",
+          "excerpt": "phoned Kaja at six in the morning on the fifth of March to say that Emil had gone in the night, alone, sometime after the two o'clock check",
+          "location": "paragraph 4",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_04-010",
+          "section": "section_04",
+          "value": "hospice",
+          "excerpt": "The hospice nurse had phoned Kaja",
+          "location": "paragraph 4",
+          "source": "narration",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": true,
+      "any_implied": false,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_01",
+        "section_04"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
+      "entity": "Kaja",
+      "attribute": "arrival_day",
+      "distinct_values": [
+        "sat in the parking lot forty minutes before going in",
+        "saturday morning"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_02-001",
+          "section": "section_02",
+          "value": "Saturday morning",
+          "excerpt": "Kaja came Saturday morning with two coffees",
+          "location": "paragraph 1",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_04-014",
+          "section": "section_04",
+          "value": "sat in the parking lot forty minutes before going in",
+          "excerpt": "sat in the parking lot for forty minutes before she could make herself go in",
+          "location": "paragraph 4",
+          "source": "narration",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": true,
+      "any_implied": false,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_02",
+        "section_04"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
+      "entity": "Kaja",
+      "attribute": "residence_distance",
+      "distinct_values": [
+        "eleven miles up the shore road",
+        "the house on vasser creek"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_02-005",
+          "section": "section_02",
+          "value": "eleven miles up the shore road",
+          "excerpt": "She had lived eleven miles up the shore road the whole time",
+          "location": "paragraph 2",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-006",
+          "section": "section_02",
+          "value": "the house on Vasser Creek",
+          "excerpt": "in the house on Vasser Creek",
+          "location": "paragraph 2",
+          "source": "narration",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": true,
+      "any_implied": false,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_02"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
+      "entity": "the lake",
+      "attribute": "water_level_event",
+      "distinct_values": [
+        "dropped so low the harbor became a shallow gray plate",
+        "risen all fall; standing over the dock boards at the outer end"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_02-018",
+          "section": "section_02",
+          "value": "dropped so low the harbor became a shallow gray plate",
+          "excerpt": "the year the lake dropped so low that the whole harbor turned to a shallow gray plate",
+          "location": "paragraph 7",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_04-002",
+          "section": "section_04",
+          "value": "risen all fall; standing over the dock boards at the outer end",
+          "excerpt": "The lake had come up all fall. That morning the water stood over the dock boards at the outer end",
+          "location": "paragraph 2",
+          "source": "narration",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": true,
+      "any_implied": false,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_02",
+        "section_04"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
+      "entity": "Ren",
+      "attribute": "recent_action",
+      "distinct_values": [
+        "bailed out the skiff",
+        "called a broker"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_02-011",
+          "section": "section_02",
+          "value": "called a broker",
+          "excerpt": "\"You called a broker,\" she said.",
+          "location": "paragraph 3",
+          "source": "dialogue",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_03-020",
+          "section": "section_03",
+          "value": "bailed out the skiff",
+          "excerpt": "She bailed it, because bailing was something she knew how to do without instruction",
+          "location": "paragraph 5",
+          "source": "narration",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": false,
+      "any_implied": false,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_02",
+        "section_03"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
+      "entity": "Ren",
+      "attribute": "intended_length_of_stay",
+      "distinct_values": [
+        "four days",
+        "stayed through october"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_03-001",
+          "section": "section_03",
+          "value": "four days",
+          "excerpt": "She meant to stay four days.",
+          "location": "paragraph 1",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_03-002",
+          "section": "section_03",
+          "value": "stayed through October",
+          "excerpt": "She stayed through October.",
+          "location": "paragraph 1",
+          "source": "narration",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": true,
+      "any_implied": false,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_03"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
+      "entity": "Ren",
+      "attribute": "residence",
+      "distinct_values": [
+        "portland; current address as of a year ago is the third apartment",
+        "rented room above the hardware store"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_03-003",
+          "section": "section_03",
+          "value": "rented room above the hardware store",
+          "excerpt": "She rented the room above the hardware store",
+          "location": "paragraph 2",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_04-018",
+          "section": "section_04",
+          "value": "Portland; current address as of a year ago is the third apartment",
+          "excerpt": "three apartments, the last one current as of a year ago",
+          "location": "paragraph 6",
+          "source": "narration",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": true,
+      "any_implied": false,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_03",
+        "section_04"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
+      "entity": "the shop",
+      "attribute": "location",
+      "distinct_values": [
+        "on a nail inside the meter box",
+        "on the harbor, with a dock",
+        "water street"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_01-019",
+          "section": "section_01",
+          "value": "Water Street",
+          "excerpt": "the shop on Water Street",
+          "location": "paragraph 3",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_01-023",
+          "section": "section_01",
+          "value": "on a nail inside the meter box",
+          "excerpt": "The key still hung on a nail inside the meter box",
+          "location": "paragraph 4",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-022",
+          "section": "section_02",
+          "value": "on the harbor, with a dock",
+          "excerpt": "stood at the shop door with a cup of coffee looking at his own dock pilings",
+          "location": "paragraph 7",
+          "source": "narration",
+          "confidence": "implied"
+        }
+      ],
+      "all_narration": true,
+      "any_implied": true,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_01",
+        "section_02"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
+      "entity": "transom date column",
+      "attribute": "last_completed_entry",
+      "distinct_values": [
+        "a fifth date written two lines below march fourth that had not yet happened",
+        "march fourth"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_03-023",
+          "section": "section_03",
+          "value": "March fourth",
+          "excerpt": "The last entry was March fourth.",
+          "location": "paragraph 6",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_03-024",
+          "section": "section_03",
+          "value": "a fifth date written two lines below March fourth that had not yet happened",
+          "excerpt": "Two lines below it, in the same soft pencil, he had written a fifth date that had not happened yet",
+          "location": "paragraph 6",
+          "source": "narration",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": true,
+      "any_implied": false,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_03"
+      ],
+      "likely_unpropagated_revision": false
+    }
+  ]
+}

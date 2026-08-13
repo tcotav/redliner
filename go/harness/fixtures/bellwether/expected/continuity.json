@@ -1,0 +1,20 @@
+{
+  "contradictions": [
+    {
+      "id": "cont-001",
+      "status": "open",
+      "kind": "unverified",
+      "category": "timeline",
+      "severity": "moderate",
+      "entity": "Emil",
+      "attribute": "death_date",
+      "fact_ids": [
+        "fact-section_01-032",
+        "fact-section_03-023",
+        "fact-section_01-015",
+        "fact-section_04-009"
+      ],
+      "note": "Emil's last days are pinned three ways and they only reconcile on one reading. section_01 paragraph 3: he died \"in the hospice wing of the county hospital.\" section_04 paragraph 4: \"the hospice nurse had phoned Kaja at six in the morning on the fifth of March to say that Emil had gone in the night, alone, sometime after the two o'clock check\" — so he died overnight March 4/5 as an inpatient. But section_03 paragraph 6 has him marking the duck skiff's transom by hand: \"The last entry was March fourth.\" And section_01 paragraph 5 has Ren assuming \"He had been restoring it, she supposed, the morning he died\" — the morning of the 5th, when by section_04 he was already dead and had been in a hospice bed at the two o'clock check. The question to settle: when did Emil enter the hospice wing? If he had been inpatient for days or weeks, he was not at the shop putting pencil to the transom on March 4, and Ren's \"the morning he died\" is a mistaken impression rather than a fact — which is fine, and arguably the better version, but the text should let a reader see it is her error. If he was admitted late on the 4th, everything reconciles and nothing needs changing. Filed unverified rather than contradiction because Ren's line is character_thought and marked implied, and because a same-day admission makes the whole cluster consistent."
+    }
+  ]
+}

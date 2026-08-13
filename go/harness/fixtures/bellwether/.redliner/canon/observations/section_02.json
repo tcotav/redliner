@@ -1,0 +1,281 @@
+{
+  "section": "section_02",
+  "section_sha256": "7affa6acde90c88e0b6cc25317cc2818d39831257bcf583276c317d6242cb7c0",
+  "facts": [
+    {
+      "id": "fact-section_02-001",
+      "entity": "Kaja",
+      "entity_type": "character",
+      "attribute": "arrival_day",
+      "value": "Saturday morning",
+      "excerpt": "Kaja came Saturday morning with two coffees",
+      "location": "paragraph 1",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-002",
+      "entity": "Kaja",
+      "entity_type": "character",
+      "attribute": "brings",
+      "value": "two coffees",
+      "excerpt": "came Saturday morning with two coffees",
+      "location": "paragraph 1",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-003",
+      "entity": "Kaja",
+      "entity_type": "character",
+      "attribute": "hair",
+      "value": "gray at the temples",
+      "excerpt": "gray at the temples",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-004",
+      "entity": "Kaja",
+      "entity_type": "character",
+      "attribute": "build",
+      "value": "heavier than Ren remembered",
+      "excerpt": "She was heavier than Ren remembered",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-005",
+      "entity": "Kaja",
+      "entity_type": "character",
+      "attribute": "residence_distance",
+      "value": "eleven miles up the shore road",
+      "excerpt": "She had lived eleven miles up the shore road the whole time",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-006",
+      "entity": "Kaja",
+      "entity_type": "character",
+      "attribute": "residence",
+      "value": "the house on Vasser Creek",
+      "excerpt": "in the house on Vasser Creek",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-007",
+      "entity": "Vasser Creek",
+      "entity_type": "place",
+      "attribute": "location",
+      "value": "eleven miles up the shore road from Ren's shop",
+      "excerpt": "She had lived eleven miles up the shore road the whole time, in the house on Vasser Creek",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "implied"
+    },
+    {
+      "id": "fact-section_02-008",
+      "entity": "Kaja",
+      "entity_type": "character",
+      "attribute": "marital_status",
+      "value": "has a husband",
+      "excerpt": "with her husband",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-009",
+      "entity": "Kaja",
+      "entity_type": "character",
+      "attribute": "owns",
+      "value": "two enormous and identical brown dogs, until last spring",
+      "excerpt": "until last spring, two enormous and identical brown dogs",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-010",
+      "entity": "Kaja",
+      "entity_type": "character",
+      "attribute": "sibling_of",
+      "value": "Ren's sister",
+      "excerpt": "Her sister had sat with him all four of those days",
+      "location": "paragraph 6",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-011",
+      "entity": "Ren",
+      "entity_type": "character",
+      "attribute": "recent_action",
+      "value": "called a broker",
+      "excerpt": "\"You called a broker,\" she said.",
+      "location": "paragraph 3",
+      "source": "dialogue",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-012",
+      "entity": "Ren",
+      "entity_type": "character",
+      "attribute": "self_account_of_call",
+      "value": "called to ask a question",
+      "excerpt": "\"I called to ask a question.\"",
+      "location": "paragraph 4",
+      "source": "dialogue",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-013",
+      "entity": "him",
+      "entity_type": "character",
+      "attribute": "time_in_room_before_death",
+      "value": "four days",
+      "excerpt": "He was in that room four days.",
+      "location": "paragraph 5",
+      "source": "dialogue",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-014",
+      "entity": "Ren",
+      "entity_type": "character",
+      "attribute": "flights_taken",
+      "value": "zero",
+      "excerpt": "And you were on an airplane exactly zero times.",
+      "location": "paragraph 5",
+      "source": "dialogue",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-015",
+      "entity": "Kaja",
+      "entity_type": "character",
+      "attribute": "attended_deathbed",
+      "value": "sat with him all four days and held his hand the last four hours",
+      "excerpt": "had held his hand through the last four hours of it",
+      "location": "paragraph 6",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-016",
+      "entity": "Kaja",
+      "entity_type": "character",
+      "attribute": "sang",
+      "value": "the song about the pierogi",
+      "excerpt": "had sung him that stupid song about the pierogi",
+      "location": "paragraph 6",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-017",
+      "entity": "Ren",
+      "entity_type": "character",
+      "attribute": "age_at_low_lake_summer",
+      "value": "turned sixteen that August",
+      "excerpt": "the August she turned sixteen",
+      "location": "paragraph 7",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-018",
+      "entity": "the lake",
+      "entity_type": "place",
+      "attribute": "water_level_event",
+      "value": "dropped so low the harbor became a shallow gray plate",
+      "excerpt": "the year the lake dropped so low that the whole harbor turned to a shallow gray plate",
+      "location": "paragraph 7",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-019",
+      "entity": "the dock",
+      "entity_type": "place",
+      "attribute": "exposed_lakebed_distance",
+      "value": "forty feet past the end of the dock",
+      "excerpt": "You could walk out forty feet past the end of the dock and not wet your knees.",
+      "location": "paragraph 7",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-020",
+      "entity": "their father",
+      "entity_type": "character",
+      "attribute": "relationship",
+      "value": "father of Ren and Kaja",
+      "excerpt": "Their father had stood at the shop door",
+      "location": "paragraph 7",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-021",
+      "entity": "their father",
+      "entity_type": "character",
+      "attribute": "owns",
+      "value": "the shop and its dock pilings",
+      "excerpt": "looking at his own dock pilings",
+      "location": "paragraph 7",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-022",
+      "entity": "the shop",
+      "entity_type": "place",
+      "attribute": "location",
+      "value": "on the harbor, with a dock",
+      "excerpt": "stood at the shop door with a cup of coffee looking at his own dock pilings",
+      "location": "paragraph 7",
+      "source": "narration",
+      "confidence": "implied"
+    },
+    {
+      "id": "fact-section_02-023",
+      "entity": "him",
+      "entity_type": "character",
+      "attribute": "never_mentioned_ren",
+      "value": "never asked about Ren or said her name",
+      "excerpt": "He never once asked about you",
+      "location": "paragraph 8",
+      "source": "dialogue",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-024",
+      "entity": "Kaja",
+      "entity_type": "character",
+      "attribute": "annual_contact",
+      "value": "sat across from him every Christmas",
+      "excerpt": "Every Christmas I sat across from him",
+      "location": "paragraph 8",
+      "source": "dialogue",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-025",
+      "entity": "Kaja",
+      "entity_type": "character",
+      "attribute": "location_of_conversation",
+      "value": "inside Ren's shop",
+      "excerpt": "she moved through the shop touching things",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    }
+  ]
+}

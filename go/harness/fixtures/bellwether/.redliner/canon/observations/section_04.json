@@ -1,0 +1,303 @@
+{
+  "section": "section_04",
+  "section_sha256": "dc17999dcf89b5bdcb63079411a28febb5f99ead94581e2e4fc6029ff4bdc4ea",
+  "facts": [
+    {
+      "id": "fact-section_04-001",
+      "entity": "the boat",
+      "entity_type": "object",
+      "attribute": "launch_date",
+      "value": "November 14",
+      "excerpt": "They put her in the water on the fourteenth of November",
+      "location": "paragraph 1",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_04-002",
+      "entity": "the lake",
+      "entity_type": "place",
+      "attribute": "water_level",
+      "value": "risen all fall; standing over the dock boards at the outer end",
+      "excerpt": "The lake had come up all fall. That morning the water stood over the dock boards at the outer end",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_04-003",
+      "entity": "the pier",
+      "entity_type": "place",
+      "attribute": "submerged_length",
+      "value": "last twenty feet",
+      "excerpt": "the last twenty feet of pier looked like a path laid across the surface",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_04-004",
+      "entity": "the boat",
+      "entity_type": "object",
+      "attribute": "length",
+      "value": "thirty-one feet",
+      "excerpt": "Thirty-one feet of white oak and mahogany came off the slings",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_04-005",
+      "entity": "the boat",
+      "entity_type": "object",
+      "attribute": "material",
+      "value": "white oak and mahogany",
+      "excerpt": "Thirty-one feet of white oak and mahogany",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_04-006",
+      "entity": "the boat",
+      "entity_type": "object",
+      "attribute": "construction_type",
+      "value": "old wooden boat, plank-built",
+      "excerpt": "did what old wooden boats do, which is leak, generously and without apology, until the planks took up",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "implied"
+    },
+    {
+      "id": "fact-section_04-007",
+      "entity": "the boat",
+      "entity_type": "object",
+      "attribute": "launch_method",
+      "value": "travel lift with slings",
+      "excerpt": "men in waders swore cheerfully at the travel lift",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_04-008",
+      "entity": "Kaja",
+      "entity_type": "character",
+      "attribute": "possessions",
+      "value": "a thermos and a folding chair",
+      "excerpt": "Kaja came with a thermos and a folding chair",
+      "location": "paragraph 3",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_04-009",
+      "entity": "Emil",
+      "entity_type": "character",
+      "attribute": "death_date",
+      "value": "night before March 5, after the two o'clock check",
+      "excerpt": "phoned Kaja at six in the morning on the fifth of March to say that Emil had gone in the night, alone, sometime after the two o'clock check",
+      "location": "paragraph 4",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_04-010",
+      "entity": "Emil",
+      "entity_type": "character",
+      "attribute": "place_of_death",
+      "value": "hospice",
+      "excerpt": "The hospice nurse had phoned Kaja",
+      "location": "paragraph 4",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_04-011",
+      "entity": "Emil",
+      "entity_type": "character",
+      "attribute": "relationship_to_Ren_and_Kaja",
+      "value": "father",
+      "excerpt": "their father had written her Portland address in pencil",
+      "location": "paragraph 6",
+      "source": "narration",
+      "confidence": "implied"
+    },
+    {
+      "id": "fact-section_04-012",
+      "entity": "Kaja",
+      "entity_type": "character",
+      "attribute": "notified_of_death_at",
+      "value": "six in the morning, March 5, by phone",
+      "excerpt": "The hospice nurse had phoned Kaja at six in the morning on the fifth of March",
+      "location": "paragraph 4",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_04-013",
+      "entity": "the hospice",
+      "entity_type": "place",
+      "attribute": "distance_from_Kaja",
+      "value": "eleven miles",
+      "excerpt": "Kaja had driven the eleven miles in the dark",
+      "location": "paragraph 4",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_04-014",
+      "entity": "Kaja",
+      "entity_type": "character",
+      "attribute": "action_on_arrival",
+      "value": "sat in the parking lot forty minutes before going in",
+      "excerpt": "sat in the parking lot for forty minutes before she could make herself go in",
+      "location": "paragraph 4",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_04-015",
+      "entity": "the two sisters",
+      "entity_type": "character",
+      "attribute": "presence_at_death",
+      "value": "neither present",
+      "excerpt": "Neither of them had been in the room at the end.",
+      "location": "paragraph 4",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_04-016",
+      "entity": "the shop ledger",
+      "entity_type": "object",
+      "attribute": "location",
+      "value": "below deck on the boat",
+      "excerpt": "she went below and came back with the shop ledger",
+      "location": "paragraph 6",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_04-017",
+      "entity": "the shop ledger",
+      "entity_type": "object",
+      "attribute": "contents_inside_cover",
+      "value": "Ren's Portland address written in pencil three times, crossed out twice",
+      "excerpt": "their father had written her Portland address in pencil and crossed it out and written it again, three times, three apartments",
+      "location": "paragraph 6",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_04-018",
+      "entity": "Ren",
+      "entity_type": "character",
+      "attribute": "residence",
+      "value": "Portland; current address as of a year ago is the third apartment",
+      "excerpt": "three apartments, the last one current as of a year ago",
+      "location": "paragraph 6",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_04-019",
+      "entity": "Ren",
+      "entity_type": "character",
+      "attribute": "sibling",
+      "value": "Kaja",
+      "excerpt": "the two sisters sat on the dock",
+      "location": "paragraph 7",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_04-020",
+      "entity": "the two sisters",
+      "entity_type": "character",
+      "attribute": "ages",
+      "value": "forty-one and forty-four",
+      "excerpt": "forty-one and forty-four years old",
+      "location": "paragraph 7",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_04-021",
+      "entity": "the boat",
+      "entity_type": "object",
+      "attribute": "leak_stopped_time",
+      "value": "almost stopped by four o'clock on launch day",
+      "excerpt": "By four o'clock it had almost stopped",
+      "location": "paragraph 7",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_04-022",
+      "entity": "the boat launch",
+      "entity_type": "event",
+      "attribute": "time_of_day",
+      "value": "failing light by four o'clock",
+      "excerpt": "By four o'clock it had almost stopped, and the two sisters sat on the dock in the failing light",
+      "location": "paragraph 7",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_04-023",
+      "entity": "Emil",
+      "entity_type": "character",
+      "attribute": "opinion_on_november_launch",
+      "value": "would have hated it and called it showing off",
+      "excerpt": "\"He'd have hated November,\" Kaja said",
+      "location": "paragraph 5",
+      "source": "dialogue",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_04-024",
+      "entity": "Kaja",
+      "entity_type": "character",
+      "attribute": "topic_avoided",
+      "value": "brokers",
+      "excerpt": "did not say anything about brokers",
+      "location": "paragraph 3",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_04-025",
+      "entity": "the boat",
+      "entity_type": "object",
+      "attribute": "pumps_running",
+      "value": "pumps running during launch",
+      "excerpt": "Kaja said, watching the pumps run",
+      "location": "paragraph 5",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_04-026",
+      "entity": "the shop",
+      "entity_type": "organization",
+      "attribute": "associated_with",
+      "value": "the sisters' father",
+      "excerpt": "the shop ledger, open to the inside cover, where their father had written her Portland address",
+      "location": "paragraph 6",
+      "source": "narration",
+      "confidence": "implied"
+    },
+    {
+      "id": "fact-section_04-027",
+      "entity": "the boat launch",
+      "entity_type": "event",
+      "attribute": "sequence",
+      "value": "occurs after Emil's death on March 5",
+      "excerpt": "They put her in the water on the fourteenth of November",
+      "location": "paragraphs 1 and 4",
+      "source": "narration",
+      "confidence": "implied"
+    }
+  ]
+}

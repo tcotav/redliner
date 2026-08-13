@@ -1257,6 +1257,13 @@ before concluding it didn't write anything.
 (below). Not fixed.** This is a **recall** bug, and the more serious of
 the two findings from that run, because nothing downstream catches it.
 
+> **STATUS 2026-08-12, read this first.** Candidate fix 5 below was
+> implemented and then **failed a blind second manuscript 0/4**. It
+> handles *attribute*-name variation only; *entity*-name variation is
+> unhandled, and one of the four planted contradictions is not reachable
+> by name matching at all. See "The recall fix does not generalize"
+> further down before building on anything in this section.
+
 A contradiction was deliberately planted in a scratch manuscript: a tide
 clock described as stopped for **eleven years** in section 1 and
 **fifteen years** in section 3. The continuity layer extracted both facts
@@ -1425,6 +1432,12 @@ attribute"*). It even caught a garbage extraction (`house_smell: 'yes'`).
   observation about the manuscript at all.
 - **The recall fix is validated end to end**, not just unit-tested: a
   real contradiction surfaces and the added noise is absorbed.
+  **Amended 2026-08-12 (later the same day): scope this to saltmarsh's
+  failure shape only.** A second, blind-authored manuscript scored 0/4 —
+  see "The recall fix does not generalize" below. What was validated is
+  that the fix handles *attribute*-name variation on an entity that
+  differs by an article. That is the shape saltmarsh has, and the only
+  shape it has.
 - **Revisit only if** adjudication is later seen to sweep or to drop a
   real contradiction. That is the tripwire; it has not tripped.
 
@@ -1450,6 +1463,139 @@ The fixture would then be written to match whatever naming the fix
 produces, which is the same blind spot that hid the bug. It needs a
 fresh manuscript, or a fixture written by someone not looking at the
 extractor's output.
+
+## The recall fix does not generalize — 0/4 on a blind manuscript (2026-08-12)
+
+**This reopens the recall item above.** The caveat recorded at the end of
+the saltmarsh section — "a second fresh manuscript would test it
+properly" — was acted on the same day. The fix failed it outright.
+
+Full write-up and per-collision analysis live in the fixture:
+`go/harness/fixtures/bellwether/` (README + `GROUND_TRUTH.md`).
+
+**Method, and why the result is trustworthy.** A 4-section literary
+manuscript (~1,260 words) was written by an agent given no repo path, no
+redliner vocabulary, and an explicit instruction to read no file on the
+machine; a scan of the result for redliner terms found none. It planted 4
+contradictions in **non-adjacent** sections with deliberate naming
+variation, plus 3 reconcilable decoys. **The grading rule — including
+"a surfaced-then-dismissed contradiction counts as a miss" and the
+≤2/4-means-reopen threshold — was written down before any output was
+seen**, and is preserved in the fixture. Extraction ran through the real
+per-section extractor prompt, one agent per section.
+
+**Result: 0/4 matcher recall, 0/4 end-to-end.** The final
+`continuity.json` for this manuscript holds one `unverified` item and
+zero contradictions, against four planted ones.
+
+### Two failure classes, 3 + 1. Do not treat this as one bug.
+
+**Class A — entity-name variation (3 of 4).** Both halves extracted
+correctly; only the matcher failed.
+
+| Planted | section A | section B |
+| --- | --- | --- |
+| absence | `Renata Sowa.years_since_last_visit = nineteen winters` | `Ren.years_away_from_town = twenty-three years` |
+| age | `Emil.age_at_death = eighty-one` | `Ren's father.age_at_death = two months short of seventy-seven` |
+| length | `Lyman.length = twenty-six feet` | `the boat.length = thirty-one feet` |
+
+Rows 2 and 3 are the sharpest evidence in the repo: **the attribute
+matches exactly** (`age_at_death` = `age_at_death`, `length` = `length`)
+and they still never meet.
+
+Root cause, verified in source rather than inferred: `ComputeReconcile`
+partitions facts by `byEntity[normEntity(rec.Entity)]`
+(`go/internal/cli/canon.go:455-461`) and `linkByAttribute`
+(`canon.go:309`) only ever runs *inside* one partition. `normEntity`
+(`canon.go:273`) lowercases and strips one leading article, nothing more.
+**Candidate fix 5 made attribute names fuzzy and left entity names
+exact-match** — so the entity partition is a wall the attribute linking
+never crosses. Candidate fix 1 ("normalize... strip leading articles")
+is what shipped for entities, and it was correctly labelled a palliative
+at the time.
+
+**Class B — propositional mismatch (1 of 4), not reachable by name
+matching at all.** `Kaja.attended_deathbed = "sat with him all four days
+and held his hand the last four hours"` vs `the two sisters
+.presence_at_death = "neither present"`. Same underlying claim, different
+entity *and* different attribute sharing no significant token. Resolving
+`Kaja` to `the two sisters` would still not collide them. **Do not let a
+future entity-matching fix take credit for this class** — it needs
+proposition comparison, which is a materially harder problem and may not
+be worth solving.
+
+### Precision failed in the same run: 15 of 16 collisions are malformed
+
+`linkByAttribute` unions two attribute groups sharing any significant
+token. Of 16 collisions: **15 mix two different attributes**, and **6 sit
+entirely within a single section**, which cannot be a cross-section
+continuity issue by definition. Exactly 1 is a clean same-attribute
+cross-section pair, and it is not one of the planted four.
+
+`Emil` alone produced 6 spurious collisions: `activity_at_death`,
+`age_at_death`, `death_date` and `place_of_death` all share the token
+`death`, so pairwise linking emits all C(4,2) combinations — yielding
+`Emil.age_at_death: ['eighty-one', 'hospice']`. **This is quadratic in
+attributes-per-entity, so a full novel makes it worse, not better.** That
+is a cost problem as well as a noise problem, and it was not visible at
+saltmarsh's scale.
+
+Note this does not overturn the 2026-08-12 conclusion that set-valued
+false positives are "a token cost, not a correctness problem" — that was
+measured on a 12-collision run the adjudicator saw through. But it was
+never tested against a noise profile like this one.
+
+### The finding that matters most: the adjudicator saw them and could not report them
+
+Unexpected, and the most actionable thing here.
+
+The adjudicator **went looking despite being told not to** — the prompt
+asserts reconciliation is "exhaustive and deterministic" and says "**Do
+not go looking for more contradictions**"
+(`agents/fiction-continuity-adjudicator.md:11-16`) — and it found all
+three Class A contradictions, naming them in its reply.
+
+**It could not write them into `continuity.json`, because `fact_ids` is
+required and a pair the matcher never formed has no ids to cite.** Its
+own words: *"no collision was raised, and the schema needs fact IDs."*
+And `SKILL.md:293-298` has the coordinator summarize from
+`continuity.json`, where they do not appear — so in a real run they are
+most likely lost.
+
+**It also misdiagnosed the cause on two independent runs**, reporting
+"genuine extraction gaps... worth fixing upstream." Every one of those
+facts *was* extracted correctly. The adjudicator sees only
+`collisions.json`, never `observations/`, so absent-from-collisions is
+indistinguishable from absent-from-extraction. Anyone acting on that
+report would go fix the wrong component.
+
+This is worth more than a bug: it says the pipeline has a *reviewer for
+under-reporting* after all — the adjudicator noticed unprompted — and the
+design throws its answer away. The "over-reporting has a proven reviewer;
+under-reporting has nothing at all" asymmetry recorded above is not quite
+right; the reviewer exists and is gagged by the output schema.
+
+### What NOT to do next
+
+**Do not design the entity-matching fix off this one manuscript.** That
+is exactly how the current broken fix was produced — tuned to a single
+failure shape, shipped, and found to be shape-specific one day later.
+Note also that entity-side fuzzy matching **multiplies against the
+already-broken attribute linking**: fusing `Emil` and `Ren's father` into
+one partition today would make Emil's 6 spurious death-token merges
+worse, not better.
+
+The cheap deterministic guards on the precision half are separable and
+testable against saltmarsh's committed observations with **zero model
+calls** — e.g. suppressing groups whose facts all come from one section,
+and not merging two attribute groups that each already carry their own
+distinct values. Those are candidates, not decisions.
+
+**Keep `bellwether` unspent.** Its entire value is that nothing has been
+tuned against it. If a matcher fix lands and its expectations are then
+edited to match the new output, it becomes another spent fixture and the
+repo is back to zero unspent evidence. A third manuscript would be needed
+to re-earn what this one currently provides for free.
 
 ## First full intake → assess pass on a fresh manuscript (DONE, 2026-08-12)
 
