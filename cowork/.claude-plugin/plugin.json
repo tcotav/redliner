@@ -1,7 +1,7 @@
 {
   "name": "redliner-cowork",
   "description": "Layered manuscript-editing pipeline (fiction, design docs, and other long-form domains) for Cowork and other claude.ai-hosted surfaces: developmental and line editing, plus a cross-cutting continuity/canon-consistency layer, exposed via an MCP server instead of bin/-on-PATH.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": {
     "name": "redliner"
   },
