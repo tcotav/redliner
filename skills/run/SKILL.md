@@ -70,6 +70,19 @@ Check the manuscript's current state. If there's no state, or no
 `.redliner/brief.md`, stop and tell the author to run `/redliner:intake`
 first — every pass depends on the brief.
 
+**Get your bearings in one call, not four.** Where this session has a
+composite orientation operation — `redliner context <manuscript_dir>` on
+the CLI, or the matching MCP tool — use it instead of separately asking
+for state, the domain config, the section list, the diff verdict, and
+canon staleness. It returns all of them as one JSON object.
+
+This is not a style preference. Every extra command is a full round trip
+that re-reads the whole accumulated context, so it costs both tokens and
+a latency cycle — measured at ~50K cache-read per call on a real run,
+where the orientation phase alone burned four calls and asked for the
+domain config *twice*. Read the result once and keep it; don't re-run a
+command to re-read a field you already have.
+
 ## Say what's about to happen, before starting a long pass
 
 Applies to `assess`, `recheck`, `line`, and `continuity` — the
