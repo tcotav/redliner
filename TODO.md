@@ -1381,9 +1381,57 @@ Regression tests in `go/internal/cli/canon_norm_test.go` cover article
 stripping, stopword handling, the non-transitivity property, and
 containment suppression.
 
-**Still not addressed:** candidate fix 4 (set-valued attributes like
-`owns`/`contains` still produce false positives — the adjudicator
-correctly dismisses them, but they cost tokens on every run).
+**Candidate fix 4: CLOSED, won't fix — the asymmetry argument is now
+tested rather than assumed (2026-08-12).** The whole justification for
+loosening the matcher was "over-reporting has a proven reviewer" — but
+that was observed at **3** candidates, and the fix quadrupled them to
+**12**. Untested, that made the recall fix's safety an assumption, so it
+was measured: the adjudicator was re-run against the 12-collision canon.
+
+**Result: 2 kept, 10 dismissed — exactly the two that should survive,
+and only those.** Predicted before looking, to prevent rationalizing
+afterwards:
+
+- `tide clock.duration_not_working: eleven vs fifteen years` — kept as a
+  `contradiction`. **The planted bug survives the noise**, which was the
+  catastrophic-failure case.
+- `the instrument.possession_duration: three vs two weeks` — kept as
+  `unverified`, correctly reasoned as an on-page dialogue disagreement
+  needing author confirmation.
+
+Quality did not degrade under 4× the load: it reasoned **per collision
+with a specific cause**, not by sweeping. It sorted its own dismissals
+into "extraction artifacts" and "compatible descriptions"; it identified
+`Ferris.owns` and `shop.contains` as *"multi-valued attribute, he owns
+both"* — i.e. it diagnosed the exact condition fix 4 exists to encode;
+and it correctly saw through the four malformed pairs the new pairwise
+linking creates (*"the two values were never about the same
+attribute"*). It even caught a garbage extraction (`house_smell: 'yes'`).
+
+**Therefore:**
+
+- **Fix 4 is closed.** Set-valued false positives are a **token cost
+  (~$0.35/run), not a correctness problem**. Encoding cardinality in the
+  fact schema would buy ~$0.20/run at the price of opening a schema
+  deliberately sealed against optional keys — and its wrong answers
+  (`multi` where `single` was right) reintroduce silent misses, the
+  failure class this section exists to eliminate. Not worth it.
+- **`FACT_REQUIRED_KEYS` stays sealed.** The "adding an optional key here
+  is how this schema stops being judgment-free" guard held on its first
+  real test. Note the distinction that makes it bind: `source` and
+  `confidence` describe *the observation* ("how was this stated?") and
+  are checkable against the excerpt; cardinality describes *the world
+  model* ("can a person own several things?"), which is not an
+  observation about the manuscript at all.
+- **The recall fix is validated end to end**, not just unit-tested: a
+  real contradiction surfaces and the added noise is absorbed.
+- **Revisit only if** adjudication is later seen to sweep or to drop a
+  real contradiction. That is the tripwire; it has not tripped.
+
+One caveat on the evidence: this is one adjudication run on one
+manuscript. It is far better than the assumption it replaces, but a
+second fresh manuscript would test it properly — the same reason
+`sample_manuscript` could never have caught the original bug.
 
 **Do not treat this as fixed by adding a test to `sample_manuscript`.**
 The fixture would then be written to match whatever naming the fix
