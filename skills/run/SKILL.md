@@ -138,8 +138,9 @@ invites the author to start reacting to a half-finished picture.
 
 1. Move the manuscript to the developmental phase (this increments the
    round counter).
-2. Prepare `<manuscript_dir>/.redliner/findings/`; clear stale files from
-   a previous round.
+2. Prepare `<manuscript_dir>/.redliner/findings/` and
+   `<manuscript_dir>/.redliner/letters/`; clear stale files from a
+   previous round.
 3. Task the `redliner:<domain>-developmental-editor` subagent with the manuscript directory,
    the round number, and output path `.redliner/findings/developmental.json`.
 4. Validate everything currently under `.redliner/` — stop and report
@@ -157,7 +158,13 @@ invites the author to start reacting to a half-finished picture.
    baseline. Don't reorder this.
 6. Record the current text as the assessed baseline — this is what lets
    a later `recheck` tell what changed.
-7. Task `redliner:<domain>-editorial-aggregator` for the **developmental** letter.
+7. Task `redliner:<domain>-editorial-aggregator` for the **developmental**
+   letter, giving it **both output paths explicitly**:
+   `.redliner/letters/developmental_round<N>.md` and
+   `.redliner/letters/developmental_round<N>.json`, where `<N>` is the
+   round from step 1. The agent's contract is "write both output paths
+   you're given" — if you don't supply them it has to invent a location,
+   and the letter then lands somewhere nothing else can reliably find.
 8. Validate again, then read and show the developmental letter, then the
    continuity summary from step 5.
 
@@ -241,7 +248,15 @@ that `/redliner:run recheck` will verify it.
    Sequential keeps the transcript readable; parallel is fine too —
    sections share no state.
 5. Validate.
-6. Task `redliner:<domain>-editorial-aggregator` for the **line** letter.
+6. Task `redliner:<domain>-editorial-aggregator` for the **line** letter,
+   giving it **both output paths explicitly**:
+   `.redliner/letters/line_round<N>.md` and
+   `.redliner/letters/line_round<N>.json`, where `<N>` is the manuscript's
+   current `developmental_round` — line passes aren't round-tracked
+   themselves, so they're stamped with the structural round they follow,
+   which keeps a later line pass from silently overwriting an earlier
+   one. Same reason as the developmental step: the agent writes "both
+   output paths you're given" and inventing them is not its job.
 7. Validate, then read and show the letter.
 
 ## `/redliner:run continuity`
