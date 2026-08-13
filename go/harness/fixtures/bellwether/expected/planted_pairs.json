@@ -1,0 +1,31 @@
+{
+  "_comment": "The four planted contradictions, as fact-id pairs against the committed observations/. This is the fixture's actual assertion: does 'canon reconcile' put both ids of a pair into one collision group? As of 2026-08-12 the answer is no for all four. Do NOT edit these ids to match new matcher output -- that would spend the fixture. See ../README.md and ../GROUND_TRUTH.md.",
+  "as_of": "2026-08-12",
+  "surfaced_at_that_time": 0,
+  "pairs": [
+    {
+      "label": "absence",
+      "failure_class": "A",
+      "fact_ids": ["fact-section_01-001", "fact-section_03-008"],
+      "why_missed": "entity 'Renata Sowa' vs 'Ren'; attributes also differ"
+    },
+    {
+      "label": "age",
+      "failure_class": "A",
+      "fact_ids": ["fact-section_01-014", "fact-section_03-011"],
+      "why_missed": "entity 'Emil' vs \"Ren's father\"; attribute 'age_at_death' matches exactly"
+    },
+    {
+      "label": "length",
+      "failure_class": "A",
+      "fact_ids": ["fact-section_01-027", "fact-section_04-004"],
+      "why_missed": "entity 'Lyman' vs 'the boat'; attribute 'length' matches exactly"
+    },
+    {
+      "label": "deathbed",
+      "failure_class": "B",
+      "fact_ids": ["fact-section_02-015", "fact-section_04-015"],
+      "why_missed": "entity 'Kaja' vs 'the two sisters' AND attribute 'attended_deathbed' vs 'presence_at_death' share no token -- not reachable by name matching"
+    }
+  ]
+}

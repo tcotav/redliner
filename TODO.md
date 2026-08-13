@@ -1569,11 +1569,17 @@ facts *was* extracted correctly. The adjudicator sees only
 indistinguishable from absent-from-extraction. Anyone acting on that
 report would go fix the wrong component.
 
-This is worth more than a bug: it says the pipeline has a *reviewer for
-under-reporting* after all — the adjudicator noticed unprompted — and the
-design throws its answer away. The "over-reporting has a proven reviewer;
-under-reporting has nothing at all" asymmetry recorded above is not quite
-right; the reviewer exists and is gagged by the output schema.
+This is worth more than a bug: it says the pipeline has a **partial**
+reviewer for under-reporting after all — the adjudicator noticed
+unprompted, on both runs — and the design throws its answer away.
+
+Be careful how much weight that carries. It caught the *flagrant* numeric
+cases (26 vs 31 feet, 81 vs 76) when it happened to read the sections,
+and missed Class B entirely on the clean run. So the "over-reporting has
+a proven reviewer; under-reporting has nothing at all" asymmetry recorded
+above still mostly holds. What this shows is that **the gag is worth
+removing**, not that a safety net exists — do not relax the
+under-reporting concern on the strength of it.
 
 ### What NOT to do next
 

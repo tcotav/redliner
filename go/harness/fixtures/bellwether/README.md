@@ -118,9 +118,25 @@ cp -r go/harness/fixtures/bellwether /tmp/bw && redliner canon reconcile /tmp/bw
 ```
 
 The check that matters is not a diff against `expected/collisions.json` —
-that file records broken output. It is: **do the four pairs in
-`GROUND_TRUTH.md` appear as collisions?** Today, zero do. A fix works
-when Class A's three appear; Class B is a separate, harder problem.
+that file records broken output. It is: **do the four pairs appear as
+collisions?** `expected/planted_pairs.json` holds them as fact-id pairs
+so this is mechanical rather than a prose instruction:
+
+```python
+import json
+cols = json.load(open('/tmp/bw/.redliner/canon/collisions.json'))['collisions']
+groups = [{f['id'] for f in c['facts']} for c in cols]
+for p in json.load(open('expected/planted_pairs.json'))['pairs']:
+    a, b = p['fact_ids']
+    print(p['label'], p['failure_class'], any(a in g and b in g for g in groups))
+```
+
+Today all four print `False`. A matcher fix works when Class A's three
+print `True`; Class B is a separate, harder problem and should not be
+counted toward an entity-matching fix.
+
+Do **not** edit those ids to match new output. Fixing the matcher should
+change what the script prints, not what the fixture asserts.
 
 ## Caveats on the evidence
 
