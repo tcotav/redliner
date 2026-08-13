@@ -1654,6 +1654,15 @@ by text values, so the guard deletes a real contradiction the entity fix
 had just recovered. Guards and the entity fix cannot be evaluated
 independently — that is the durable lesson here.
 
+**Read the "perfect entity fix" column narrowly.** It was produced by a
+hand-written alias map over four entities (`Renata Sowa`→`Ren`, `Ren's
+father`→`Emil`, `the boat`→`Lyman`, `the two sisters`→`Kaja`), not by a
+real matcher. A real entity fix will resolve a different set — fusing
+things this map left alone, missing things it merged. So "protect-exact +
+G3-coarse finds all 3 Class A" is a result about *that map*, not about
+any entity fix. **When the entity fix lands, re-measure the guard
+combination against the actual fix rather than inheriting these numbers.**
+
 **On today's code, G3-coarse buys no recall at all** — bellwether stays
 0/4, 16 → 9 collisions. It is a noise reduction whose risk only
 materializes later. `protect-exact` moves in the safe direction
