@@ -47,8 +47,35 @@ hardcode fiction's fields here even as a fallback.
 4. **Read a sample first, then interview.** Read the first section (and
    skim one from the middle) *before* asking anything. Ask questions
    informed by what's actually on the page — "you're in present tense
-   throughout, is that fixed?" beats "what tense is it?". Never ask the
-   author something the manuscript already answers.
+   throughout, is that fixed?" beats "what tense is it?".
+
+   **But only infer the fields the text can actually settle.** Split
+   `brief_fields` in two before you start:
+
+   - **Observable** — POV, tense, length, structure, cadence evidence.
+     The text really does answer these. Infer them, and skip the
+     question.
+   - **Intent** — genre/subgenre, audience, comps, hook expectation, and
+     draft stage. These are the author's claim about *which conventions
+     apply*, not facts on the page. **Always ask these, however obvious
+     the manuscript makes them seem.**
+
+   The failure mode is specific, and it was observed in real use: an
+   interviewer read a genre confidently off the page, wrote it into the
+   brief without asking, and the author's actual answer named a different
+   genre with different conventions. Genre is the worst case because it
+   *gates severity* — the same passage is a defect under one genre's
+   conventions and correct craft under another's — so a wrong guess
+   mis-calibrates every later pass silently, with nothing downstream able
+   to catch it. **A confident wrong genre is worse than an unasked
+   question**, because the author never sees the assumption to correct
+   it.
+
+   **Anything you infer, show back for confirmation** rather than writing
+   it into the brief unannounced, and mark it in the brief as inferred
+   ("read from the manuscript, not supplied by the author") so a later
+   reader knows which fields carry the author's authority and which carry
+   yours.
 
 5. **Interview.** Use the AskUserQuestion tool where the options are
    genuinely enumerable (draft stage, and any `brief_fields` entry with an
@@ -57,6 +84,17 @@ hardcode fiction's fields here even as a fallback.
 
    - **Every field in the domain's `brief_fields`** — ask using that
      field's `prompt` text.
+   - **"None" is a real answer to some fields — take it and move on.**
+     Comps especially: an author writing toward something original may
+     have no comps by choice, and pressing for them implies the work
+     should resemble something. Don't infer comps from the text to fill
+     the gap. Record the refusal *as an instruction* — "none supplied,
+     deliberately; do not infer comps and calibrate against them" — so a
+     later pass doesn't quietly substitute its own. Comps exist for
+     severity calibration (a 40-word sentence is a defect in a thriller
+     and unremarkable in literary fantasy), so when they're absent, the
+     genre/subgenre field carries that load alone. That is a reason to
+     ask genre *carefully*, not a reason to push on comps.
    - **Draft stage** — present the domain's `draft_stages` names as the
      options. This *gates severity*, see below. Stage vocabulary and its
      severity implication are domain data, not something to hardcode

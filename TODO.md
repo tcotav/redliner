@@ -1705,6 +1705,139 @@ edited to match the new output, it becomes another spent fixture and the
 repo is back to zero unspent evidence. A third manuscript would be needed
 to re-earn what this one currently provides for free.
 
+## Real prose vs. the continuity layer — measured 2026-08-13
+
+Run against a **private manuscript belonging to a user**. Nothing about
+that work is recorded here: no prose, no names, no genre, no domain, no
+length, no plot or character detail, and no description of its setting.
+Only tool behaviour and counts. **Keep it that way** — see the recording
+rule at the end of this section.
+
+This supplies the evidence class `bellwether`'s README says it cannot:
+prose written with **no contradictions in mind**, where signal-to-noise
+is far worse than any fixture. Corpus: 330 extracted facts, 87 entities,
+69 collisions.
+
+### Entity aliasing is ordinary, not a fixture artifact
+
+The 0/4 failure shape occurs naturally and immediately in real writing.
+Measured across the corpus: **28 candidate cross-section alias pairs**,
+including a principal entity whose surface form changes at the first
+section boundary and never changes back, and several entities carrying
+three distinct surface forms. This settles a design question — **build
+for aliasing; it is not a synthetic edge case.**
+
+### But containment matching is not the fix
+
+A deliberately generous containment matcher (one name's token set a
+subset of another's) produced those 28 candidates, and a substantial
+share were wrong in ways that would corrupt canon rather than merely add
+noise. Two generic categories account for most of it:
+
+- **Possessives and part-of constructions** — `X` vs `X's <relative>`,
+  `X` vs `<the> <group> of X`. These denote *different* entities and a
+  containment matcher fuses them.
+- **Shared morphemes across unrelated referents** — compound or affixed
+  names where two different kinds of thing share a root.
+
+**So substring/containment entity matching is not viable.** This
+constraint came from real data *before* a fix was designed, which is
+exactly what went wrong with the last one.
+
+### Collision growth is superlinear — the scaling problem is real
+
+| sections | facts | entities | collisions |
+| --- | --- | --- | --- |
+| 1 | 50 | 21 | 1 |
+| 2 | 138 | 47 | 20 |
+| 3 | 191 | 63 | 31 |
+| 4 | 261 | 74 | 53 |
+| 5 | 330 | 87 | 69 |
+
+Collisions scale about **facts^1.4**, and the per-section rate was still
+climbing at the end of the corpus. Extrapolated to a full-length work
+that is **order 1,000+ collisions**, every one of which goes to the
+adjudicator. Five points, so treat it as an order of magnitude — the
+direction is not in doubt.
+
+**87% (60/69) are mixed-attribute artifacts and 64% sit inside a single
+section.** A single entity produced **31 of 69** on its own, through
+attributes sharing a leading token (`<prefix>_a`, `<prefix>_b`,
+`<prefix>_c`); two others produced 13 and 10 the same way. This is the
+predicted quadratic attribute-token blowup, now observed at scale on
+real material rather than inferred.
+
+### This effectively kills G3-coarse
+
+The quantity-vs-text guard cut `bellwether` 16 → 6 (62%). On real prose
+it cuts **69 → 54 (22%)**. Real narration collides *text against text*;
+the guard only ever worked because bellwether's planted contradictions
+happened to be numeric. Holding it was correct, and it should now be
+treated as **rejected rather than deferred** absent new evidence.
+
+### New failure class: legitimately multi-named referents
+
+Some settings give one referent two or more names that are *all correct
+and permanent* — not drift, not error, and never resolvable from the
+text. The matcher reports every such pair as a collision, forever.
+
+This is the mirror of the aliasing bug: same referent, different surface
+form, except **intended**. No matcher improvement addresses it, because
+the necessary information does not exist in the manuscript.
+
+### Therefore: an author-declared alias table in the brief
+
+In this run the author resolved several collisions instantly that no
+script or model could have settled, because the deciding facts were
+never on the page — an intended-permanent multi-naming, and a deliberate
+setup whose payoff is planned for later. Against that, the layer also
+surfaced **a genuine error the author had missed and immediately
+confirmed** — the first unplanted real-prose catch in this project.
+
+So the split is clear: the matcher finds candidates, but a whole class of
+resolutions is only available from the author. **Let authors declare
+aliases and equivalences in the brief** — "X and Y are the same entity",
+"A is intentional setup, don't report it, and don't spoil it" — and have
+`reconcile` read them. Same principle as `diff_manuscript` and
+`likely_unpropagated_revision`: give the part a script cannot know to
+whoever actually knows it, instead of guessing. It also shrinks the
+entity-matching problem, since the highest-value aliases are exactly the
+ones an author can name in one line.
+
+Not built. Design it against more than one manuscript.
+
+### Extractor excerpt-validity defect, second sighting
+
+`validate` rejected one section's observations (3 of 66 excerpts not
+verbatim, one an ellipsis-join). Across `bellwether` and this run that is
+**2 of 9 section extractions failing**, i.e. a real `/redliner:run
+continuity` halts at step 4 roughly a fifth of the time and needs a
+re-extraction round trip. An explicit "verbatim contiguous substring,
+copy the original punctuation, never ellipsis-join" instruction fixed it
+both times. Worth shipping into the extractor agents; it is currently
+applied ad hoc.
+
+### RULE: never record anything about a user's manuscript
+
+**Nothing about a user's work goes in this repo — ever.** Not prose, not
+names, not genre, not setting, not length, not "small" or "generic"
+details. Two reasons, and the second is the one that is easy to miss:
+
+1. It is their unpublished creative work and this repo is public.
+2. **Any detail is a linkage risk.** A trait recorded here can tie a
+   published work back to this repo, or this repo's maintainer back to a
+   pseudonymous work. "It's only the genre" is exactly the kind of
+   detail that does it.
+
+This was violated on 2026-08-13 — a user's genre string was written into
+`skills/intake/SKILL.md` as a worked example, and setting details into
+this file — and both had to be scrubbed from history. Every finding in
+this section survives without any of it, which is the proof that the
+detail was never needed. When writing up a run on a user manuscript:
+counts, ratios, and abstract patterns only. If an example seems to need a
+concrete detail, **invent one**.
+
+
 ## First full intake → assess pass on a fresh manuscript (DONE, 2026-08-12)
 
 The item `README.md` had carried as "not yet done" since the beginning:
