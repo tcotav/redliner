@@ -1,0 +1,26 @@
+{
+  "contradictions": [
+    {
+      "id": "cont-001",
+      "status": "open",
+      "kind": "contradiction",
+      "category": "object",
+      "severity": "moderate",
+      "entity": "tide clock",
+      "attribute": "duration_not_working",
+      "fact_ids": ["fact-section_01-004", "fact-section_03-013"],
+      "note": "The tide clock in Ferris's shop has been stopped for two different lengths of time. section_01, line 1: \"The tide clock in Ferris Vane's shop had not worked in eleven years, and he wound it every morning anyway.\" section_03, paragraph 6: \"He thought of the tide clock on his own wall, stopped these fifteen years, and how he wound it anyway.\" Same clock, same wall, same daily ritual — not two objects. Both are narration (the section_03 line is free indirect thought but still narrated fact, not a character claim that could be wrong), and a man who winds it every morning for over a decade would not misremember the count. The brief lists no unreliable narrator among its deliberate choices and the POV is third limited on Ferris, so neither line can be discounted as unreliable. Note that the two sentences deliberately echo each other (\"wound it every morning anyway\" / \"wound it anyway\") — they are a matched pair, so whichever figure you keep, the other line wants its number edited rather than the line cut."
+    },
+    {
+      "id": "cont-002",
+      "status": "open",
+      "kind": "unverified",
+      "category": "timeline",
+      "severity": "minor",
+      "entity": "the instrument",
+      "attribute": "possession_duration",
+      "fact_ids": ["fact-section_03-007", "fact-section_03-008"],
+      "note": "How long Ferris has had the instrument is asserted twice, differently, and both assertions are dialogue rather than narration. section_03, paragraph 3: Ilse says \"You've had this three weeks\"; paragraph 4, Ferris answers \"Two.\"; paragraph 5, Ilse holds her figure: \"You've had it three weeks, Ferris, because that's how long it takes to get to the part where you bring it to me.\" This reads as a staged disagreement — Ilse overrides him and gives a non-calendar reason for her number — which would make it a character beat rather than an error. Please confirm that is the intent: that Ilse's \"three weeks\" is deliberate (she is counting from a different starting point, or making a point about him rather than stating a date) and not a drafting slip, in which case the true elapsed time is Ferris's \"Two\" and Ilse's two lines need changing to match."
+    }
+  ]
+}

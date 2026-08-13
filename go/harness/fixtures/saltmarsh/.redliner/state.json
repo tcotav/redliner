@@ -1,0 +1,22 @@
+{
+  "manuscript_dir": "saltmarsh",
+  "domain": "fiction",
+  "phase": "developmental",
+  "developmental_round": 1,
+  "section_fingerprints": {
+    "section_01": {
+      "sha256": "731ca9bbfffe362059df9f8265f2184ac2d81e36507cfcdff73275b7da05085c",
+      "words": 290
+    },
+    "section_02": {
+      "sha256": "09de6eea2efc88a63a2dc7052bf0c8b2ed62f461603138a5afb4247bd3ce9cf7",
+      "words": 243
+    },
+    "section_03": {
+      "sha256": "4023ebf5b8faf5a886ab1c5a11076833bff64b4102d5bfd782feba3060e5edcf",
+      "words": 240
+    }
+  },
+  "created_at": "2026-08-12T21:46:04.24643Z",
+  "updated_at": "2026-08-12T21:56:54.707553Z"
+}

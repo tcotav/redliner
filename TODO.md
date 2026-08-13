@@ -1433,6 +1433,18 @@ manuscript. It is far better than the assumption it replaces, but a
 second fresh manuscript would test it properly — the same reason
 `sample_manuscript` could never have caught the original bug.
 
+**The manuscript itself is preserved at `go/harness/fixtures/saltmarsh/`**
+(committed 2026-08-12, force-added past the `.redliner/` ignore rules the
+same way `happy` is). Its committed `observations/` let `canon reconcile`
+be re-run deterministically with **no model calls**, and `expected/`
+records both the 12 collisions and the 2 the adjudicator kept. Read its
+README before citing it: **the fix was tuned against this manuscript**,
+so it catches regressions but is not evidence the fix generalizes. It is
+deliberately *not* wired into `capture_baseline.py`'s `FIXTURE_SCRIPTS` —
+the harness proves Go-matches-Python, while this tests a behavioural
+property of the current matcher, and conflating the two would mean
+regenerating goldens whenever this fixture's expectations change.
+
 **Do not treat this as fixed by adding a test to `sample_manuscript`.**
 The fixture would then be written to match whatever naming the fix
 produces, which is the same blind spot that hid the bug. It needs a

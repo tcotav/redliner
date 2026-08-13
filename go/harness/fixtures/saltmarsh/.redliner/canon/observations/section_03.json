@@ -1,0 +1,215 @@
+{
+  "section": "section_03",
+  "section_sha256": "4023ebf5b8faf5a886ab1c5a11076833bff64b4102d5bfd782feba3060e5edcf",
+  "facts": [
+    {
+      "id": "fact-section_03-001",
+      "entity": "Ilse Marrow",
+      "entity_type": "character",
+      "attribute": "eye_color",
+      "value": "brown",
+      "excerpt": "her brown eyes did not blink as much as they should have",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-002",
+      "entity": "Ilse Marrow",
+      "entity_type": "character",
+      "attribute": "residence_location",
+      "value": "a house above the saltmarsh",
+      "excerpt": "Her house above the saltmarsh smelled of tar and cold tea.",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-003",
+      "entity": "Ilse Marrow",
+      "entity_type": "character",
+      "attribute": "house_smell",
+      "value": "tar and cold tea",
+      "excerpt": "Her house above the saltmarsh smelled of tar and cold tea.",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-004",
+      "entity": "Ilse Marrow",
+      "entity_type": "character",
+      "attribute": "prior_estrangement_from_ferris",
+      "value": "told him twenty years ago never to bring her anything again",
+      "excerpt": "she had told him twenty years ago never to bring her anything again",
+      "location": "paragraph 1",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-005",
+      "entity": "Ilse Marrow",
+      "entity_type": "character",
+      "attribute": "has_kitchen_in_house",
+      "value": "yes",
+      "excerpt": "Saying it aloud in her kitchen would make it a thing that two people knew",
+      "location": "paragraph 9",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-006",
+      "entity": "Ferris",
+      "entity_type": "character",
+      "attribute": "brings_instrument_to",
+      "value": "Ilse Marrow",
+      "excerpt": "He took it to Ilse Marrow",
+      "location": "paragraph 1",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-007",
+      "entity": "the instrument",
+      "entity_type": "object",
+      "attribute": "possession_duration",
+      "value": "three weeks",
+      "excerpt": "You've had it three weeks, Ferris, because that's how long it takes to get to the part where you bring it to me.",
+      "location": "paragraph 5",
+      "source": "dialogue",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-008",
+      "entity": "the instrument",
+      "entity_type": "object",
+      "attribute": "possession_duration",
+      "value": "two weeks",
+      "excerpt": "Two.",
+      "location": "paragraph 4",
+      "source": "dialogue",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-009",
+      "entity": "the instrument",
+      "entity_type": "object",
+      "attribute": "function",
+      "value": "it counts something",
+      "excerpt": "Tell me what it counts.",
+      "location": "paragraph 7",
+      "source": "dialogue",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-010",
+      "entity": "the instrument",
+      "entity_type": "object",
+      "attribute": "not_destroyed",
+      "value": "Ilse does not ask him to destroy it",
+      "excerpt": "I'm not going to tell you to destroy it. You wouldn't",
+      "location": "paragraph 5",
+      "source": "dialogue",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-011",
+      "entity": "Ferris",
+      "entity_type": "character",
+      "attribute": "knew_what_instrument_counts_since",
+      "value": "the tenth day",
+      "excerpt": "He had known since the tenth day.",
+      "location": "paragraph 9",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-012",
+      "entity": "the tide clock",
+      "entity_type": "object",
+      "attribute": "location",
+      "value": "on Ferris's own wall",
+      "excerpt": "the tide clock on his own wall",
+      "location": "paragraph 6",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-013",
+      "entity": "the tide clock",
+      "entity_type": "object",
+      "attribute": "stopped_duration",
+      "value": "fifteen years",
+      "excerpt": "stopped these fifteen years",
+      "location": "paragraph 6",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-014",
+      "entity": "Ferris",
+      "entity_type": "character",
+      "attribute": "habit",
+      "value": "winds the stopped tide clock anyway",
+      "excerpt": "and how he wound it anyway",
+      "location": "paragraph 6",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-015",
+      "entity": "Ferris",
+      "entity_type": "character",
+      "attribute": "owns",
+      "value": "a shop",
+      "excerpt": "the cold coming along the floor of his shop",
+      "location": "paragraph 9",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-016",
+      "entity": "the woman with the grey eyes",
+      "entity_type": "character",
+      "attribute": "eye_color",
+      "value": "grey",
+      "excerpt": "the woman with the grey eyes",
+      "location": "paragraph 9",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-017",
+      "entity": "the woman with the grey eyes",
+      "entity_type": "character",
+      "attribute": "motive",
+      "value": "counted on Ferris never being ready to say what the instrument counts",
+      "excerpt": "this was precisely what the woman with the grey eyes had been counting on",
+      "location": "paragraph 9",
+      "source": "character_thought",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-018",
+      "entity": "the saltmarsh tide",
+      "entity_type": "event",
+      "attribute": "anomaly",
+      "value": "tide went out and did not return at the expected hour",
+      "excerpt": "the tide went out over the saltmarsh, and did not come back at the hour it should have",
+      "location": "paragraph 10",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_03-019",
+      "entity": "tides at the saltmarsh",
+      "entity_type": "world_rule",
+      "attribute": "normal_behavior",
+      "value": "tides return at a known, predictable hour",
+      "excerpt": "did not come back at the hour it should have",
+      "location": "paragraph 10",
+      "source": "narration",
+      "confidence": "implied"
+    }
+  ]
+}

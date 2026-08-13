@@ -1,0 +1,237 @@
+{
+  "section": "section_01",
+  "section_sha256": "731ca9bbfffe362059df9f8265f2184ac2d81e36507cfcdff73275b7da05085c",
+  "facts": [
+    {
+      "id": "fact-section_01-001",
+      "entity": "Ferris Vane",
+      "entity_type": "character",
+      "attribute": "occupation",
+      "value": "clock repairer",
+      "excerpt": "\"I repair clocks.\"",
+      "location": "line 10",
+      "source": "dialogue",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_01-002",
+      "entity": "Ferris Vane's shop",
+      "entity_type": "place",
+      "attribute": "contains",
+      "value": "a tide clock",
+      "excerpt": "The tide clock in Ferris Vane's shop",
+      "location": "line 1",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_01-003",
+      "entity": "tide clock",
+      "entity_type": "object",
+      "attribute": "condition",
+      "value": "not working",
+      "excerpt": "had not worked in eleven years",
+      "location": "line 1",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_01-004",
+      "entity": "tide clock",
+      "entity_type": "object",
+      "attribute": "duration_not_working",
+      "value": "eleven years",
+      "excerpt": "had not worked in eleven years",
+      "location": "line 1",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_01-005",
+      "entity": "Ferris Vane",
+      "entity_type": "character",
+      "attribute": "habit",
+      "value": "winds the tide clock every morning",
+      "excerpt": "he wound it every morning anyway",
+      "location": "line 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_01-006",
+      "entity": "the woman's visit to the shop",
+      "entity_type": "event",
+      "attribute": "time_of_day",
+      "value": "morning",
+      "excerpt": "he wound it every morning anyway. He was winding it when the woman came in.",
+      "location": "lines 2-4",
+      "source": "narration",
+      "confidence": "implied"
+    },
+    {
+      "id": "fact-section_01-007",
+      "entity": "the woman's visit to the shop",
+      "entity_type": "event",
+      "attribute": "conditions",
+      "value": "grey light outside, cold air",
+      "excerpt": "She stood in the doorway with the grey light behind her, and she did not close the door, so the cold came in with her",
+      "location": "lines 4-6",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_01-008",
+      "entity": "Ferris Vane's shop",
+      "entity_type": "place",
+      "attribute": "temperature",
+      "value": "cold",
+      "excerpt": "He stood in his cold shop with the door open",
+      "location": "line 35",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_01-009",
+      "entity": "Ferris Vane's shop",
+      "entity_type": "place",
+      "attribute": "contains",
+      "value": "a counter",
+      "excerpt": "She set the case on the counter between them.",
+      "location": "line 12",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_01-010",
+      "entity": "the woman",
+      "entity_type": "character",
+      "attribute": "eye_color",
+      "value": "grey",
+      "excerpt": "Her grey eyes caught the door light.",
+      "location": "lines 31-32",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_01-011",
+      "entity": "the woman",
+      "entity_type": "character",
+      "attribute": "name_disclosed",
+      "value": "not given",
+      "excerpt": "He did not ask her name.",
+      "location": "line 34",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_01-012",
+      "entity": "the instrument",
+      "entity_type": "object",
+      "attribute": "container",
+      "value": "case bound in oiled canvas",
+      "excerpt": "It was longer than his forearm and bound in oiled canvas",
+      "location": "lines 12-13",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_01-013",
+      "entity": "the instrument",
+      "entity_type": "object",
+      "attribute": "size",
+      "value": "longer than Ferris's forearm",
+      "excerpt": "It was longer than his forearm",
+      "location": "line 13",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_01-014",
+      "entity": "the instrument",
+      "entity_type": "object",
+      "attribute": "materials",
+      "value": "brass and glass",
+      "excerpt": "he saw brass, and a great deal of glass",
+      "location": "line 14",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_01-015",
+      "entity": "the instrument",
+      "entity_type": "object",
+      "attribute": "behavior",
+      "value": "something inside the glass turns slowly though nothing wound it",
+      "excerpt": "something inside the glass that turned slowly although nothing had wound it",
+      "location": "lines 14-15",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_01-016",
+      "entity": "the instrument",
+      "entity_type": "object",
+      "attribute": "behavior_change",
+      "value": "turning thing slowed slightly when set down",
+      "excerpt": "why the turning thing inside it had slowed, very slightly, when she set it down",
+      "location": "lines 24-25",
+      "source": "character_thought",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_01-017",
+      "entity": "the instrument",
+      "entity_type": "object",
+      "attribute": "classification",
+      "value": "a kind of clock",
+      "excerpt": "\"It is a kind of clock.\"",
+      "location": "line 12",
+      "source": "dialogue",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_01-018",
+      "entity": "the instrument",
+      "entity_type": "object",
+      "attribute": "possessor",
+      "value": "Ferris Vane",
+      "excerpt": "\"You can keep it,\" she said.",
+      "location": "line 30",
+      "source": "dialogue",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_01-019",
+      "entity": "Ferris Vane",
+      "entity_type": "character",
+      "attribute": "reputation",
+      "value": "the last one who knows what the instrument is",
+      "excerpt": "\"I'm told you're the last one who knows what it is.\"",
+      "location": "lines 30-31",
+      "source": "dialogue",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_01-020",
+      "entity": "Ferris Vane",
+      "entity_type": "character",
+      "attribute": "peers_status",
+      "value": "gone",
+      "excerpt": "\"The others are gone.\"",
+      "location": "line 32",
+      "source": "dialogue",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_01-021",
+      "entity": "Ferris Vane",
+      "entity_type": "character",
+      "attribute": "lies_about_instrument",
+      "value": "tells the first of several lies after she leaves",
+      "excerpt": "which was the first lie he told about the instrument but not the last",
+      "location": "lines 36-37",
+      "source": "narration",
+      "confidence": "explicit"
+    }
+  ]
+}

@@ -1,0 +1,226 @@
+{
+  "section": "section_02",
+  "section_sha256": "09de6eea2efc88a63a2dc7052bf0c8b2ed62f461603138a5afb4247bd3ce9cf7",
+  "facts": [
+    {
+      "id": "fact-section_02-001",
+      "entity": "Ferris",
+      "entity_type": "character",
+      "attribute": "time_to_open_case",
+      "value": "four days",
+      "excerpt": "It took Ferris four days to open the case properly.",
+      "location": "paragraph 1",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-002",
+      "entity": "case",
+      "entity_type": "object",
+      "attribute": "material",
+      "value": "not actually brass; brass-like substance",
+      "excerpt": "The brass was not brass.",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-003",
+      "entity": "case",
+      "entity_type": "object",
+      "attribute": "metal_grain",
+      "value": "shows a wood-like grain whose direction changes depending on which eye is closed",
+      "excerpt": "the metal showed a grain, like wood, running in a direction that changed depending on which eye he closed",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-004",
+      "entity": "Ferris",
+      "entity_type": "character",
+      "attribute": "owns",
+      "value": "a loupe",
+      "excerpt": "when he set his loupe against it",
+      "location": "paragraph 2",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-005",
+      "entity": "mechanism",
+      "entity_type": "object",
+      "attribute": "lacks_components",
+      "value": "no mainspring, no weight, no pendulum, no escapement",
+      "excerpt": "There was no mainspring. There was no weight, no pendulum, no escapement, nothing that stored force and released it in measured amounts.",
+      "location": "paragraph 3",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-006",
+      "entity": "mechanism",
+      "entity_type": "object",
+      "attribute": "components",
+      "value": "only a turning thing suspended in glass",
+      "excerpt": "There was only the turning thing, suspended in its glass",
+      "location": "paragraph 3",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-007",
+      "entity": "mechanism",
+      "entity_type": "object",
+      "attribute": "rotation_rate",
+      "value": "varies wildly; faster than a pulse, then an hour later glacially slow",
+      "excerpt": "going around at a rate his own pulse could not keep up with and then, an hour later, at a rate a glacier would have found unhurried",
+      "location": "paragraph 3",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-008",
+      "entity": "mechanism",
+      "entity_type": "object",
+      "attribute": "rate_pattern",
+      "value": "not random; the rates are counting something",
+      "excerpt": "he understood that the rates were not random, and on the tenth day he understood what they were counting",
+      "location": "paragraph 4",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-009",
+      "entity": "Ferris",
+      "entity_type": "character",
+      "attribute": "understood_rates_not_random_on",
+      "value": "the ninth day",
+      "excerpt": "On the ninth day he understood that the rates were not random",
+      "location": "paragraph 4",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-010",
+      "entity": "Ferris",
+      "entity_type": "character",
+      "attribute": "understood_what_rates_counted_on",
+      "value": "the tenth day",
+      "excerpt": "on the tenth day he understood what they were counting",
+      "location": "paragraph 4",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-011",
+      "entity": "Ferris",
+      "entity_type": "character",
+      "attribute": "recorded_rates_in",
+      "value": "a notebook",
+      "excerpt": "He wrote down the rates. He filled a notebook with them.",
+      "location": "paragraph 4",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-012",
+      "entity": "Ferris's shop",
+      "entity_type": "place",
+      "attribute": "floor_covering",
+      "value": "sawdust",
+      "excerpt": "he sat down on the floor of his shop, in the sawdust",
+      "location": "paragraph 4",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-013",
+      "entity": "the woman",
+      "entity_type": "character",
+      "attribute": "statement",
+      "value": "\"the others are gone\"",
+      "excerpt": "The woman had said *the others are gone.*",
+      "location": "paragraph 5",
+      "source": "dialogue",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-014",
+      "entity": "the others",
+      "entity_type": "object",
+      "attribute": "others_status",
+      "value": "gone",
+      "excerpt": "The woman had said *the others are gone.*",
+      "location": "paragraph 5",
+      "source": "dialogue",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-015",
+      "entity": "the woman",
+      "entity_type": "character",
+      "attribute": "brought_case_to_ferris",
+      "value": "she is the client who asked him to repair the case",
+      "excerpt": "been asked to repair something that was already working exactly as it was meant to",
+      "location": "paragraphs 5-6",
+      "source": "narration",
+      "confidence": "implied"
+    },
+    {
+      "id": "fact-section_02-016",
+      "entity": "Ferris",
+      "entity_type": "character",
+      "attribute": "age",
+      "value": "fifty-one years old",
+      "excerpt": "Ferris was fifty-one years old.",
+      "location": "paragraph 6",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-017",
+      "entity": "Ferris",
+      "entity_type": "character",
+      "attribute": "clocks_repaired",
+      "value": "four thousand",
+      "excerpt": "He had repaired four thousand clocks.",
+      "location": "paragraph 6",
+      "source": "narration",
+      "confidence": "explicit"
+    },
+    {
+      "id": "fact-section_02-018",
+      "entity": "Ferris",
+      "entity_type": "character",
+      "attribute": "occupation",
+      "value": "clock repairer",
+      "excerpt": "He had repaired four thousand clocks.",
+      "location": "paragraph 6",
+      "source": "narration",
+      "confidence": "implied"
+    },
+    {
+      "id": "fact-section_02-019",
+      "entity": "Ferris",
+      "entity_type": "character",
+      "attribute": "owns",
+      "value": "a shop",
+      "excerpt": "he sat down on the floor of his shop",
+      "location": "paragraph 4",
+      "source": "narration",
+      "confidence": "implied"
+    },
+    {
+      "id": "fact-section_02-020",
+      "entity": "mechanism",
+      "entity_type": "object",
+      "attribute": "working_state",
+      "value": "already working exactly as it was meant to",
+      "excerpt": "He had never once, in all that time, been asked to repair something that was already working exactly as it was meant to.",
+      "location": "paragraph 6",
+      "source": "narration",
+      "confidence": "implied"
+    }
+  ]
+}

@@ -1,0 +1,435 @@
+{
+  "collisions": [
+    {
+      "entity": "Ferris",
+      "attribute": "brings_instrument_to",
+      "distinct_values": [
+        "ilse marrow",
+        "the tenth day"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_03-006",
+          "section": "section_03",
+          "value": "Ilse Marrow",
+          "excerpt": "He took it to Ilse Marrow",
+          "location": "paragraph 1",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_03-011",
+          "section": "section_03",
+          "value": "the tenth day",
+          "excerpt": "He had known since the tenth day.",
+          "location": "paragraph 9",
+          "source": "narration",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": true,
+      "any_implied": false,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_03"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
+      "entity": "Ferris",
+      "attribute": "owns",
+      "distinct_values": [
+        "a loupe",
+        "a shop"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_02-004",
+          "section": "section_02",
+          "value": "a loupe",
+          "excerpt": "when he set his loupe against it",
+          "location": "paragraph 2",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-019",
+          "section": "section_02",
+          "value": "a shop",
+          "excerpt": "he sat down on the floor of his shop",
+          "location": "paragraph 4",
+          "source": "narration",
+          "confidence": "implied"
+        },
+        {
+          "id": "fact-section_03-015",
+          "section": "section_03",
+          "value": "a shop",
+          "excerpt": "the cold coming along the floor of his shop",
+          "location": "paragraph 9",
+          "source": "narration",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": true,
+      "any_implied": true,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_02",
+        "section_03"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
+      "entity": "Ferris",
+      "attribute": "understood_rates_not_random_on",
+      "distinct_values": [
+        "a notebook",
+        "the ninth day"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_02-009",
+          "section": "section_02",
+          "value": "the ninth day",
+          "excerpt": "On the ninth day he understood that the rates were not random",
+          "location": "paragraph 4",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-011",
+          "section": "section_02",
+          "value": "a notebook",
+          "excerpt": "He wrote down the rates. He filled a notebook with them.",
+          "location": "paragraph 4",
+          "source": "narration",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": true,
+      "any_implied": false,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_02"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
+      "entity": "Ferris",
+      "attribute": "understood_what_rates_counted_on",
+      "distinct_values": [
+        "a notebook",
+        "the tenth day"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_02-010",
+          "section": "section_02",
+          "value": "the tenth day",
+          "excerpt": "on the tenth day he understood what they were counting",
+          "location": "paragraph 4",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-011",
+          "section": "section_02",
+          "value": "a notebook",
+          "excerpt": "He wrote down the rates. He filled a notebook with them.",
+          "location": "paragraph 4",
+          "source": "narration",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": true,
+      "any_implied": false,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_02"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
+      "entity": "Ferris",
+      "attribute": "understood_rates_not_random_on",
+      "distinct_values": [
+        "the ninth day",
+        "the tenth day"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_02-009",
+          "section": "section_02",
+          "value": "the ninth day",
+          "excerpt": "On the ninth day he understood that the rates were not random",
+          "location": "paragraph 4",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-010",
+          "section": "section_02",
+          "value": "the tenth day",
+          "excerpt": "on the tenth day he understood what they were counting",
+          "location": "paragraph 4",
+          "source": "narration",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": true,
+      "any_implied": false,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_02"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
+      "entity": "Ferris Vane's shop",
+      "attribute": "contains",
+      "distinct_values": [
+        "a counter",
+        "a tide clock"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_01-002",
+          "section": "section_01",
+          "value": "a tide clock",
+          "excerpt": "The tide clock in Ferris Vane's shop",
+          "location": "line 1",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_01-009",
+          "section": "section_01",
+          "value": "a counter",
+          "excerpt": "She set the case on the counter between them.",
+          "location": "line 12",
+          "source": "narration",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": true,
+      "any_implied": false,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_01"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
+      "entity": "Ilse Marrow",
+      "attribute": "house_smell",
+      "distinct_values": [
+        "tar and cold tea",
+        "yes"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_03-003",
+          "section": "section_03",
+          "value": "tar and cold tea",
+          "excerpt": "Her house above the saltmarsh smelled of tar and cold tea.",
+          "location": "paragraph 2",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_03-005",
+          "section": "section_03",
+          "value": "yes",
+          "excerpt": "Saying it aloud in her kitchen would make it a thing that two people knew",
+          "location": "paragraph 9",
+          "source": "narration",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": true,
+      "any_implied": false,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_03"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
+      "entity": "the instrument",
+      "attribute": "behavior",
+      "distinct_values": [
+        "something inside the glass turns slowly though nothing wound it",
+        "turning thing slowed slightly when set down"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_01-015",
+          "section": "section_01",
+          "value": "something inside the glass turns slowly though nothing wound it",
+          "excerpt": "something inside the glass that turned slowly although nothing had wound it",
+          "location": "lines 14-15",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_01-016",
+          "section": "section_01",
+          "value": "turning thing slowed slightly when set down",
+          "excerpt": "why the turning thing inside it had slowed, very slightly, when she set it down",
+          "location": "lines 24-25",
+          "source": "character_thought",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": false,
+      "any_implied": false,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_01"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
+      "entity": "the instrument",
+      "attribute": "possession_duration",
+      "distinct_values": [
+        "three weeks",
+        "two weeks"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_03-007",
+          "section": "section_03",
+          "value": "three weeks",
+          "excerpt": "You've had it three weeks, Ferris, because that's how long it takes to get to the part where you bring it to me.",
+          "location": "paragraph 5",
+          "source": "dialogue",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_03-008",
+          "section": "section_03",
+          "value": "two weeks",
+          "excerpt": "Two.",
+          "location": "paragraph 4",
+          "source": "dialogue",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": false,
+      "any_implied": false,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_03"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
+      "entity": "mechanism",
+      "attribute": "lacks_components",
+      "distinct_values": [
+        "no mainspring, no weight, no pendulum, no escapement",
+        "only a turning thing suspended in glass"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_02-005",
+          "section": "section_02",
+          "value": "no mainspring, no weight, no pendulum, no escapement",
+          "excerpt": "There was no mainspring. There was no weight, no pendulum, no escapement, nothing that stored force and released it in measured amounts.",
+          "location": "paragraph 3",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-006",
+          "section": "section_02",
+          "value": "only a turning thing suspended in glass",
+          "excerpt": "There was only the turning thing, suspended in its glass",
+          "location": "paragraph 3",
+          "source": "narration",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": true,
+      "any_implied": false,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_02"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
+      "entity": "mechanism",
+      "attribute": "rotation_rate",
+      "distinct_values": [
+        "not random; the rates are counting something",
+        "varies wildly; faster than a pulse, then an hour later glacially slow"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_02-007",
+          "section": "section_02",
+          "value": "varies wildly; faster than a pulse, then an hour later glacially slow",
+          "excerpt": "going around at a rate his own pulse could not keep up with and then, an hour later, at a rate a glacier would have found unhurried",
+          "location": "paragraph 3",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-008",
+          "section": "section_02",
+          "value": "not random; the rates are counting something",
+          "excerpt": "he understood that the rates were not random, and on the tenth day he understood what they were counting",
+          "location": "paragraph 4",
+          "source": "narration",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": true,
+      "any_implied": false,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_02"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
+      "entity": "tide clock",
+      "attribute": "duration_not_working",
+      "distinct_values": [
+        "eleven years",
+        "fifteen years"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_01-004",
+          "section": "section_01",
+          "value": "eleven years",
+          "excerpt": "had not worked in eleven years",
+          "location": "line 1",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_03-013",
+          "section": "section_03",
+          "value": "fifteen years",
+          "excerpt": "stopped these fifteen years",
+          "location": "paragraph 6",
+          "source": "narration",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": true,
+      "any_implied": false,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_01",
+        "section_03"
+      ],
+      "likely_unpropagated_revision": false
+    }
+  ]
+}
