@@ -53,3 +53,16 @@ findings, editorial letter) against its domain's schema, including
 excerpt-verbatim checks against the actual section text. Mirrors
 ` + "`validate_findings.py <manuscript_dir>`" + ` -- same pass/fail logic and
 per-file detail, captured from its stdout rather than re-derived.`
+
+// descContext has no mcp_server.py counterpart: `context` is a Go-only
+// composite added to cut coordinator round trips, not a ported operation.
+// Written here rather than extracted from a Python docstring, and
+// deliberately says what it replaces so a caller reaches for it first.
+const descContext = `Orientation for a manuscript in a single call: current state (phase,
+round, domain), the active domain's full config (categories, brief
+fields, draft stages), the section list, the diff verdict against the
+last snapshot, continuity staleness, and which .redliner files exist.
+
+Prefer this over calling state_status, domain_show, state_diff and
+canon_stale separately -- it returns all of them at once, and each
+avoided call is a full round trip.`

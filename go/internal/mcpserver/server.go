@@ -42,6 +42,7 @@ func NewServer(domainsDir string) *mcp.Server {
 	mcp.AddTool(srv, &mcp.Tool{Name: "state_snapshot", Description: descStateSnapshot}, s.stateSnapshot)
 	mcp.AddTool(srv, &mcp.Tool{Name: "state_phase", Description: descStatePhase}, s.statePhase)
 	mcp.AddTool(srv, &mcp.Tool{Name: "canon_stale", Description: descCanonStale}, s.canonStale)
+	mcp.AddTool(srv, &mcp.Tool{Name: "context", Description: descContext}, s.context)
 	mcp.AddTool(srv, &mcp.Tool{Name: "canon_reconcile", Description: descCanonReconcile}, s.canonReconcile)
 	mcp.AddTool(srv, &mcp.Tool{Name: "domain_list", Description: descDomainList}, s.domainList)
 	mcp.AddTool(srv, &mcp.Tool{Name: "domain_show", Description: descDomainShow}, s.domainShow)
@@ -299,4 +300,17 @@ func (s *redlinerServer) validateFindings(_ context.Context, _ *mcp.CallToolRequ
 		"ok":     exitCode == 0,
 		"output": buf.String(),
 	}, nil
+}
+
+// context mirrors the CLI's `redliner context` via the same BuildContext
+// helper, so the two front doors cannot drift.
+func (s *redlinerServer) context(_ context.Context, _ *mcp.CallToolRequest, in manuscriptDirInput) (*mcp.CallToolResult, any, error) {
+	report, err := cli.BuildContext(in.ManuscriptDir, s.domainsDir)
+	if err != nil {
+		if ce, ok := err.(*schemas.SectionCollisionError); ok {
+			return nil, errorResult("Section file error: %s", ce.Error()), nil
+		}
+		return nil, errorResult("%s", err.Error()), nil
+	}
+	return nil, report, nil
 }

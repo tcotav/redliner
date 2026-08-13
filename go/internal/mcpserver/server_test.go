@@ -125,13 +125,24 @@ func TestToolNamesAndDescriptions_MatchPython(t *testing.T) {
 		t.Fatalf("golden file has %d descriptions, want 10 -- did extraction pick up every @mcp.tool()?", len(want))
 	}
 
+	// Go-only composites over the ported operations. They have no Python
+	// counterpart by design, so they are exempt from the description
+	// comparison below -- but they must be listed here explicitly, so
+	// adding a tool stays a deliberate act rather than something that
+	// silently slips past this guard.
+	goOnly := map[string]bool{"context": true}
+
 	got := map[string]string{}
 	for _, tool := range res.Tools {
+		if goOnly[tool.Name] {
+			continue
+		}
 		got[tool.Name] = tool.Description
 	}
 
 	if len(got) != len(want) {
-		t.Errorf("tool count: got %d, want %d (got names: %v)", len(got), len(want), toolNames(res.Tools))
+		t.Errorf("ported tool count: got %d, want %d (all names: %v; Go-only exemptions: %v)",
+			len(got), len(want), toolNames(res.Tools), goOnly)
 	}
 	for name, desc := range want {
 		gotDesc, ok := got[name]

@@ -41,38 +41,27 @@ type ContextReport struct {
 const contextUsage = `Usage:
   redliner context <manuscript_dir>   # state + domain + sections + diff + canon staleness, in one call`
 
-// RunContext implements `redliner context <manuscript_dir>`.
-func RunContext(args []string, stdout io.Writer) int {
-	if len(args) < 1 {
-		fmt.Fprintln(stdout, contextUsage)
-		return 1
-	}
-	manuscriptDir := args[0]
-
-	state, ok := requireState(manuscriptDir, stdout)
-	if !ok {
-		return 1
-	}
-
-	domainsDir, err := schemas.FindDomainsDir()
+// BuildContext is RunContext's computation, pure (no writer, no
+// printing) so internal/mcpserver's `context` tool reuses it unchanged --
+// same split as ComputeStale, and for the same reason: both front doors
+// must answer identically. domainsDir is a parameter rather than resolved
+// internally so the MCP server passes the one every other tool uses.
+func BuildContext(manuscriptDir, domainsDir string) (ContextReport, error) {
+	state, err := schemas.LoadState(manuscriptDir)
 	if err != nil {
-		fmt.Fprintf(stdout, "Domain config error: %v\n", err)
-		return 1
+		return ContextReport{}, err
 	}
 	domain, err := schemas.LoadDomain(domainsDir, state.DomainName())
 	if err != nil {
-		fmt.Fprintf(stdout, "Domain config error: %v\n", err)
-		return 1
+		return ContextReport{}, err
 	}
-
 	sections, err := schemas.SectionFiles(manuscriptDir)
 	if err != nil {
-		return reportSectionError(err, stdout)
+		return ContextReport{}, err
 	}
-
 	diff, err := schemas.DiffManuscript(manuscriptDir, state)
 	if err != nil {
-		return reportSectionError(err, stdout)
+		return ContextReport{}, err
 	}
 
 	// Staleness needs observations; a manuscript with no continuity run
@@ -89,7 +78,7 @@ func RunContext(args []string, stdout io.Writer) int {
 		return err == nil
 	}
 
-	return printJSON(stdout, ContextReport{
+	return ContextReport{
 		ManuscriptDir: manuscriptDir,
 		State:         state,
 		Domain:        domain,
@@ -104,5 +93,32 @@ func RunContext(args []string, stdout io.Writer) int {
 			"canon/collisions.json":  exists("canon/collisions.json"),
 			"canon/continuity.json":  exists("canon/continuity.json"),
 		},
-	})
+	}, nil
+}
+
+// RunContext implements `redliner context <manuscript_dir>`.
+func RunContext(args []string, stdout io.Writer) int {
+	if len(args) < 1 {
+		fmt.Fprintln(stdout, contextUsage)
+		return 1
+	}
+	manuscriptDir := args[0]
+
+	if _, ok := requireState(manuscriptDir, stdout); !ok {
+		return 1
+	}
+	domainsDir, err := schemas.FindDomainsDir()
+	if err != nil {
+		fmt.Fprintf(stdout, "Domain config error: %v\n", err)
+		return 1
+	}
+	report, err := BuildContext(manuscriptDir, domainsDir)
+	if err != nil {
+		if _, ok := err.(*schemas.SectionCollisionError); ok {
+			return reportSectionError(err, stdout)
+		}
+		fmt.Fprintf(stdout, "Domain config error: %v\n", err)
+		return 1
+	}
+	return printJSON(stdout, report)
 }

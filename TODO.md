@@ -1662,7 +1662,31 @@ into agent frontmatter or `SKILL.md`; reordering or conditionally
 including agent-file sections; changing the tool set mid-run (tools
 render at position 0 — the MCP-vs-CLI split makes this a live hazard).
 
-**WORTH DOING — composite commands to cut coordinator round trips.** The
+**DONE 2026-08-12 — `redliner context` / the `context` MCP tool.** One
+call returning state, domain config, section list, diff verdict, canon
+staleness, and which `.redliner` files exist. `skills/run/SKILL.md` tells
+the coordinator to prefer it *and says why in cost terms*, since an
+instruction without a reason is the kind that gets dropped.
+
+**The `check` half was deliberately NOT built.** The plan was a second
+composite for the repeated `validate` + one-canon-op pattern — but
+re-reading the transcript, the model **already chains those inside a
+single Bash call** with `;`. It batches them itself. A subcommand would
+have added surface for no saving. The orientation phase was the only
+real gap: calls 4–7, including `domain show <name>` run twice back to
+back.
+
+Both front doors share `cli.BuildContext`, the same pure-function split
+already used for `ComputeStale`, so they cannot drift. The tool is
+Go-only by design — a composite over ported operations, not a ported
+operation — so it stays out of `python-baseline` and the goldens. That
+tripped `TestToolNamesAndDescriptions_MatchPython`, correctly: rather
+than bumping the expected count (which would silently weaken the guard),
+the test now separates *ported* tools, which must still match Python's
+real docstrings exactly, from an explicit `goOnly` allowlist. Adding a
+tool stays a deliberate act.
+
+**Original analysis, kept for the reasoning:** The
 coordinator is the largest single line item (35%): 18 calls × ~50K
 cache-read = 905K reads, and *half those calls are Bash*. The transcript
 shows real waste — `redliner domain show fiction` ran **twice back to
