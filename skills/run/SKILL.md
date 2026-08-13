@@ -160,13 +160,31 @@ invites the author to start reacting to a half-finished picture.
    a later `recheck` tell what changed.
 7. Task `redliner:<domain>-editorial-aggregator` for the **developmental**
    letter, giving it **both output paths explicitly**:
-   `.redliner/letters/developmental_round<N>.md` and
-   `.redliner/letters/developmental_round<N>.json`, where `<N>` is the
-   round from step 1. The agent's contract is "write both output paths
-   you're given" — if you don't supply them it has to invent a location,
-   and the letter then lands somewhere nothing else can reliably find.
+   - Markdown → `<manuscript_dir>/Developmental Letter - Round <N>.md`
+   - JSON → `<manuscript_dir>/.redliner/letters/developmental_round<N>.json`
+
+   where `<N>` is the round from step 1. The agent's contract is "write
+   both output paths you're given" — if you don't supply them it has to
+   invent a location, and the letter then lands somewhere nothing else
+   can reliably find.
+
+   **The Markdown letter goes in the manuscript folder itself, not inside
+   `.redliner/`, and that split is deliberate: hidden storage for machine
+   state, visible files for anything a human reads.** `.redliner` is a
+   dotfile directory that Finder hides by default, and an author who
+   can't find the letter got nothing for the whole pass. Real feedback,
+   2026-08-13: "I don't know where the .redliner directory you linked
+   is." The JSON sidecar stays hidden — that one is for the tool.
+
+   Sitting beside the chapters is safe: section discovery globs
+   `section_*`, so a letter named this way is never mistaken for
+   manuscript text.
 8. Validate again, then read and show the developmental letter, then the
-   continuity summary from step 5.
+   continuity summary from step 5. **Print the letter's absolute path**
+   when you show it — the author needs to be able to reopen it later
+   without hunting for it, and telling them only that "the letter is
+   written" is how a pass ends with the author unable to find its one
+   deliverable.
 
 Do **not** run line editing here, whatever the author asked for.
 
@@ -250,14 +268,16 @@ that `/redliner:run recheck` will verify it.
 5. Validate.
 6. Task `redliner:<domain>-editorial-aggregator` for the **line** letter,
    giving it **both output paths explicitly**:
-   `.redliner/letters/line_round<N>.md` and
-   `.redliner/letters/line_round<N>.json`, where `<N>` is the manuscript's
-   current `developmental_round` — line passes aren't round-tracked
-   themselves, so they're stamped with the structural round they follow,
-   which keeps a later line pass from silently overwriting an earlier
-   one. Same reason as the developmental step: the agent writes "both
-   output paths you're given" and inventing them is not its job.
-7. Validate, then read and show the letter.
+   - Markdown → `<manuscript_dir>/Line Letter - Round <N>.md`
+   - JSON → `<manuscript_dir>/.redliner/letters/line_round<N>.json`
+
+   where `<N>` is the manuscript's current `developmental_round` — line
+   passes aren't round-tracked themselves, so they're stamped with the
+   structural round they follow, which keeps a later line pass from
+   silently overwriting an earlier one. Same visible/hidden split and
+   same reason as the developmental step.
+7. Validate, then read and show the letter — and **print its absolute
+   path**, so the author can open it later without hunting.
 
 ## `/redliner:run continuity`
 
