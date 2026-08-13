@@ -254,7 +254,125 @@ type Canon struct {
 	SectionsCovered []string                `json:"sections_covered"`
 }
 
-type groupKey struct{ entity, attribute string }
+// --- entity/attribute normalization for collision grouping -------------
+// Mirrors python-baseline/redliner_canon.py's _norm_entity /
+// _attr_tokens / linkByAttribute exactly -- the harness diffs this
+// operation against that oracle, so the two must stay byte-identical.
+//
+// Added 2026-08-12: exact (entity, attribute) matching silently missed a
+// real contradiction because independent per-section extractions named
+// the same thing differently ("tide clock" vs "the tide clock";
+// "duration_not_working" vs "stopped_duration"). See TODO.md.
+var attrStopwords = map[string]bool{
+	"of": true, "the": true, "a": true, "an": true, "is": true, "was": true,
+	"are": true, "were": true, "be": true, "been": true, "to": true,
+	"in": true, "at": true, "on": true, "for": true, "not": true, "no": true,
+}
+
+// normEntity lowercases, trims, and drops one leading article.
+func normEntity(value string) string {
+	text := strings.ToLower(strings.TrimSpace(value))
+	for _, article := range []string{"the ", "a ", "an "} {
+		if strings.HasPrefix(text, article) {
+			return strings.TrimSpace(text[len(article):])
+		}
+	}
+	return text
+}
+
+// attrTokens returns an attribute name's significant tokens.
+func attrTokens(value string) map[string]bool {
+	out := map[string]bool{}
+	for _, part := range strings.FieldsFunc(strings.ToLower(strings.TrimSpace(value)), func(r rune) bool {
+		return !((r >= 'a' && r <= 'z') || (r >= '0' && r <= '9'))
+	}) {
+		if part != "" && !attrStopwords[part] {
+			out[part] = true
+		}
+	}
+	return out
+}
+
+func tokensIntersect(a, b map[string]bool) bool {
+	for k := range a {
+		if b[k] {
+			return true
+		}
+	}
+	return false
+}
+
+// linkByAttribute groups one entity's facts: exact-attribute groups, plus
+// pairwise unions of two groups sharing a significant attribute token.
+// Deliberately NOT transitive -- chaining A~B~C fuses attributes with
+// nothing in common and yields a malformed collision.
+func linkByAttribute(factIDs []string, factsByID map[string]*collisionFact) [][]string {
+	pos := map[string]int{}
+	for i, id := range factIDs {
+		pos[id] = i
+	}
+	exact := map[string][]string{}
+	var keys []string
+	for _, id := range factIDs {
+		k := strings.ToLower(strings.TrimSpace(factsByID[id].Attribute))
+		if _, ok := exact[k]; !ok {
+			keys = append(keys, k)
+		}
+		exact[k] = append(exact[k], id)
+	}
+	sort.Strings(keys)
+
+	var groups [][]string
+	for _, k := range keys {
+		groups = append(groups, append([]string(nil), exact[k]...))
+	}
+	toks := make([]map[string]bool, len(keys))
+	for i, k := range keys {
+		toks[i] = attrTokens(k)
+	}
+	for i := 0; i < len(keys); i++ {
+		for j := i + 1; j < len(keys); j++ {
+			if tokensIntersect(toks[i], toks[j]) {
+				merged := append(append([]string(nil), exact[keys[i]]...), exact[keys[j]]...)
+				sort.Slice(merged, func(a, b int) bool { return pos[merged[a]] < pos[merged[b]] })
+				groups = append(groups, merged)
+			}
+		}
+	}
+
+	// Drop groups contained in a larger one, so a merged pair supersedes
+	// its two halves rather than being reported three times.
+	sort.SliceStable(groups, func(a, b int) bool { return len(groups[a]) > len(groups[b]) })
+	var seen []map[string]bool
+	var out [][]string
+	for _, g := range groups {
+		set := map[string]bool{}
+		for _, id := range g {
+			set[id] = true
+		}
+		contained := false
+		for _, s := range seen {
+			all := true
+			for id := range set {
+				if !s[id] {
+					all = false
+					break
+				}
+			}
+			if all {
+				contained = true
+				break
+			}
+		}
+		if contained {
+			continue
+		}
+		seen = append(seen, set)
+		out = append(out, g)
+	}
+	sort.SliceStable(out, func(a, b int) bool { return pos[out[a][0]] < pos[out[b][0]] })
+	return out
+}
 
 // ErrNoObservations signals cmd_reconcile's "no observations yet" case --
 // a sentinel rather than a formatted error so each caller (the CLI, the
@@ -305,9 +423,9 @@ func ComputeReconcile(manuscriptDir string) (Canon, []Collision, error) {
 
 	factsByID := map[string]*collisionFact{}
 	var factOrder []string // insertion order = sorted sections, then each report's facts array order -- matches Python's dict/list iteration order, which determines canon.json's per-attribute array order (real content, not just key order)
-	grouped := map[groupKey][]string{}
-	var groupOrder []groupKey
-	seenGroup := map[groupKey]bool{}
+	byEntity := map[string][]string{}
+	seenEntity := map[string]bool{}
+	var entityOrder []string
 
 	for _, stem := range sectionStems {
 		for _, raw := range reportField(observations[stem], "facts") {
@@ -334,30 +452,48 @@ func ComputeReconcile(manuscriptDir string) (Canon, []Collision, error) {
 			factsByID[id] = rec
 			factOrder = append(factOrder, id)
 
-			key := groupKey{
-				entity:    strings.ToLower(strings.TrimSpace(rec.Entity)),
-				attribute: strings.ToLower(strings.TrimSpace(rec.Attribute)),
+			ent := normEntity(rec.Entity)
+			if !seenEntity[ent] {
+				seenEntity[ent] = true
+				entityOrder = append(entityOrder, ent)
 			}
-			if !seenGroup[key] {
-				seenGroup[key] = true
-				groupOrder = append(groupOrder, key)
-			}
-			grouped[key] = append(grouped[key], id)
+			byEntity[ent] = append(byEntity[ent], id)
 		}
 	}
 
-	// Python: `for (entity, attribute), fact_ids in sorted(grouped.items())`
-	sortedGroups := append([]groupKey(nil), groupOrder...)
-	sort.Slice(sortedGroups, func(i, j int) bool {
-		if sortedGroups[i].entity != sortedGroups[j].entity {
-			return sortedGroups[i].entity < sortedGroups[j].entity
+	// Group by normalized entity, then link facts whose attribute names
+	// share a significant token. Mirrors the Python oracle's ordering:
+	// entities sorted, then each group keyed by its lowest attribute name.
+	type linked struct {
+		entity   string
+		sortAttr string
+		factIDs  []string
+	}
+	var groups []linked
+	entityKeys := append([]string(nil), entityOrder...)
+	sort.Strings(entityKeys)
+	for _, ent := range entityKeys {
+		for _, ids := range linkByAttribute(byEntity[ent], factsByID) {
+			sortAttr := ""
+			for _, id := range ids {
+				a := strings.ToLower(strings.TrimSpace(factsByID[id].Attribute))
+				if sortAttr == "" || a < sortAttr {
+					sortAttr = a
+				}
+			}
+			groups = append(groups, linked{entity: ent, sortAttr: sortAttr, factIDs: ids})
 		}
-		return sortedGroups[i].attribute < sortedGroups[j].attribute
+	}
+	sort.SliceStable(groups, func(i, j int) bool {
+		if groups[i].entity != groups[j].entity {
+			return groups[i].entity < groups[j].entity
+		}
+		return groups[i].sortAttr < groups[j].sortAttr
 	})
 
 	var collisions []Collision
-	for _, key := range sortedGroups {
-		factIDs := grouped[key]
+	for _, g := range groups {
+		factIDs := g.factIDs
 
 		valueGroups := map[string][]string{}
 		for _, fid := range factIDs {

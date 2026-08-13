@@ -35,6 +35,7 @@ contradict."
 """
 
 import json
+import re
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -120,6 +121,76 @@ def cmd_stale(manuscript_dir: Path) -> int:
     return 0
 
 
+# --- entity/attribute normalization for collision grouping -------------
+# Added 2026-08-12. Exact string matching on (entity, attribute) silently
+# missed a real contradiction because two independent per-section
+# extractions named the same thing differently: "tide clock" vs "the tide
+# clock", attribute "duration_not_working" vs "stopped_duration". See
+# TODO.md, "Continuity misses contradictions when extractions name things
+# differently". Deliberately loosens matching rather than tightening
+# extraction: over-reporting is reviewed by the adjudicator, while
+# under-reporting has no safety net at all.
+_ARTICLES = ("the ", "a ", "an ")
+_ATTR_STOPWORDS = {
+    "of", "the", "a", "an", "is", "was", "are", "were", "be", "been",
+    "to", "in", "at", "on", "for", "not", "no",
+}
+
+
+def _norm_entity(value: str) -> str:
+    """Lowercase, trim, drop one leading article."""
+    text = str(value).strip().lower()
+    for article in _ARTICLES:
+        if text.startswith(article):
+            return text[len(article):].strip()
+    return text
+
+
+def _attr_tokens(value: str) -> set:
+    """Significant tokens of an attribute name, split on non-alphanumerics."""
+    parts = re.split(r"[^a-z0-9]+", str(value).strip().lower())
+    return {p for p in parts if p and p not in _ATTR_STOPWORDS}
+
+
+def _link_by_attribute(fact_ids, facts_by_id):
+    """Group facts for collision detection.
+
+    Exact-attribute groups first (the original behaviour), then *pairwise*
+    unions of two groups whose attribute names share a significant token.
+    Deliberately NOT a transitive closure: chaining A~B~C merges attributes
+    with nothing in common and hands the adjudicator a malformed collision
+    (observed: four unrelated values fused under one label). Pairwise keeps
+    each reported collision explainable.
+    """
+    exact = {}
+    for fid in fact_ids:
+        key = str(facts_by_id[fid]["attribute"]).strip().lower()
+        exact.setdefault(key, []).append(fid)
+
+    keys = sorted(exact)
+    groups = [list(exact[k]) for k in keys]
+
+    tokens = [_attr_tokens(k) for k in keys]
+    for i in range(len(keys)):
+        for j in range(i + 1, len(keys)):
+            if tokens[i] & tokens[j]:
+                merged = exact[keys[i]] + exact[keys[j]]
+                merged.sort(key=fact_ids.index)
+                groups.append(merged)
+
+    # Drop any group whose fact set is contained in a larger one, so a
+    # merged pair supersedes its two halves rather than reporting thrice.
+    seen, out = set(), []
+    for g in sorted(groups, key=len, reverse=True):
+        fs = frozenset(g)
+        if any(fs <= s for s in seen):
+            continue
+        seen.add(fs)
+        out.append(g)
+    out.sort(key=lambda g: fact_ids.index(g[0]))
+    return out
+
+
 def cmd_reconcile(manuscript_dir: Path) -> int:
     observations = load_observations(manuscript_dir)
     if not observations:
@@ -139,15 +210,25 @@ def cmd_reconcile(manuscript_dir: Path) -> int:
         changed_since_snapshot = set(verdict["changed"]) | set(verdict["added"])
 
     facts_by_id = {}
-    grouped = defaultdict(list)
+    by_entity = defaultdict(list)
     for section, report in observations.items():
         for fact in report.get("facts", []):
             facts_by_id[fact["id"]] = {**fact, "section": section}
-            key = (fact["entity"].strip().lower(), fact["attribute"].strip().lower())
-            grouped[key].append(fact["id"])
+            by_entity[_norm_entity(fact["entity"])].append(fact["id"])
+
+    # Group by normalized entity, then link facts whose attribute names
+    # share a significant token, so synonymous attributes collide.
+    groups = []
+    for entity in sorted(by_entity):
+        for fact_ids in _link_by_attribute(by_entity[entity], facts_by_id):
+            sort_attr = min(
+                str(facts_by_id[f]["attribute"]).strip().lower() for f in fact_ids
+            )
+            groups.append((entity, sort_attr, fact_ids))
+    groups.sort(key=lambda g: (g[0], g[1]))
 
     collisions = []
-    for (entity, attribute), fact_ids in sorted(grouped.items()):
+    for entity, attribute, fact_ids in groups:
         values = {}
         for fact_id in fact_ids:
             value = str(facts_by_id[fact_id]["value"]).strip().lower()

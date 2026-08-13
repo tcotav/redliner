@@ -1319,8 +1319,8 @@ the first two are palliatives, not solutions:**
 4. **Mark set-valued attributes as non-colliding** (`owns`, `contains`,
    `knows`). This addresses the *precision* half seen in the same run,
    not this recall bug. Worth doing, separately.
-5. **Loosen the matcher instead of tightening extraction — the current
-   recommendation.** Keep extractors independent, parallel and
+5. **Loosen the matcher instead of tightening extraction — IMPLEMENTED
+   2026-08-12.** Keep extractors independent, parallel and
    per-section exactly as they are; normalize entity strings and match
    attributes through a synonym map rather than exact string equality.
    Fixes recall *globally* rather than within any window, and changes
@@ -1344,6 +1344,46 @@ the first two are palliatives, not solutions:**
    phrased differently. Strict extraction → fuzzy matching → model
    adjudication puts each stage's failure mode somewhere downstream can
    catch it.
+
+**Implemented 2026-08-12 (option 5).** `go/internal/cli/canon.go` now
+normalizes the entity (lowercase, trim, drop one leading article) and
+groups a fact with others whose attribute names share a significant
+token, instead of requiring an exact `(entity, attribute)` match. The
+planted contradiction is caught: `tide clock.duration_not_working:
+['eleven years', 'fifteen years']`.
+
+**Pairwise, deliberately not transitive.** The first attempt used
+union-find, which chained A~B~C through unrelated shared tokens and fused
+four unrelated facts under one label — `Ferris.understood_rates_not_random_on:
+['a notebook', 'ilse marrow', 'the ninth day', 'the tenth day']`. That is
+worse than noise: it hands the adjudicator a malformed collision it
+cannot reason about. Linking is now strictly pairwise, so every reported
+collision is explainable, and a merged pair supersedes its two halves
+rather than being reported three times.
+
+**The precision cost, stated plainly: 3 → 12 candidate collisions** on
+the same manuscript. Two were already true positives, one is the
+recovered bug, and the rest are plausible-but-wrong pairs like
+`understood_rates_not_random_on` vs `understood_what_rates_counted_on`.
+Adjudication absorbs them (~$0.13 for 3 collisions, so roughly $0.35 for
+12 — small in absolute terms), and that is the whole basis for the
+trade: **over-reporting has a proven reviewer, under-reporting has
+nothing.** If adjudication ever stops filtering reliably, revisit this
+first.
+
+**Parity preserved.** The identical logic was ported to
+`go/harness/python-baseline/redliner_canon.py`, goldens regenerated, and
+Go verified byte-identical to the Python oracle on both the harness
+fixtures and the scratch manuscript (12 collisions each, `identical=True`).
+The oracle still verifies this operation — the option chosen over
+accepting divergence. **Change one implementation, change both.**
+Regression tests in `go/internal/cli/canon_norm_test.go` cover article
+stripping, stopword handling, the non-transitivity property, and
+containment suppression.
+
+**Still not addressed:** candidate fix 4 (set-valued attributes like
+`owns`/`contains` still produce false positives — the adjudicator
+correctly dismisses them, but they cost tokens on every run).
 
 **Do not treat this as fixed by adding a test to `sample_manuscript`.**
 The fixture would then be written to match whatever naming the fix
