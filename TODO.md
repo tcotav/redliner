@@ -1541,16 +1541,20 @@ arrangement:**
    this fixture** — 750 words is far too small to model context growth
    honestly; measure a real manuscript instead. (~$0.25/section measured.)
 
-**Model choice is the biggest single lever, and redliner deliberately
-does not pull it.** All fifteen agent files specify `model: inherit`, so
-every pass runs on whatever model the user's session is using — this run
-was `claude-opus-5` only because the harness driving it defaulted there.
-A Sonnet-tier session runs the same pass for roughly half. Pinning a
-cheaper model in the agent frontmatter would make cost predictable at
-the price of overriding a choice the user has already made, and the
-editorial quality of these passes is the whole product. **Left as
-`inherit` on purpose; revisit only with evidence that a cheaper model
-holds finding quality.**
+**On model choice — settled, not an open question.** All fifteen agent
+files specify `model: inherit`, so every pass runs on whatever model the
+session is using, and the numbers above scale accordingly (this run was
+`claude-opus-5` because the harness driving it defaulted there).
+
+That is the right design and it is already implemented: **the model is
+the user's choice, made through the normal means of picking one, and the
+tool follows the session default at the time.** Pinning a model in agent
+frontmatter would override a decision the user has already made. Nor
+should this be surfaced as a cost lever for them to pull — recommending
+a cheaper model to save tokens substitutes the tool's judgment about
+quality for the author's, and editorial quality is the entire product.
+Record cost figures as *observations*, note which model produced them,
+and stop there.
 
 **The UX problem this surfaced.** The author of this tool, watching his
 own run, could not tell whether it had hung. Two things are true at once:
@@ -1698,8 +1702,9 @@ config as one JSON, plus a single post-phase `redliner check`, plausibly
 removes 4–5 calls. Same shape as the existing Go subcommands, no design
 tradeoff.
 
-**Largest lever, deliberately not pulled:** model choice — see the
-`model: inherit` note above.
+Note that all figures here scale with the session's model (`model:
+inherit`) — see the note above on why that is settled rather than a
+tuning knob.
 
 ## Obsidian vault integration
 

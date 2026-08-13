@@ -394,10 +394,10 @@ silent stretch is distinguishable from a hang.
 
 That run also spent ~39K output tokens across 53 API calls, with prompt
 caching accounting for a ~71% reduction in token cost. `TODO.md` has the
-per-step breakdown. Note the agents specify `model: inherit`, so passes
-run on whatever model your session uses — that choice affects cost more
-than anything else, and on a Pro/Max subscription usage draws against
-plan limits rather than being billed per token.
+per-step breakdown. The agents specify `model: inherit`, so passes run on
+whatever model your session uses and these figures scale with it. On a
+Pro/Max subscription, usage draws against plan limits rather than being
+billed per token.
 
 **The Go port is done and merged.** Every deterministic operation —
 both front doors, CLI and MCP — is one statically-linked binary with no
