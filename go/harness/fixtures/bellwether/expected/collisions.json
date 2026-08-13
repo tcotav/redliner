@@ -346,6 +346,78 @@
       "likely_unpropagated_revision": false
     },
     {
+      "entity": "Emil",
+      "attribute": "death_date",
+      "distinct_values": [
+        "march",
+        "night before march 5, after the two o'clock check"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_01-013",
+          "section": "section_01",
+          "value": "March",
+          "excerpt": "Emil had died in March",
+          "location": "paragraph 3",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_04-009",
+          "section": "section_04",
+          "value": "night before March 5, after the two o'clock check",
+          "excerpt": "phoned Kaja at six in the morning on the fifth of March to say that Emil had gone in the night, alone, sometime after the two o'clock check",
+          "location": "paragraph 4",
+          "source": "narration",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": true,
+      "any_implied": false,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_01",
+        "section_04"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
+      "entity": "Emil",
+      "attribute": "place_of_death",
+      "distinct_values": [
+        "hospice",
+        "hospice wing of the county hospital"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_01-015",
+          "section": "section_01",
+          "value": "hospice wing of the county hospital",
+          "excerpt": "in the hospice wing of the county hospital",
+          "location": "paragraph 3",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_04-010",
+          "section": "section_04",
+          "value": "hospice",
+          "excerpt": "The hospice nurse had phoned Kaja",
+          "location": "paragraph 4",
+          "source": "narration",
+          "confidence": "explicit"
+        }
+      ],
+      "all_narration": true,
+      "any_implied": false,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_01",
+        "section_04"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
       "entity": "Kaja",
       "attribute": "arrival_day",
       "distinct_values": [
@@ -583,6 +655,42 @@
           "value": "on a nail inside the meter box",
           "excerpt": "The key still hung on a nail inside the meter box",
           "location": "paragraph 4",
+          "source": "narration",
+          "confidence": "explicit"
+        },
+        {
+          "id": "fact-section_02-022",
+          "section": "section_02",
+          "value": "on the harbor, with a dock",
+          "excerpt": "stood at the shop door with a cup of coffee looking at his own dock pilings",
+          "location": "paragraph 7",
+          "source": "narration",
+          "confidence": "implied"
+        }
+      ],
+      "all_narration": true,
+      "any_implied": true,
+      "sections_edited_since_snapshot": [],
+      "sections_untouched_since_snapshot": [
+        "section_01",
+        "section_02"
+      ],
+      "likely_unpropagated_revision": false
+    },
+    {
+      "entity": "the shop",
+      "attribute": "location",
+      "distinct_values": [
+        "on the harbor, with a dock",
+        "water street"
+      ],
+      "facts": [
+        {
+          "id": "fact-section_01-019",
+          "section": "section_01",
+          "value": "Water Street",
+          "excerpt": "the shop on Water Street",
+          "location": "paragraph 3",
           "source": "narration",
           "confidence": "explicit"
         },

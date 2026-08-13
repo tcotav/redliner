@@ -293,6 +293,14 @@ func attrTokens(value string) map[string]bool {
 	return out
 }
 
+// groupKey identifies a group by its fact-id set, order-independently --
+// Python compares frozensets, so this stands in for that.
+func groupKey(factIDs []string) string {
+	sorted := append([]string(nil), factIDs...)
+	sort.Strings(sorted)
+	return strings.Join(sorted, "\x00")
+}
+
 func tokensIntersect(a, b map[string]bool) bool {
 	for k := range a {
 		if b[k] {
@@ -340,8 +348,31 @@ func linkByAttribute(factIDs []string, factsByID map[string]*collisionFact) [][]
 		}
 	}
 
+	// An exact-attribute group that is *itself* a collision (two or more
+	// distinct values under one attribute name) is never superseded --
+	// see the containment note below.
+	protected := map[string]bool{}
+	for _, k := range keys {
+		values := map[string]bool{}
+		for _, id := range exact[k] {
+			values[strings.ToLower(strings.TrimSpace(fmt.Sprintf("%v", factsByID[id].Value)))] = true
+		}
+		if len(values) > 1 {
+			protected[groupKey(exact[k])] = true
+		}
+	}
+
 	// Drop groups contained in a larger one, so a merged pair supersedes
 	// its two halves rather than being reported three times.
+	//
+	// Except when a half is a real collision on its own. "The merged pair
+	// supersedes its halves" assumes the merge is at least as informative,
+	// and it isn't: the superset drags in values from the *other*
+	// attribute, so a clean `age_at_death: [eighty-one, seventy-seven]`
+	// gets replaced by one also carrying `hospice` and `March`. That hides
+	// signal behind noise -- a recall bug, not just a cosmetic one. Found
+	// 2026-08-12 by simulating an entity-matching fix over the bellwether
+	// fixture; see TODO.md.
 	sort.SliceStable(groups, func(a, b int) bool { return len(groups[a]) > len(groups[b]) })
 	var seen []map[string]bool
 	var out [][]string
@@ -351,17 +382,19 @@ func linkByAttribute(factIDs []string, factsByID map[string]*collisionFact) [][]
 			set[id] = true
 		}
 		contained := false
-		for _, s := range seen {
-			all := true
-			for id := range set {
-				if !s[id] {
-					all = false
+		if !protected[groupKey(g)] {
+			for _, s := range seen {
+				all := true
+				for id := range set {
+					if !s[id] {
+						all = false
+						break
+					}
+				}
+				if all {
+					contained = true
 					break
 				}
-			}
-			if all {
-				contained = true
-				break
 			}
 		}
 		if contained {

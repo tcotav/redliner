@@ -65,10 +65,15 @@ to `the two sisters` would not do it. Don't let a future entity-matching
 fix take credit for this class.
 
 **Precision failed too.** Of 16 collisions reported, **15 mix two
-different attributes** and **6 are entirely within a single section**
-(structurally incapable of being a cross-section continuity issue).
+different attributes** and 6 are entirely within a single section.
 Exactly 1 is a clean same-attribute cross-section pair, and it is not one
-of the planted four. `Emil` alone produced 6 spurious collisions:
+of the planted four.
+
+> **Correction.** An earlier version of this README called single-section
+> collisions structurally invalid. They are not — saltmarsh's `cont-002`
+> is a real `unverified` finding with both fact ids in `section_03`. A
+> manuscript can contradict itself within one section. The 6 here are
+> noise on their merits, not by construction. `Emil` alone produced 6 spurious collisions:
 `activity_at_death`, `age_at_death`, `death_date`, and `place_of_death`
 all share the token `death`, so pairwise linking emits all C(4,2)
 combinations, yielding items like `Emil.age_at_death: ['eighty-one',
@@ -108,7 +113,8 @@ reading only that report would go fix the wrong component.
 | `.redliner/brief.md` | a hand-written brief in the shape `/redliner:intake` produces |
 | `.redliner/state.json` | `manuscript_dir` relativized to `bellwether`, matching `happy` and `saltmarsh` |
 | `.redliner/canon/observations/*.json` | 111 facts across 30 entities — lets `canon reconcile` re-run deterministically with **no model calls** |
-| `expected/collisions.json` | the 16 collisions the current matcher finds — **a record of failure, not a target** |
+| `expected/collisions.json` | what the current matcher finds — **a record of failure, not a target**. Was 16 when the run above was measured; **19 since the `protect-exact` fix** (2026-08-12), which surfaced three clean same-attribute collisions that had been hidden inside contaminated merged supersets. Recall is unchanged at 0/4 — `protect-exact` does not touch the entity partition. |
+| `expected/planted_pairs.json` | **the actual assertion.** Never regenerate this |
 | `expected/continuity.json` | what the adjudicator kept from those 16: one `unverified` item, zero contradictions |
 
 ## Using it

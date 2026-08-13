@@ -67,6 +67,10 @@ func TestLinkByAttribute_IsPairwiseNotTransitive(t *testing.T) {
 func TestLinkByAttribute_SupersedesContainedGroups(t *testing.T) {
 	// Two facts whose attributes overlap should be reported once as a
 	// merged pair, not additionally as their two singleton halves.
+	//
+	// Note the halves here are singletons -- neither is a collision on
+	// its own, so neither is protected. That distinction is the subject
+	// of the sibling test below.
 	facts := map[string]*collisionFact{
 		"f1": {Attribute: "duration_not_working"},
 		"f2": {Attribute: "stopped_duration"},
@@ -74,5 +78,60 @@ func TestLinkByAttribute_SupersedesContainedGroups(t *testing.T) {
 	groups := linkByAttribute([]string{"f1", "f2"}, facts)
 	if len(groups) != 1 || len(groups[0]) != 2 {
 		t.Fatalf("want one merged pair, got %v", groups)
+	}
+}
+
+func TestLinkByAttribute_ProtectsExactGroupThatIsItselfACollision(t *testing.T) {
+	// The bellwether shape: one attribute carries a genuine two-value
+	// collision, and a neighbouring attribute shares a token with it.
+	// Containment used to let the merged superset supersede the clean
+	// pair, so `age_at_death: [eighty-one, seventy-seven]` was only ever
+	// reported alongside `hospice` -- signal hidden behind noise, which
+	// is a recall bug rather than a cosmetic one. The clean pair must
+	// survive as a group of its own.
+	facts := map[string]*collisionFact{
+		"f1": {Attribute: "age_at_death", Value: "eighty-one"},
+		"f2": {Attribute: "age_at_death", Value: "two months short of seventy-seven"},
+		"f3": {Attribute: "place_of_death", Value: "hospice"},
+	}
+	groups := linkByAttribute([]string{"f1", "f2", "f3"}, facts)
+
+	var foundClean bool
+	for _, g := range groups {
+		if len(g) == 2 && ((g[0] == "f1" && g[1] == "f2") || (g[0] == "f2" && g[1] == "f1")) {
+			foundClean = true
+		}
+	}
+	if !foundClean {
+		t.Fatalf("clean age_at_death collision was superseded by the merged group: %v", groups)
+	}
+
+	// The merge itself is still reported -- this protects a group, it
+	// doesn't suppress the union.
+	var foundMerged bool
+	for _, g := range groups {
+		if len(g) == 3 {
+			foundMerged = true
+		}
+	}
+	if !foundMerged {
+		t.Errorf("the merged group should still be reported too, got %v", groups)
+	}
+}
+
+func TestLinkByAttribute_SingleValuedExactGroupStaysUnprotected(t *testing.T) {
+	// Guard against over-reach: an exact-attribute group with only one
+	// distinct value is not a collision, so it must still be superseded
+	// by the merge. Otherwise every half comes back and the containment
+	// rule stops doing anything at all.
+	facts := map[string]*collisionFact{
+		"f1": {Attribute: "age_at_death", Value: "eighty-one"},
+		"f2": {Attribute: "age_at_death", Value: "eighty-one"},
+		"f3": {Attribute: "place_of_death", Value: "hospice"},
+	}
+	for _, g := range linkByAttribute([]string{"f1", "f2", "f3"}, facts) {
+		if len(g) == 2 {
+			t.Fatalf("single-valued half should have been superseded, got %v", g)
+		}
 	}
 }

@@ -178,12 +178,29 @@ def _link_by_attribute(fact_ids, facts_by_id):
                 merged.sort(key=fact_ids.index)
                 groups.append(merged)
 
+    # An exact-attribute group that is *itself* a collision (two or more
+    # distinct values under one attribute name) is never superseded --
+    # see the containment note below.
+    protected = set()
+    for k in keys:
+        if len({str(facts_by_id[f]["value"]).strip().lower() for f in exact[k]}) > 1:
+            protected.add(frozenset(exact[k]))
+
     # Drop any group whose fact set is contained in a larger one, so a
     # merged pair supersedes its two halves rather than reporting thrice.
+    #
+    # Except when a half is a real collision on its own. "The merged pair
+    # supersedes its halves" assumes the merge is at least as informative,
+    # and it isn't: the superset drags in values from the *other*
+    # attribute, so a clean `age_at_death: [eighty-one, seventy-seven]`
+    # gets replaced by one also carrying `hospice` and `March`. That hides
+    # signal behind noise -- a recall bug, not just a cosmetic one. Found
+    # 2026-08-12 by simulating an entity-matching fix over the bellwether
+    # fixture; see TODO.md.
     seen, out = set(), []
     for g in sorted(groups, key=len, reverse=True):
         fs = frozenset(g)
-        if any(fs <= s for s in seen):
+        if fs not in protected and any(fs <= s for s in seen):
             continue
         seen.add(fs)
         out.append(g)

@@ -1527,10 +1527,18 @@ be worth solving.
 ### Precision failed in the same run: 15 of 16 collisions are malformed
 
 `linkByAttribute` unions two attribute groups sharing any significant
-token. Of 16 collisions: **15 mix two different attributes**, and **6 sit
-entirely within a single section**, which cannot be a cross-section
-continuity issue by definition. Exactly 1 is a clean same-attribute
+token. Of 16 collisions: **15 mix two different attributes**, and 6 sit
+entirely within a single section. Exactly 1 is a clean same-attribute
 cross-section pair, and it is not one of the planted four.
+
+**Correction, 2026-08-12:** an earlier version of this section called
+single-section collisions structurally invalid. That is wrong.
+Saltmarsh's `cont-002` — the on-page dialogue disagreement the
+adjudicator correctly kept as `unverified` — has **both** fact ids in
+`section_03`. A manuscript can contradict itself inside one section, and
+that is a legitimate finding. The 6 here are noise on their specific
+merits, not by construction. See the guard measurements below, where this
+mistake was caught.
 
 `Emil` alone produced 6 spurious collisions: `activity_at_death`,
 `age_at_death`, `death_date` and `place_of_death` all share the token
@@ -1591,11 +1599,96 @@ already-broken attribute linking**: fusing `Emil` and `Ren's father` into
 one partition today would make Emil's 6 spurious death-token merges
 worse, not better.
 
-The cheap deterministic guards on the precision half are separable and
-testable against saltmarsh's committed observations with **zero model
-calls** — e.g. suppressing groups whose facts all come from one section,
-and not merging two attribute groups that each already carry their own
-distinct values. Those are candidates, not decisions.
+### Precision guards: measured 2026-08-12, zero model calls
+
+Both guards this file originally proposed are **refuted**, and the
+measurement turned up a separate latent recall bug. All numbers from
+replaying the committed observations of `saltmarsh` and `bellwether`
+through the matcher — no model calls, reproducible.
+
+| Guard | saltmarsh | bellwether | true positives lost |
+| --- | --- | --- | --- |
+| G1 suppress single-section groups | 12 → 2 | 16 → 10 | **1 — refuted** |
+| G2 don't merge two already-multi-valued groups | 12 → 12 | 16 → 15 | 0, but useless |
+| G3 value-shape, unit-sensitive | 12 → 12 | 16 → 6 | **refuted, see below** |
+| G3-coarse: quantity vs text | 12 → 12 | 16 → 6 | none measured |
+
+**G1 is refuted and the reasoning behind it was wrong.** Saltmarsh's
+`cont-002` has both fact ids in `section_03`. A manuscript can contradict
+itself inside one section — an on-page dialogue disagreement is exactly
+that — and it was one of only two findings saltmarsh ever produced.
+
+**G3 unit-sensitive is refuted.** It would drop the planted absence
+contradiction, because `nineteen winters` and `twenty-three years` parse
+to different units. Buying precision with silent recall loss is the
+failure class this whole section exists to eliminate. The coarse
+quantity-vs-text form avoids it.
+
+**The real find: the containment rule can hide a true collision.**
+`linkByAttribute` drops any group contained in a larger one so that "a
+merged pair supersedes its two halves" (`canon.go:343-344`). That
+rationale fails when a half is *itself* a collision. Simulating a perfect
+entity fix on `bellwether`, the genuine `Emil.age_at_death`
+collision (`eighty-one` vs `two months short of seventy-seven`, **same
+attribute**) never appears as a clean group at all — it survives only
+inside merged supersets contaminated by `hospice` and `March`. So the
+fuzzy linking does not merely add noise; **it can swallow clean signal**.
+Call the fix `protect-exact`: never let a merged group supersede an
+exact-attribute group that is independently a collision. This is a latent
+**recall** defect today, invisible only because the entity partition
+already blocks those pairs — it bites the moment entity matching works.
+
+**The two changes are a package, not independent options.** Simulated
+against a perfect entity fix:
+
+| config | saltmarsh | bellwether + entity fix |
+| --- | --- | --- |
+| baseline | 12, both TPs | 21, finds all 3 Class A |
+| G3-coarse alone | 12, both TPs | 10, **loses `age`** |
+| protect-exact alone | 12, both TPs | 25, finds all 3 |
+| protect-exact + G3-coarse | 12, both TPs | 14, finds all 3 |
+
+**Shipping G3-coarse alone would be actively harmful** once entity
+matching improves: the merged group carrying the age pair is contaminated
+by text values, so the guard deletes a real contradiction the entity fix
+had just recovered. Guards and the entity fix cannot be evaluated
+independently — that is the durable lesson here.
+
+**On today's code, G3-coarse buys no recall at all** — bellwether stays
+0/4, 16 → 9 collisions. It is a noise reduction whose risk only
+materializes later. `protect-exact` moves in the safe direction
+(16 → 19 today) and is a bug fix rather than a heuristic.
+
+**Decision: `protect-exact` SHIPPED 2026-08-12. `G3-coarse` HELD.**
+G3-coarse buys zero recall today, its only measured benefit is noise
+reduction on one manuscript, and it is a word-list heuristic tuned
+against two fixtures — the same procedure that produced the failure this
+section documents. Revisit it *with* the entity fix, where it can be
+measured on a case that matters; it must not ship before one.
+
+`protect-exact` landed in both `canon.go` and
+`python-baseline/redliner_canon.py` in the same commit, with parity
+verified directly (Python vs Go on `bellwether`, `saltmarsh`, `happy` —
+identical `collisions.json` and `canon.json` for all three). That direct
+diff is the check that discriminates here: the harness only exercises
+`happy`, where the two agree regardless, so a Go-only change would have
+left the harness green and the byte-identical invariant silently broken.
+The three collisions it newly surfaces on `bellwether` are all clean
+same-attribute cross-section pairs (`Emil.death_date`,
+`Emil.place_of_death`, `the shop.location`) that were previously hidden —
+the fix doing exactly what it claims.
+
+Harness note: the `happy` fixture's collisions are **unchanged** by both
+(4 in, 4 out, every config), so `golden/happy/06_canon_reconcile.json`
+does not move. Any change still has to land in
+`python-baseline/redliner_canon.py` as well to keep the byte-identical
+invariant `canon.go:258-260` asserts.
+
+Caveat on G3-coarse: the quantity test is a word-list heuristic
+(`nineteen` counts, `winters` does not) designed by looking at these two
+manuscripts. That is the same procedure that produced the fix this
+section documents failing. Treat "none measured" as measured on two
+saltmarsh findings and three simulated ones, not as safe.
 
 **Keep `bellwether` unspent.** Its entire value is that nothing has been
 tuned against it. If a matcher fix lands and its expectations are then
