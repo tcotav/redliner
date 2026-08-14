@@ -14,6 +14,7 @@ const usage = `Usage:
   redliner validate <manuscript_dir>
   redliner context <manuscript_dir>   # state+domain+sections+diff+canon in one call
   redliner decisions list|apply <manuscript_dir>   # author resolve/wontfix decisions
+  redliner rounds archive|list <manuscript_dir> [pass]   # keep completed passes for diffing
   redliner mcp   # MCP stdio server (see cmd/redliner/main.go)`
 
 // Dispatch is the binary's top-level subcommand router for every
@@ -41,6 +42,8 @@ func Dispatch(args []string, stdout, stderr io.Writer) int {
 		return RunContext(args[1:], stdout)
 	case "decisions":
 		return RunDecisions(args[1:], stdout)
+	case "rounds":
+		return RunRounds(args[1:], stdout)
 	default:
 		fmt.Fprintf(stdout, "Unknown subcommand %s\n\n%s\n", pyReprStr(args[0]), usage)
 		return 1

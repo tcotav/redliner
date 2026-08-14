@@ -219,9 +219,16 @@ invites the author to start reacting to a half-finished picture.
 
 1. Move the manuscript to the developmental phase (this increments the
    round counter).
-2. Prepare `<manuscript_dir>/.redliner/findings/` and
-   `<manuscript_dir>/.redliner/letters/`; clear stale files from a
-   previous round.
+2. **Archive the previous round before clearing anything**
+   (`redliner rounds archive <dir> developmental`, and `... line` if a
+   line pass ran). Then prepare `<manuscript_dir>/.redliner/findings/`
+   and `.redliner/letters/`, clearing stale files from the previous
+   round.
+
+   This step is where the "before" used to be destroyed: every pass
+   rewrites findings in place, so clearing without archiving left nothing
+   to compare a later round against. Archiving first makes the clear
+   safe. Say in one line that you've archived and where.
 3. Task the `redliner:<domain>-developmental-editor` subagent with the manuscript directory,
    the round number, and output path `.redliner/findings/developmental.json`.
 4. Validate everything currently under `.redliner/` — stop and report
@@ -262,8 +269,9 @@ invites the author to start reacting to a half-finished picture.
    manuscript text.
 8. Validate again, then read and show the developmental letter, then the
    continuity summary from step 5.
-9. Re-apply author decisions, then record the completed pass:
-   `redliner decisions apply <dir>` and `redliner state pass <dir> developmental`
+9. Re-apply author decisions, archive the completed pass, and record it:
+   `redliner decisions apply <dir>`, `redliner rounds archive <dir> developmental`
+   (and `... continuity`), `redliner state pass <dir> developmental`.
    (and `... continuity`, since step 5 ran one). This is what lets
    `status` tell the author what has actually been run rather than only
    what phase they're in. **Print the letter's absolute path**
@@ -374,6 +382,24 @@ Neither letter mentions it, so nobody would know. When showing findings
 disagree with can be declined with a reason and won't be re-raised.
 Authors know things the manuscript doesn't say; the tool's job is to
 make recording that cheap, not to keep re-litigating.
+
+## Completed passes are kept, not overwritten
+
+Each finished pass is archived to
+`.redliner/rounds/<pass>-round<N>/` — a copy of that pass's findings (or,
+for continuity, its collisions and adjudication). `redliner rounds list`
+shows what's there.
+
+They're kept **by default** because they're small and the alternative is
+unrecoverable: a full round of developmental, line and continuity
+artifacts for a five-section manuscript is about 180KB, so even a long
+project stays under a few megabytes. Losing the previous round means
+losing the ability to answer "what changed since last time" forever.
+
+**Never delete anything under `rounds/` without asking the author
+first**, and don't offer to prune unprompted — the cost of keeping is
+negligible and the cost of a wrong deletion is total. If they ask what's
+accumulating, show `rounds list` and the size, and let them decide.
 
 ## Author decisions survive re-runs
 
@@ -502,8 +528,9 @@ forever.
    same reason as the developmental step.
 7. Validate, then read and show the letter — and **print its absolute
    path**, so the author can open it later without hunting.
-8. Re-apply author decisions (`redliner decisions apply <dir>`), then
-   record the completed pass: `redliner state pass <dir> line`.
+8. Re-apply author decisions (`redliner decisions apply <dir>`), archive
+   the pass (`redliner rounds archive <dir> line`), then record it
+   (`redliner state pass <dir> line`).
 
 ## `/redliner:run continuity`
 
@@ -551,7 +578,8 @@ developmental round counter. It's safe to run any time after intake.
      subagent with the manuscript directory and output path
      `.redliner/canon/continuity.json`.
 7. Validate again.
-8. Record the completed pass: `redliner state pass <dir> continuity`.
+8. Archive and record the pass: `redliner rounds archive <dir> continuity`,
+   then `redliner state pass <dir> continuity`.
 9. Report a short summary: entity/fact counts from the canon, and
    contradiction counts broken out by `kind` (`contradiction` vs.
    `unverified`) and by `severity`. Name any
