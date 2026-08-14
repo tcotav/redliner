@@ -158,3 +158,59 @@ cut `MORNING_EDIT.md` measured dead at 1/4.
   brief, the author's declared aliases, and prior decisions.
 - **Nothing about cost at true novel scale**, which is extrapolated here,
   not measured.
+
+---
+
+# Compression arm — grading rule fixed 2026-08-14, BEFORE any output was seen
+
+Follow-up to the run above, same discipline, same corpus, same four
+seeds, same thresholds. Only the *representation* changes.
+
+## Why
+
+The run above settled accuracy and moved the constraint to cost: ~82K
+tokens for 330 facts, against a novel's order 2,000. Partitioning the
+corpus is the obvious cut and is already dead three ways — by entity
+name (measured 1/4 in `MORNING_EDIT.md`), by multi-section entities (one
+seed's earlier surface form appears in a single section, so that filter
+drops it), and by section window (one seed spans sections 01↔05, and any
+window loses long-range joins, which is the class continuity exists to
+catch).
+
+That leaves making each fact cheaper rather than sending fewer of them.
+The bundle above was **88,192 bytes for 330 facts — 267 bytes per fact**,
+most of it JSON scaffolding, repeated key names, and fields the join may
+never have used.
+
+## What changes
+
+One line per fact, `id | entity | attribute | value`, with a compact id
+(`s{section}f{number}`) carrying the section. **Dropped:**
+`entity_type`, `source`, `confidence`, and all JSON structure.
+
+Everything else is held constant: same 330 facts, same 4 seeds, same
+prompt wording, same two arms, same scoring rule and thresholds as the
+run above.
+
+## Predictions, recorded so they can be wrong
+
+1. **Compression is recall-neutral** — 4/4 retained. The seeds are
+   contradictions of *value* between two entity surface forms; none of
+   the dropped fields carries information needed to make that join.
+2. **`confidence` is the riskiest drop for precision.** An inferred fact
+   conflicting with an explicit one is weaker evidence than two explicit
+   facts conflicting, and without the field the agent cannot weigh that.
+   If the control arm's asserted-contradiction count rises above zero,
+   this is the first place to look.
+3. **Bundle drops to roughly 80 bytes/fact**, making order 2,000 facts
+   about 160KB — a single call at novel scale.
+
+## Scoring
+
+Identical to the run above, including the thresholds table and the
+pre-declaration that `cont-001`/`cont-002` are hits rather than false
+positives. Recorded per arm: seeded recall out of 4, items raised,
+items asserted as `contradiction`, bundle bytes, measured tokens.
+
+A recall drop here does not reopen the accuracy question settled above —
+it localizes which fields the join was actually using.
