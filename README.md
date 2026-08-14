@@ -325,7 +325,10 @@ A few things worth knowing if you're debugging or extending this:
   `redliner validate` checks after the fact — including verifying
   that any `excerpt` field is a genuine verbatim substring of the section
   it claims to quote, not a paraphrase. That check has already caught a
-  real fabricated excerpt in this repo's own sample data.
+  real fabricated excerpt in this repo's own sample data. A line finding
+  whose point is the relationship between two separated passages may
+  cite a *list* of excerpts; every element is verified the same way, so
+  the guarantee holds either way.
 - **Deterministic detection, model judgment — kept as two separate
   steps.** Section-hash diffing and continuity-collision finding are both
   exactly computable, so they're plain scripts. Judgment (is this really

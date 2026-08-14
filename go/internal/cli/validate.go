@@ -38,10 +38,24 @@ func loadSectionText(manuscriptDir, stem string) (string, bool) {
 	return "", false
 }
 
-// verifyExcerpts mirrors validate_findings.py's _verify_excerpts: each
-// item's excerpt (if present) must be a genuine, normalized substring of
-// the section it claims to quote.
-func verifyExcerpts(items []interface{}, sectionText, label string) []string {
+// verifyExcerpts checks that each item's excerpt (if present) is a
+// genuine, normalized substring of the section it claims to quote.
+//
+// allowMulti governs whether `excerpt` may also be a *list* of strings,
+// each validated as its own verbatim contiguous span. That is true for
+// line findings and false for extracted facts, and the split is
+// deliberate: a line finding about prose rhythm or POV is frequently
+// about the relationship between two separated passages, which no single
+// contiguous span can cite, while a fact asserts one thing and has one
+// place it comes from. See TODO.md, "The excerpt field can't express a
+// pattern across separated spans".
+//
+// Anything that is neither form is an error rather than a skip. It used
+// to be a skip -- `excerpt, _ := item["excerpt"].(string)` on a list
+// yielded "" and fell through the empty check -- so the workaround an
+// agent would naturally reach for silently disabled the one guarantee
+// this function exists to provide.
+func verifyExcerpts(items []interface{}, sectionText, label string, allowMulti bool) []string {
 	var errors []string
 	normalizedSection := normalizeExcerpt(sectionText)
 	for i, raw := range items {
@@ -49,16 +63,57 @@ func verifyExcerpts(items []interface{}, sectionText, label string) []string {
 		if !ok {
 			continue
 		}
-		excerpt, _ := item["excerpt"].(string)
-		if excerpt == "" {
+		excerptRaw, present := item["excerpt"]
+		if !present || excerptRaw == nil {
 			continue
 		}
-		if !strings.Contains(normalizedSection, normalizeExcerpt(excerpt)) {
-			id, ok := item["id"].(string)
-			if !ok || id == "" {
-				id = fmt.Sprintf("index %d", i)
+
+		id, ok := item["id"].(string)
+		if !ok || id == "" {
+			id = fmt.Sprintf("index %d", i)
+		}
+		fail := func(format string, args ...interface{}) {
+			errors = append(errors, fmt.Sprintf("%s[%s]: %s", label, id, fmt.Sprintf(format, args...)))
+		}
+		verify := func(excerpt, where string) {
+			if !strings.Contains(normalizedSection, normalizeExcerpt(excerpt)) {
+				fail("excerpt%s not found verbatim in section text: %s", where, pyReprStr(excerpt))
 			}
-			errors = append(errors, fmt.Sprintf("%s[%s]: excerpt not found verbatim in section text: %s", label, id, pyReprStr(excerpt)))
+		}
+
+		switch excerpt := excerptRaw.(type) {
+		case string:
+			// An empty string is "no excerpt", same as omitting the key.
+			if excerpt != "" {
+				verify(excerpt, "")
+			}
+		case []interface{}:
+			if !allowMulti {
+				fail("excerpt must be a single string here -- a fact asserts one thing and cites one span")
+				continue
+			}
+			if len(excerpt) == 0 {
+				fail("excerpt is an empty list -- cite at least one span, or omit the field")
+				continue
+			}
+			for j, spanRaw := range excerpt {
+				span, ok := spanRaw.(string)
+				if !ok {
+					fail("excerpt[%d] is not a string", j)
+					continue
+				}
+				if strings.TrimSpace(span) == "" {
+					fail("excerpt[%d] is empty", j)
+					continue
+				}
+				verify(span, fmt.Sprintf("[%d]", j))
+			}
+		default:
+			if allowMulti {
+				fail("excerpt must be a string or a list of strings")
+			} else {
+				fail("excerpt must be a string")
+			}
 		}
 	}
 	return errors
@@ -140,7 +195,7 @@ func ValidateManuscript(manuscriptDir, domainsDir string, stdout io.Writer) int 
 		errs := schemas.ValidateLineReport(report, domain.StringSet("line_categories"))
 		if m := lineFilePattern.FindStringSubmatch(filepath.Base(lineFile)); m != nil {
 			if sectionText, found := loadSectionText(manuscriptDir, m[1]); found {
-				errs = append(errs, verifyExcerpts(reportField(report, "findings"), sectionText, filepath.Base(lineFile))...)
+				errs = append(errs, verifyExcerpts(reportField(report, "findings"), sectionText, filepath.Base(lineFile), true)...)
 			}
 		}
 		ok = checkFile(stdout, lineFile, errs) && ok
@@ -186,7 +241,7 @@ func validateCanon(stdout io.Writer, manuscriptDir, redlinerPath string, domain 
 		errs := schemas.ValidateObservations(report, entityTypes, sources)
 		stem := stemOfPath(obsFile)
 		if sectionText, found := loadSectionText(manuscriptDir, stem); found {
-			errs = append(errs, verifyExcerpts(reportField(report, "facts"), sectionText, filepath.Base(obsFile))...)
+			errs = append(errs, verifyExcerpts(reportField(report, "facts"), sectionText, filepath.Base(obsFile), false)...)
 		}
 		ok = checkFile(stdout, obsFile, errs) && ok
 	}

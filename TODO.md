@@ -1806,7 +1806,7 @@ ones an author can name in one line.
 
 Not built. Design it against more than one manuscript.
 
-### The excerpt field can't express a pattern across separated spans
+### The excerpt field can't express a pattern across separated spans (FIXED 2026-08-14)
 
 Found 2026-08-14 running the **line** phase for the first time on real
 prose. `validate` rejected one of five sections on 5 of 12 findings, all
@@ -1826,24 +1826,46 @@ pattern that is the finding, or ellipsis-join and fail validation. It
 chose the latter five times, which is arguably the more honest of the
 two.
 
-**Candidate fix, not built:** let `excerpt` accept a list of strings,
-each individually validated as a verbatim contiguous substring. That
-keeps the guarantee that matters — every quoted fragment is really in the
-text, so a finding can't cite prose the author never wrote — while making
-the multi-span finding expressible. A single string stays valid, so
-nothing already written breaks.
+**Built 2026-08-14, as sketched:** `excerpt` on a *line finding* may now
+be a list of strings, each individually validated as a verbatim
+contiguous substring. The guarantee that matters is unchanged — every
+quoted fragment is really in the text, so a finding still can't cite
+prose the author never wrote — and a single string stays valid, so
+nothing already written breaks. Facts stay string-only (`allowMulti` is
+false at that call site): a fact asserts one thing and comes from one
+place, and this is the **findings** schema, not the fact schema. The
+"FACT_REQUIRED_KEYS stays sealed" argument was about keeping
+*extraction* judgment-free and doesn't transfer.
 
-Scope before building: it touches the findings schema in both Go and
-`python-baseline` (harness parity), `validate.go`'s `verifyExcerpts`, and
-the output-format block in all 15 agent files plus 5 templates. Note this
-is the **findings** schema, not the fact schema — the "FACT_REQUIRED_KEYS
-stays sealed" argument was about keeping *extraction* judgment-free and
-does not transfer here.
+**The bug was worse than "can't express it", and that only surfaced
+while fixing it.** `verifyExcerpts` read the field as
+`item["excerpt"].(string)`, so a list yielded `""` and fell straight
+through the empty-excerpt check — **validated nothing, reported
+nothing**. The ellipsis-join at least failed loudly; the list form, which
+is what an agent would naturally reach for next, silently disabled the
+one guarantee the function exists to provide. Every non-string,
+non-allowed-list value is now an explicit error. (The Python baseline
+diverged here rather than agreeing: `if not excerpt` on a non-empty list
+is truthy, so it reached `_normalize(list)` and raised `TypeError`. Both
+sides now behave the same.)
 
-Stopgap in use meanwhile: tell the line editor to put one contiguous span
-in `excerpt` and describe the wider pattern in `note`, citing other
-locations in prose. It works, but it demotes the evidence for exactly the
-findings where evidence matters most.
+**Scope was smaller than this section claimed.** It said "all 15 agent
+files plus 5 templates"; `excerpt` appears in exactly **three**
+line-editor agent files and **one** template, because the extractor
+agents' excerpts are facts and stay string-only. Real footprint:
+`validate.go`'s `verifyExcerpts` (+ its two call sites),
+`validate_findings.py`'s mirror, three agent files, one template,
+README, and `validate_excerpt_test.go` (17 cases pinning the list form,
+the string form's unchanged behaviour, empty/blank/non-string elements,
+and the silent-skip regression). Goldens unaffected — no fixture carries
+a list excerpt, and the full suite passes unchanged.
+
+The stopgap this section recorded (one contiguous span in `excerpt`, the
+wider pattern described in `note`) is retired. The line editors now carry
+a positive rule instead: quote verbatim, never ellipsis-join, and use a
+list when the finding *is* the relationship between separated passages —
+with an explicit note that a list is one finding needing two spans, not
+a way to bundle two findings into one entry.
 
 ### Extractor excerpt-validity defect, second sighting
 

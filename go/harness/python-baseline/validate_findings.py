@@ -93,21 +93,63 @@ def _load_section_text(manuscript_dir: Path, section_stem: str) -> str | None:
     return None
 
 
-def _verify_excerpts(items: list, section_text: str, label: str) -> list:
+def _verify_excerpts(
+    items: list, section_text: str, label: str, allow_multi: bool = False
+) -> list:
     """Check each item's `excerpt` (if present) is a real substring of the
-    section it claims to quote. Returns error strings; empty if clean."""
+    section it claims to quote. Returns error strings; empty if clean.
+
+    `allow_multi` lets `excerpt` also be a *list* of strings, each checked
+    as its own verbatim contiguous span -- true for line findings, false
+    for extracted facts. A line finding about prose rhythm or POV is often
+    about the relationship between two separated passages, which no single
+    contiguous span can cite; a fact asserts one thing and comes from one
+    place. Anything that is neither form is an error, not a skip.
+    """
     errors = []
     normalized_section = _normalize(section_text)
     for i, item in enumerate(items):
-        excerpt = item.get("excerpt") if isinstance(item, dict) else None
-        if not excerpt:
+        if not isinstance(item, dict) or "excerpt" not in item:
             continue
-        if _normalize(excerpt) not in normalized_section:
-            item_id = (
-                item.get("id", f"index {i}") if isinstance(item, dict) else f"index {i}"
-            )
-            errors.append(
-                f"{label}[{item_id}]: excerpt not found verbatim in section text: {excerpt!r}"
+        excerpt = item["excerpt"]
+        if excerpt is None:
+            continue
+        item_id = item.get("id") or f"index {i}"
+
+        def fail(msg):
+            errors.append(f"{label}[{item_id}]: {msg}")
+
+        def verify(span, where=""):
+            if _normalize(span) not in normalized_section:
+                fail(
+                    f"excerpt{where} not found verbatim in section text: {span!r}"
+                )
+
+        if isinstance(excerpt, str):
+            # An empty string is "no excerpt", same as omitting the key.
+            if excerpt:
+                verify(excerpt)
+        elif isinstance(excerpt, list):
+            if not allow_multi:
+                fail(
+                    "excerpt must be a single string here -- a fact asserts one thing and cites one span"
+                )
+                continue
+            if not excerpt:
+                fail("excerpt is an empty list -- cite at least one span, or omit the field")
+                continue
+            for j, span in enumerate(excerpt):
+                if not isinstance(span, str):
+                    fail(f"excerpt[{j}] is not a string")
+                elif not span.strip():
+                    fail(f"excerpt[{j}] is empty")
+                else:
+                    verify(span, f"[{j}]")
+        else:
+            fail(
+                "excerpt must be a string or a list of strings"
+                if allow_multi
+                else "excerpt must be a string"
             )
     return errors
 
@@ -189,7 +231,10 @@ def main(manuscript_dir_arg: str) -> int:
             section_text = _load_section_text(manuscript_dir, match.group(1))
             if section_text is not None:
                 errors += _verify_excerpts(
-                    report.get("findings", []), section_text, line_file.name
+                    report.get("findings", []),
+                    section_text,
+                    line_file.name,
+                    allow_multi=True,
                 )
         ok = _check(line_file, errors) and ok
 

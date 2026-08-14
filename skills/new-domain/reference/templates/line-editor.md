@@ -102,6 +102,24 @@ commentary in the file):
 - `category`: exactly one of {{LINE_CATEGORY_LIST}}.
 - `severity`: exactly one of `minor`, `moderate`, `major`, `critical`,
   calibrated to draft stage per the brief.
+- `excerpt`: the text you are citing, **quoted verbatim** — copy the
+  original punctuation, don't tidy it, and never join separated passages
+  with an ellipsis. Validation rejects an excerpt that isn't really in
+  the section, because a finding that quotes prose the author never wrote
+  is worse than one that quotes nothing.
+
+  When the finding **is about the relationship between two separated
+  passages** — two spans whose relationship is the point, not either
+  span alone — pass a **list** of excerpts instead of one string, each
+  one verbatim and contiguous on its own:
+
+  ```json
+  "excerpt": ["first span, exactly as written", "the later span it plays against"]
+  ```
+
+  The list is for one finding that needs more than one span as evidence.
+  It is not for bundling several findings into one entry — those are
+  separate findings with separate ids. One span? Use a plain string.
 
 Don't nitpick to have something to say — a clean section can have
 zero findings.
