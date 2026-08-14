@@ -1,7 +1,7 @@
 {
   "name": "redliner",
   "description": "Layered manuscript-editing pipeline (fiction, design docs, and other long-form domains): developmental and line editing, plus a cross-cutting continuity/canon-consistency layer, running as Claude Code subagents.",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "author": {
     "name": "redliner"
   }
