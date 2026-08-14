@@ -145,7 +145,10 @@ commentary in the file):
   use `addressed` for ones the revision genuinely fixed, and `stale` for
   ones the manuscript changed out from under (the issue as written no
   longer describes the text). Don't mark something `addressed` you can't
-  verify on the page.
+  verify on the page. A finding the author marked `wontfix` stays
+  `wontfix` — don't re-raise it under a new id — and any `resolution`
+  block must be preserved verbatim, since it records who decided and
+  why. A status a person chose is never overwritten by one you inferred.
 - `round`: the developmental round number you're told.
 - `category`: exactly one of `arc_plot`, `episodic_pacing`,
   `character_arc`, `chapter_hook`, `stakes`, `reader_reorientation`,

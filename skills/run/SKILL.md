@@ -13,6 +13,7 @@ Phase-aware editing pipeline. Subcommands:
 | `/redliner:run assess` | Developmental pass (round 1, or a fresh full read) |
 | `/redliner:run work <id>` | Talk through one finding and how to revise it |
 | `/redliner:run resolve <id>` | Mark a finding addressed (author's claim) — developmental or line |
+| `/redliner:run wontfix <id>` | Decline a finding, with a reason; it won't be re-raised |
 | `/redliner:run recheck` | Re-read after revision; verify claims, find new issues |
 | `/redliner:run line` | Line-editing phase (gated — see below) |
 | `/redliner:run continuity` | Extract facts, find collisions, adjudicate — see below |
@@ -320,10 +321,55 @@ touched `developmental.json`, so line findings could never be anything
 but `open` and their count could only grow. The schema always allowed it;
 the flow just didn't.
 
-**`wontfix` is also a legitimate outcome and has no command yet.** If the
-author considers a finding and declines it, that's `wontfix`, and it
-means "don't re-raise this" — see the schema's status list. Setting it by
-hand is fine for now; note that it survives re-checks untouched.
+## `/redliner:run wontfix <id> [reason]`
+
+The author considered the finding and is declining it. Set `status` to
+`wontfix` — same id lookup as `resolve` above — and **record why**.
+
+**Always ask for a reason if none was given**, in one short question.
+A bare `wontfix` is a landmine: a later round sees a suppressed finding
+with no explanation and can't tell a deliberate craft choice from an
+abandoned one, and neither can the author six months on.
+
+Write it as a `resolution` block alongside the status. Extra keys are
+permitted on findings (unlike facts, whose schema is deliberately
+sealed), so this needs no schema change:
+
+```json
+"status": "wontfix",
+"resolution": {
+  "set_by": "author",
+  "at": "2026-08-14T12:00:00Z",
+  "reason": "The register shift is intentional here."
+}
+```
+
+`set_by` is `author` when a human decided, and the pass name
+(`recheck`, `line`) when a pass did. That distinction is the point:
+**a status a person chose must never be overwritten by a status a
+machine inferred.**
+
+### One finding, or the whole class?
+
+`wontfix` stops *that finding* coming back. It does nothing about the
+next one of the same kind, in another section, next round.
+
+So ask which it is. If the reason is a standing property of the work —
+an intentional device, a convention, a deliberate omission — **offer to
+add it to the brief's "Deliberate choices" as well**, and say plainly
+that this is what stops the whole class recurring. That mechanism is
+proven: a bilingual-naming convention and a planned-reveal setup were
+recorded in one manuscript's brief and no subsequent pass re-raised
+either, across five independent agents that never saw each other's
+output.
+
+### Tell authors this exists
+
+Neither letter mentions it, so nobody would know. When showing findings
+— in a letter, in `work`, in `status` — say once that a finding they
+disagree with can be declined with a reason and won't be re-raised.
+Authors know things the manuscript doesn't say; the tool's job is to
+make recording that cheap, not to keep re-litigating.
 
 ## `/redliner:run recheck`
 

@@ -83,6 +83,12 @@ commentary in the file):
   finding no longer describes it; `wontfix` preserved untouched if the
   author already declined it, and never re-raised as a new finding under
   a new id.
+
+  **Preserve any `resolution` block verbatim** — it records who set a
+  status and why. A status a person chose must never be overwritten by
+  one you inferred: if `resolution.set_by` is `author`, leave both the
+  status and the block exactly as they are, even if you'd have judged
+  differently.
 - `category`: exactly one of `clarity`, `jargon`, `passive_voice`,
   `redundancy`, `structure_flow`.
 - `severity`: exactly one of `minor`, `moderate`, `major`, `critical`,
