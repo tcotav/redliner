@@ -18,14 +18,14 @@
 #   bin/ invocation doesn't get, so no on-disk indirection is needed
 #   there.
 #
-#   This is now the Cowork plugin's script *only*, and a real file
-#   rather than the symlink into the repo-root hooks/ it used to be.
-#   The CLI plugin's equivalent hook was deleted (see TODO.md's
-#   hook-reliability section -- bin/redliner is committed directly
-#   instead), which silently left that symlink dangling and stopped
-#   Cowork's binary from ever downloading. Keep this a real file so
-#   Cowork's install can't be broken again by a change aimed at the CLI
-#   variant.
+# NOTE: hooks/bootstrap-redliner-binary.sh (the CLI plugin's copy) is
+# the same script, identical apart from this header comment --
+# deliberately duplicated rather than symlinked. This file *was* a
+# symlink to that one, which silently dangled the moment that one was
+# briefly deleted, stopping Cowork's binary from downloading at all (see
+# TODO.md, 2026-08-12). Both plugins download their binary through their
+# own copy again; two 4KB files is the cheaper failure mode. Keep the
+# executable part in sync.
 set -euo pipefail
 
 DEST="${1:?usage: bootstrap-redliner-binary.sh <dest-path>}"

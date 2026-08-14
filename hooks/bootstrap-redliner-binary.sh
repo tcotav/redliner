@@ -20,11 +20,12 @@
 #   resolved it in that same session. (The docs are silent on this, so it
 #   was tested rather than assumed.)
 #
-# NOTE: cowork/hooks/bootstrap-redliner-binary.sh is a byte-identical
-# real file, deliberately duplicated rather than symlinked. It *was* a
-# symlink to this file, which silently dangled the moment this one was
-# deleted -- breaking Cowork's install entirely (see TODO.md, 2026-08-12).
-# Two 4KB copies is the cheaper failure mode. Keep them in sync.
+# NOTE: cowork/hooks/bootstrap-redliner-binary.sh is the same script,
+# identical apart from its header comment -- deliberately duplicated
+# rather than symlinked. It *was* a symlink to this file, which silently
+# dangled the moment this one was briefly deleted, stopping Cowork's
+# binary from downloading at all (see TODO.md, 2026-08-12). Two 4KB
+# files is the cheaper failure mode. Keep the executable part in sync.
 set -euo pipefail
 
 DEST="${1:?usage: bootstrap-redliner-binary.sh <dest-path>}"
