@@ -90,6 +90,49 @@ raised as a question needing author confirmation → acceptable; asserted
 as a contradiction → precision regression, recorded but not a reason to
 change the recall verdict.
 
+## Result, 2026-08-14 — arm 1: 4/4. arm 2: 1/4.
+
+Run after the rule above was committed (`6de13d5`), against the grading
+it fixes. The pipeline's score on the same four contradictions is 0/4.
+
+| # | Planted | Class | Pipeline | Arm 1 (all facts) | Arm 2 (entity-scoped) |
+| --- | --- | --- | --- | --- | --- |
+| 1 | absence 19 winters vs 23 years | A | MISS | **FOUND** | MISS |
+| 2 | father's age 81 vs ~76 | A | MISS | **FOUND** | MISS |
+| 3 | hull 26ft vs 31ft | A | MISS | **FOUND** | MISS |
+| 4 | deathbed present vs alone | B | MISS | **FOUND** | **FOUND** |
+
+**Arm 1 found all four, and named the aliased halves explicitly** — it
+connected `twenty-three years` to `Renata Sowa`'s `nineteen winters`,
+`her father` to `Emil`, and identified the 31-foot hull as the Lyman by
+reasoning from shared construction details ("white oak and mahogany...
+so it reads as the same boat") rather than from the name. That is the
+exact join `normEntity` cannot make, and it is the reason the 0/4
+happened.
+
+**Precision: clean.** No decoy was asserted as a contradiction in any
+arm — the two boats, the harbor water level, and Kaja's "he never asked
+about you" were all correctly left alone. Arm 2 raised one extra item as
+a `question` (time of death against section 1's "the morning he died"),
+correctly noting the earlier line is Ren's supposition; that is the
+acceptable bucket, not a regression.
+
+**The arm 2 prediction held exactly, including which ones it would
+miss.** Name-based scoping missed precisely the three Class A pairs and
+caught the one Class B pair. The mechanism is visible in what survived
+the filter: morning A retained facts for only `Ren` and `the shop`,
+having dropped `Renata Sowa` and `Emil` because section 3 calls them
+`Ren` and `Ren's father`; morning B retained `Emil`/`Kaja` (so #4 was
+reachable) but dropped `Lyman`, because section 4 only ever says `the
+boat`. **So the scoping cut cannot be name-based** — it reintroduces the
+partition that caused the 0/4, one step earlier in the pipeline.
+
+Note the inversion worth keeping: Class B, the propositional mismatch
+`GROUND_TRUTH.md` calls "not reachable by name matching at all" and
+"materially harder", is the *easy* one for an agent — it is the only one
+arm 2 got. The hard class for a string matcher and the hard class for a
+reader are not the same class.
+
 ## What a pass here will NOT prove
 
 - **Nothing about scale.** Four sections and 84 prior facts is not a
