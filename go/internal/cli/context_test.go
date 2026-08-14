@@ -3,6 +3,8 @@ package cli
 import (
 	"bytes"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -52,5 +54,47 @@ func TestContext_UsageWithoutArgs(t *testing.T) {
 	}
 	if !strings.Contains(out.String(), "redliner context") {
 		t.Errorf("expected usage, got %q", out.String())
+	}
+}
+
+func TestBuildContext_DetectsPerSectionLineFindings(t *testing.T) {
+	// Line findings are one file per section (findings/line_<stem>.json),
+	// never a single findings/line.json. Checking the latter reported
+	// false forever, including right after a completed line pass, so a
+	// coordinator orienting via this call was told no line pass had run.
+	dir := t.TempDir()
+	findings := filepath.Join(dir, ".redliner", "findings")
+	if err := os.MkdirAll(findings, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	state := `{"manuscript_dir":"` + dir + `","domain":"fiction","phase":"line",` +
+		`"developmental_round":1,"section_fingerprints":{},` +
+		`"created_at":"2026-08-14T00:00:00Z","updated_at":"2026-08-14T00:00:00Z"}`
+	if err := os.WriteFile(filepath.Join(dir, ".redliner", "state.json"), []byte(state), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	domains, err := filepath.Abs(filepath.Join("..", "..", "..", "domains"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	before, err := BuildContext(dir, domains)
+	if err != nil {
+		t.Fatalf("BuildContext: %v", err)
+	}
+	if before.Files["findings/line"] {
+		t.Error("findings/line should be false before any line pass")
+	}
+
+	if err := os.WriteFile(filepath.Join(findings, "line_section_01.json"), []byte(`{"findings":[]}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	after, err := BuildContext(dir, domains)
+	if err != nil {
+		t.Fatalf("BuildContext: %v", err)
+	}
+	if !after.Files["findings/line"] {
+		t.Error("findings/line should be true once line_section_01.json exists")
 	}
 }

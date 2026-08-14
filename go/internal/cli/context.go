@@ -77,6 +77,16 @@ func BuildContext(manuscriptDir, domainsDir string) (ContextReport, error) {
 		_, err := os.Stat(filepath.Join(stateDir, rel))
 		return err == nil
 	}
+	// Line findings are written one file per section as
+	// `findings/line_<section_stem>.json` (see skills/run/SKILL.md's line
+	// flow), never as a single `findings/line.json`. Checking for the
+	// latter reported `false` permanently -- including immediately after a
+	// completed line pass -- so a coordinator orienting via this call was
+	// told no line pass had ever run. Glob instead.
+	anyExists := func(pattern string) bool {
+		matches, err := filepath.Glob(filepath.Join(stateDir, pattern))
+		return err == nil && len(matches) > 0
+	}
 
 	return ContextReport{
 		ManuscriptDir: manuscriptDir,
@@ -88,7 +98,7 @@ func BuildContext(manuscriptDir, domainsDir string) (ContextReport, error) {
 		Files: map[string]bool{
 			"brief.md":               exists("brief.md"),
 			"findings/developmental": exists("findings/developmental.json"),
-			"findings/line":          exists("findings/line.json"),
+			"findings/line":          anyExists("findings/line_*.json"),
 			"canon/canon.json":       exists("canon/canon.json"),
 			"canon/collisions.json":  exists("canon/collisions.json"),
 			"canon/continuity.json":  exists("canon/continuity.json"),
