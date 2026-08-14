@@ -214,3 +214,54 @@ items asserted as `contradiction`, bundle bytes, measured tokens.
 
 A recall drop here does not reopen the accuracy question settled above —
 it localizes which fields the join was actually using.
+
+## Compression result, 2026-08-14 — 4/4 retained at 86 bytes/fact
+
+Run after the rule above was committed (`984f972`).
+
+| Arm | Bundle | B/fact | Seeded recall | Items | Asserted `contradiction` | Tokens |
+| --- | --- | --- | --- | --- | --- | --- |
+| Seeded, JSON | 89,290 B | 267 | 4/4 | 5 | 4 | 80,269 |
+| Seeded, compact | 28,902 B | **86** | **4/4** | 4 | 4 | **45,347** |
+| Control, JSON | 88,192 B | 267 | — | 1 | 0 | 83,213 |
+| Control, compact | 28,500 B | **86** | — | 1 | **0** | **56,070** |
+
+**All three predictions held.** Compression is recall-neutral (4/4
+retained, every seed still `kind: contradiction`, still citing both
+halves). Precision is unchanged — the control asserted zero
+contradictions and raised exactly one question, so dropping `confidence`
+cost nothing measurable here, contrary to the risk flagged in prediction
+2. Bundle fell to **86 bytes/fact against a predicted ~80**, a **68%
+reduction**.
+
+**Cost fell further than the bundle did**: 80,269 → 45,347 tokens on the
+seeded arm, a 44% drop, more than the bundle's share alone would explain.
+Less scaffolding to read appears to mean less work done per fact, not
+merely fewer input tokens.
+
+### What this makes possible
+
+At 86 bytes/fact, an order-2,000-fact novel is a **~172KB bundle**, which
+fits a single call. Whole-corpus agent join at novel scale is viable
+without partitioning — which matters because every partitioning scheme
+examined is dead: by entity name (1/4 measured), by multi-section entity,
+and by section window, each for the same reason.
+
+### Two observations, neither scored
+
+- **The control arm raised a different question in each representation** —
+  a district-naming question from the JSON bundle, an entity-identity
+  question from the compact one. Both are legitimate, both correctly
+  hedged as `question` rather than asserted. But it means the single
+  control item is not a *stable* finding, and one run per arm cannot
+  distinguish "reliably finds one real thing" from "surfaces one of
+  several plausible things at random". Variance is unmeasured here.
+- **The compact seeded arm dropped the district question** the JSON arm
+  raised, reporting only its four seeds. Consistent with the above.
+
+### Still not proven
+
+Everything in "What this will NOT prove" above still applies unchanged —
+this measures the join and not extraction, on one corpus, one model, one
+prompt, with a single run per arm. The novel-scale figure is an
+extrapolation from 330 facts, not a measurement at 2,000.
