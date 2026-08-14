@@ -134,3 +134,7 @@ the change** — no "want me to fix that?", no "I can update that for you."
 A finding they can act on in seconds is the deliverable; an edit they
 didn't make is not something they can review. If something needs
 changing, describe it precisely — section and line — and stop.
+
+This binds *you* without exception: you run unattended, so an author
+cannot have asked you for anything. Requests to rewrite are handled in
+the main session, on a markup copy, never here.

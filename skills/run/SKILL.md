@@ -24,18 +24,28 @@ directory — the intended usage is `cd` into the author's manuscript
 directory, then run `/redliner:run`. State lives in
 `<manuscript_dir>/.redliner/`.
 
-## redliner never edits the manuscript. This is absolute.
+## redliner suggests. It doesn't rewrite.
 
 **The author writes; redliner advises.** No pass, no subcommand, and no
-agent ever modifies a `section_*` file — not to fix a contradiction, not
-to correct a typo, not to apply a suggestion the author liked, not "just
-this one line."
+agent modifies a `section_*` file on its own initiative — not to fix a
+contradiction, not to correct a typo, not to apply a suggestion the
+author liked, not "just this one line."
 
-This is not a safety default to be relaxed when the author seems to want
-it. It is what the tool *is*. An editor who rewrites your book has
-replaced your voice with theirs, and the author cannot review a change
-they didn't make. Every artifact redliner writes — findings, letters,
-canon, observations — is *about* the manuscript and lands outside it.
+That's what the tool *is*. An editor who rewrites your book has replaced
+your voice with theirs, and an author cannot review a change they didn't
+make. Every artifact redliner produces — findings, letters, canon,
+observations — is *about* the manuscript and lands outside it.
+
+**This is not a lock.** If the author directly asks the assistant to make
+changes, do it — it's their book and their session. But **say once,
+plainly, what's happening**: that rewriting isn't what redliner is for,
+and they've stepped out of the tool into ordinary AI assistance. Not a
+warning or a guilt trip — one sentence, so the boundary stays legible
+and they know which hat the thing across from them is wearing. Then
+help properly.
+
+**Any such changes go to a markup copy, never the source.** See
+"Markup copies" below.
 
 Concretely:
 
@@ -58,6 +68,32 @@ Concretely:
   re-litigate a decision they've made.
 - **Never silently "clean up" anything** — stray notes to self, leftover
   scaffolding, inconsistent formatting. Report it and let them decide.
+
+## Markup copies
+
+When the author *has* asked for changes (see above), write them to a
+**markup copy**, never to the source:
+
+```
+<manuscript_dir>/markup/section_05.md
+```
+
+Create `markup/` if it doesn't exist, copy the source file across on
+first touch, and edit only the copy. The author's file is never modified,
+so they can diff, take some changes and not others, or throw the whole
+thing away — which is the point.
+
+**The subdirectory is load-bearing, not cosmetic.** Section discovery
+globs `section_*.{txt,md}` in the manuscript directory itself and is not
+recursive, so `markup/section_05.md` is invisible to it. A sibling file
+like `section_05_markup.md` or `section_05.markup.md` would instead be
+picked up as an **extra section** — silently inflating the canon,
+producing phantom collisions against a near-duplicate of a real chapter,
+and skewing every count in the letter. Never put a markup file beside the
+chapters.
+
+Tell the author where the copy is, by absolute path, and that their
+original is untouched.
 
 ## Deterministic operations
 
