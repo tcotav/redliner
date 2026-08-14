@@ -2186,9 +2186,19 @@ into your own project/user settings. Worth a real fix once this has more
 than one user — maybe a `/redliner:setup` step that offers to write it for
 them, rather than expecting a novelist to hand-edit `settings.json`.
 
-## Editing *during* drafting, not just after (open)
+## The morning edit: checking a section before writing the next one
 
-**Raised:** 2026-08-14
+**Raised:** 2026-08-14. **Tested the same day — 4/4 on `bellwether`,
+where the pipeline scores 0/4.** See
+`go/harness/fixtures/bellwether/MORNING_EDIT.md` for the pre-registered
+rule and the full result; the summary is at the end of this section.
+
+The author's framing, and it is a better one than "checks while
+drafting": **a writer doing a morning edit before starting the next
+chapter.** Not passive background watching — a discrete session the
+author opens at a natural boundary, which is how the craft actually
+works. That framing costs far less than the one this section originally
+proposed, and it is why the test below was cheap enough to just run.
 
 Every use case we've designed for so far assumes a finished artifact: a
 complete manuscript arrives, intake writes the brief, canon gets
@@ -2209,29 +2219,30 @@ setting.
 
 First-pass reasoning about which layer actually pays off mid-draft:
 
-- **Continuity — the obvious candidate, and currently the weakest layer.**
-  The *use* case is the strongest of the three: continuity degrades with
-  distance, so catching "you gave her a sister in ch 4; this scene says
-  only child" *while writing ch 21* is worth far more than catching it in
-  a revision pass — the fix is one sentence instead of a thread pulled
-  through six chapters. But this is the layer measured at **0/4 recall on
-  a blind manuscript** (see *The recall fix does not generalize*) with the
-  entity-matching fix still unbuilt, and *Real prose vs. the continuity
-  layer* rules out the cheap version of that fix. A drafting-time mode
-  inherits that ceiling exactly. **So this may be the wrong thing to build
-  next** — not because the idea is wrong, but because it multiplies a
-  layer that doesn't work yet. If drafting-time checks are the goal, the
-  entity-matching work is the prerequisite, not a parallel track.
+- **Continuity, and it does not inherit the 0/4.** The use case is the
+  strongest of the three: continuity degrades with distance, so catching
+  "you gave her a sister in ch 4; this scene says only child" *while
+  writing ch 21* is worth far more than catching it in a revision pass —
+  the fix is one sentence instead of a thread pulled through six
+  chapters.
 
-  Two mechanics do favour it once recall is fixed, both verified in
-  source rather than assumed: extraction is already section-scoped and
+  This section first claimed the opposite: that a drafting-time mode
+  inherits the pipeline's 0/4 ceiling and the entity-matching fix is its
+  prerequisite. **That was wrong, and the test below is what corrected
+  it.** The 0/4 was never an extraction failure — all four contradictions
+  were extracted correctly from both halves. It was `ComputeReconcile`
+  partitioning by `normEntity` so `Renata Sowa` and `Ren` never meet. An
+  agent handed the new section and the prior facts does not run that
+  partition, so it does not lose to it.
+
+  Mechanics, verified in source: extraction is already section-scoped and
   persisted (`observations/*.json`, one file per section — a new section
-  is one extraction agent, not a re-read), but **reconcile is not
-  incremental** — `ComputeReconcile` (`go/internal/cli/canon.go:425`)
-  loads every observation and recomputes globally. Combined with the
-  measured facts^1.4 collision growth, a naive per-section check gets
-  *more* expensive as the draft gets longer, which is backwards for the
-  use case. Incremental reconcile would have to be built.
+  is one extraction agent, not a re-read). `ComputeReconcile`
+  (`go/internal/cli/canon.go:425`) is *not* incremental — it loads every
+  observation and recomputes globally — but the morning edit doesn't call
+  it, which is the point. The scale problem it was going to inherit is
+  now a different problem: how many prior facts to put in front of the
+  agent (see below).
 - **Developmental, probably no, possibly harmful.** Assessing structure
   on an unfinished arc means judging a shape the author hasn't finished
   making. The predictable output is findings the author correctly
@@ -2241,34 +2252,69 @@ First-pass reasoning about which layer actually pays off mid-draft:
 - **Line, no.** Already gated by `draft_stage`, and correctly: polishing
   prose that may not survive the draft is wasted on both sides.
 
-The craft objection is real and should shape the design: writers are
-routinely advised *not* to edit while drafting, because the editor voice
-kills the drafting voice. So a drafting-time mode probably should not
-interrupt or prescribe. The shape that respects this is passive —
-accumulate contradictions into something the author reads on their own
-schedule (end of session, start of next), rather than surfacing findings
-as they type.
+The craft objection is real and the author's framing already answers it:
+writers are routinely advised *not* to edit while drafting, because the
+editor voice kills the drafting voice. The morning edit doesn't
+interrupt drafting — it sits at the boundary between yesterday's writing
+and today's, which is where a writer is already in editorial mode. It
+should stay author-initiated for that reason. Nothing should fire while
+they type.
 
-Open questions, none answered yet:
+### The test, and what it settled
 
-- What triggers a check? Explicit invocation, a new `section_NN` file
-  appearing, or a word-count/section threshold?
-- Is this a new subcommand/skill or a mode of `/redliner:run`? Leaning
-  separate — the run skill's phase sequence assumes a whole manuscript.
-- What's the unit of state? Rounds archive completed passes; a drafting
+Two simulated mornings against `bellwether`'s four planted
+contradictions, grading rule committed before the run (`6de13d5`), using
+the observation files already in the fixture so extraction quality was
+held constant and only the join was under test.
+
+**Arm 1 — all prior facts: 4/4**, against the pipeline's 0/4 on the same
+four. It made the aliased joins explicitly, including identifying a
+31-foot hull as the 26-foot `Lyman` by reasoning from shared
+construction details rather than from the name. No decoy was asserted as
+a contradiction in either morning.
+
+**Arm 2 — prior facts filtered to entities named in the new section:
+1/4**, missing exactly the three pairs predicted in advance. The filter
+kept only `Ren` and `the shop` on morning A, having dropped `Renata
+Sowa` and `Emil`. **So the obvious scaling cut is not available**:
+name-based scoping reintroduces the partition that caused the 0/4, one
+step earlier.
+
+An inversion worth carrying forward: the propositional pair
+`GROUND_TRUTH.md` calls "materially harder" and "not reachable by name
+matching at all" is the *easy* one for an agent — the only one arm 2
+got. **The hard class for a string matcher is not the hard class for a
+reader.** Several deferred items in this file were scoped on the
+assumption that those are the same class; they should be re-read with
+that in mind.
+
+### Open questions
+
+- **Scale, now the main one.** 84 prior facts fit in one call. A novel is
+  order 2,000 (measured: 330 facts over 5 sections of real prose). Arm 2
+  rules out name-based filtering. Untested alternatives: recency
+  windows, the agent requesting facts it wants after reading the new
+  section, or a cheap semantic pre-filter. This is the question to test
+  next, and it is testable the same way.
+- **Cost per morning.** Two agent calls on 1,260 words proves nothing
+  about a real manuscript. If a morning edit costs what a full pass
+  costs, nobody runs it daily.
+- What triggers it — explicit invocation only, most likely, per the
+  craft objection above.
+- Is this a mode of `/redliner:run` or its own entry point? Note that
+  `run work <id>` is already the right interaction shape: conversational,
+  main session, suggest-never-apply. The morning edit may be closer to a
+  new front door onto existing behaviour than to new machinery.
+- What's the unit of state? Rounds archive completed passes; a morning
   check isn't a round and shouldn't increment one.
-- Cost. A full pass is the expensive thing we measured. An incremental
-  check has to be cheap enough to run per-section or it won't get used —
-  which means incremental reconcile, not just incremental extraction.
-- Does the brief even exist yet? Intake interviews about intent the
-  author may not have settled mid-draft. A drafting-time entry point may
-  need a much thinner brief, or none.
+- Does the brief exist yet? Intake interviews about intent the author may
+  not have settled mid-draft. This entry point may need a thinner brief,
+  or none.
 
-**Don't build this from the armchair** — and note that the prior lesson
-is three sections up in this same file, not a general principle: blind
-design of the recall fix produced a candidate that real data then killed.
-The honest test here is retroactive: replay The City's sections in the order they
-were written, run an incremental continuity check after each, and see
-whether it would have caught anything the full-manuscript pass caught —
-earlier, and cheaper. If it catches nothing the final pass didn't, this
-is a feature with a story and no evidence.
+**What the 4/4 does not license.** One fixture, synthetic prose written
+to contain contradictions, with every prior fact supplied. The
+2026-08-13 real-prose section is the evidence class this cannot supply,
+and it is where signal-to-noise gets hard. The retroactive test still
+stands as the next honest one: replay The City's sections in written
+order, run a morning check after each, and see whether it catches
+anything the full pass caught — earlier, and cheaper.

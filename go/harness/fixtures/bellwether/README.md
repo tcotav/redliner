@@ -130,11 +130,12 @@ so this is mechanical rather than a prose instruction:
 
 ```python
 import json
-cols = json.load(open('/tmp/bw/.redliner/canon/collisions.json'))['collisions']
-groups = [{f['id'] for f in c['facts']} for c in cols]
-for p in json.load(open('expected/planted_pairs.json'))['pairs']:
-    a, b = p['fact_ids']
-    print(p['label'], p['failure_class'], any(a in g and b in g for g in groups))
+
+cols = json.load(open("/tmp/bw/.redliner/canon/collisions.json"))["collisions"]
+groups = [{f["id"] for f in c["facts"]} for c in cols]
+for p in json.load(open("expected/planted_pairs.json"))["pairs"]:
+    a, b = p["fact_ids"]
+    print(p["label"], p["failure_class"], any(a in g and b in g for g in groups))
 ```
 
 Today all four print `False`. A matcher fix works when Class A's three
