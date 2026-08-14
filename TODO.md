@@ -2445,17 +2445,39 @@ Recorded so this section can't be cited as more than it is:
 4. **Drop the matcher.** Not supportable on current evidence — nothing
    has been measured at whole-manuscript scale.
 
-### What would settle it
+### What settled it — measured 2026-08-14
 
-Cheap, and in the same pre-registered style as `MORNING_EDIT.md`: take
-the real-prose corpus (330 facts, 87 entities, 5 sections, 28 known
-alias pairs), and measure agent-join recall and cost at **full-corpus**
-scale rather than section scale. If it holds up there, option 2 or 3
-becomes buildable on evidence. If it degrades — which is the honest
-expectation, since that corpus is real prose with far worse
-signal-to-noise than `bellwether` — the deterministic prefilter has a
-defined job and option 1 stays alive.
+Ran on the real-prose corpus, pre-registered in
+`go/harness/fixtures/bellwether/SCALE_TEST.md` (`7083f45`) before the
+run. Two arms, 330 facts, seeded and control.
 
-**Do not build any of these until that measurement exists.** The entity
-matching fix has already been designed blind once and died on contact
-with a second manuscript.
+**It holds up.** Seeded recall **4/4**, including the three seeds
+requiring an alias join across non-adjacent sections. Control arm on 330
+real facts with nothing planted: **zero** asserted contradictions, one
+correctly-hedged question. The deterministic matcher produced **69
+collisions** on this same corpus, 87% of them artifacts. One item to read
+against 69. The expectation recorded in advance — that it would degrade —
+was wrong, and recall did not decay from 84 facts to 330.
+
+**But the agent missed both items the adjudicator surfaced** (`cont-001`,
+`cont-002`), and both were reachable from the facts alone. They are the
+shape the seeds are not: same entity, no alias join, an attribute
+*described twice* rather than asserted two incompatible ways.
+
+So **neither approach subsumes the other**. That rules out option 4 and
+picks the hybrids: the deterministic layer keeps a real job, but not the
+job it currently has. Option 1 alone is no longer defensible — fixing
+entity matching addresses recall while leaving the 87% precision problem
+and the facts^1.4 growth curve untouched, and the agent already beats it
+on both.
+
+**Cost is now the binding constraint, not accuracy.** ~82K tokens for 330
+facts in one call. A novel is order 2,000 facts, roughly 6× that, which
+does not fit this shape — so whatever gets built has to trim the bundle
+or partition the corpus. The partition cannot be by entity name;
+`MORNING_EDIT.md` measured that cut at 1/4.
+
+**Still don't build blind.** What is measured is the *join*, on one
+corpus, with facts already extracted. A design that trims or partitions
+the bundle changes the input the 4/4 was obtained on, so it needs its own
+pre-registered run rather than inheriting this one's number.
