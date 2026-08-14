@@ -2185,3 +2185,90 @@ plugin itself. Current stopgap: the README documents the snippet to copy
 into your own project/user settings. Worth a real fix once this has more
 than one user — maybe a `/redliner:setup` step that offers to write it for
 them, rather than expecting a novelist to hand-edit `settings.json`.
+
+## Editing *during* drafting, not just after (open)
+
+**Raised:** 2026-08-14
+
+Every use case we've designed for so far assumes a finished artifact: a
+complete manuscript arrives, intake writes the brief, canon gets
+extracted over the whole text, developmental runs on the whole arc, line
+runs on the sections. The author is in revision mode. That's the case
+`/redliner:run` is built around.
+
+The question worth answering: **is there value in running checks while
+the draft is still being written**, section by section, before there is
+an arc to assess?
+
+What already leans this way: `draft_stages` (`exploratory / partial`,
+`first complete draft`, …) exists in every domain and gates line editing.
+But it is only a *severity dial* — it changes what gets reported on a
+full pass. It does not change *when* redliner runs, what it reads, or
+what a pass costs. A drafting-time mode is a different shape, not a
+setting.
+
+First-pass reasoning about which layer actually pays off mid-draft:
+
+- **Continuity — the obvious candidate, and currently the weakest layer.**
+  The *use* case is the strongest of the three: continuity degrades with
+  distance, so catching "you gave her a sister in ch 4; this scene says
+  only child" *while writing ch 21* is worth far more than catching it in
+  a revision pass — the fix is one sentence instead of a thread pulled
+  through six chapters. But this is the layer measured at **0/4 recall on
+  a blind manuscript** (see *The recall fix does not generalize*) with the
+  entity-matching fix still unbuilt, and *Real prose vs. the continuity
+  layer* rules out the cheap version of that fix. A drafting-time mode
+  inherits that ceiling exactly. **So this may be the wrong thing to build
+  next** — not because the idea is wrong, but because it multiplies a
+  layer that doesn't work yet. If drafting-time checks are the goal, the
+  entity-matching work is the prerequisite, not a parallel track.
+
+  Two mechanics do favour it once recall is fixed, both verified in
+  source rather than assumed: extraction is already section-scoped and
+  persisted (`observations/*.json`, one file per section — a new section
+  is one extraction agent, not a re-read), but **reconcile is not
+  incremental** — `ComputeReconcile` (`go/internal/cli/canon.go:425`)
+  loads every observation and recomputes globally. Combined with the
+  measured facts^1.4 collision growth, a naive per-section check gets
+  *more* expensive as the draft gets longer, which is backwards for the
+  use case. Incremental reconcile would have to be built.
+- **Developmental, probably no, possibly harmful.** Assessing structure
+  on an unfinished arc means judging a shape the author hasn't finished
+  making. The predictable output is findings the author correctly
+  refuses — which we'd then be storing, carrying forward, and paying to
+  suppress. The `wontfix`/decisions machinery would absorb it, but
+  generating work for that machinery isn't a feature.
+- **Line, no.** Already gated by `draft_stage`, and correctly: polishing
+  prose that may not survive the draft is wasted on both sides.
+
+The craft objection is real and should shape the design: writers are
+routinely advised *not* to edit while drafting, because the editor voice
+kills the drafting voice. So a drafting-time mode probably should not
+interrupt or prescribe. The shape that respects this is passive —
+accumulate contradictions into something the author reads on their own
+schedule (end of session, start of next), rather than surfacing findings
+as they type.
+
+Open questions, none answered yet:
+
+- What triggers a check? Explicit invocation, a new `section_NN` file
+  appearing, or a word-count/section threshold?
+- Is this a new subcommand/skill or a mode of `/redliner:run`? Leaning
+  separate — the run skill's phase sequence assumes a whole manuscript.
+- What's the unit of state? Rounds archive completed passes; a drafting
+  check isn't a round and shouldn't increment one.
+- Cost. A full pass is the expensive thing we measured. An incremental
+  check has to be cheap enough to run per-section or it won't get used —
+  which means incremental reconcile, not just incremental extraction.
+- Does the brief even exist yet? Intake interviews about intent the
+  author may not have settled mid-draft. A drafting-time entry point may
+  need a much thinner brief, or none.
+
+**Don't build this from the armchair** — and note that the prior lesson
+is three sections up in this same file, not a general principle: blind
+design of the recall fix produced a candidate that real data then killed.
+The honest test here is retroactive: replay The City's sections in the order they
+were written, run an incremental continuity check after each, and see
+whether it would have caught anything the full-manuscript pass caught —
+earlier, and cheaper. If it catches nothing the final pass didn't, this
+is a feature with a story and no evidence.
