@@ -262,7 +262,8 @@ invites the author to start reacting to a half-finished picture.
    manuscript text.
 8. Validate again, then read and show the developmental letter, then the
    continuity summary from step 5.
-9. Record the completed pass: `redliner state pass <dir> developmental`
+9. Re-apply author decisions, then record the completed pass:
+   `redliner decisions apply <dir>` and `redliner state pass <dir> developmental`
    (and `... continuity`, since step 5 ran one). This is what lets
    `status` tell the author what has actually been run rather than only
    what phase they're in. **Print the letter's absolute path**
@@ -331,9 +332,12 @@ A bare `wontfix` is a landmine: a later round sees a suppressed finding
 with no explanation and can't tell a deliberate craft choice from an
 abandoned one, and neither can the author six months on.
 
-Write it as a `resolution` block alongside the status. Extra keys are
-permitted on findings (unlike facts, whose schema is deliberately
-sealed), so this needs no schema change:
+**Record it in two places.** First append it to
+`.redliner/decisions.json` — the durable record, described under "Author
+decisions survive re-runs" below — then write the matching `resolution`
+block into the finding itself. Extra keys are permitted on findings
+(unlike facts, whose schema is deliberately sealed), so this needs no
+schema change:
 
 ```json
 "status": "wontfix",
@@ -370,6 +374,38 @@ Neither letter mentions it, so nobody would know. When showing findings
 disagree with can be declined with a reason and won't be re-raised.
 Authors know things the manuscript doesn't say; the tool's job is to
 make recording that cheap, not to keep re-litigating.
+
+## Author decisions survive re-runs
+
+`resolve` and `wontfix` both append to `.redliner/decisions.json`:
+
+```json
+{"decisions": [
+  {"id": "line-section_01-013", "status": "wontfix", "set_by": "author",
+   "at": "2026-08-14T12:05:00Z", "reason": "deliberate; rule chosen, see brief"}
+]}
+```
+
+**Then run the apply-decisions operation at the end of every pass**
+(`redliner decisions apply <dir>` on the CLI), after the agents have
+written and validation has passed.
+
+Why this exists rather than trusting the agents: the developmental and
+line editors **rewrite findings files wholesale** on every re-check. They
+are told to preserve author-set statuses, and mostly will — but an
+instruction is not a guarantee, and a single agent that renumbers or
+forgets silently discards a decision a human made, with nothing detecting
+it. `decisions.json` is a file no agent writes, so re-applying it makes
+the guarantee structural. Verified: after simulating a pass that reset an
+author's `wontfix` to `open`, apply reported `1 restored` and put the
+status and reason back.
+
+It reports three things — how many decisions were already correct, which
+it had to restore (each restore means a pass overwrote a human decision,
+worth noticing), and which decisions no longer match any finding. That
+last one isn't an error: a section gets cut and its findings go with it.
+It's reported so a decision doesn't sit there applying to nothing
+forever.
 
 ## `/redliner:run recheck`
 
@@ -466,7 +502,8 @@ make recording that cheap, not to keep re-litigating.
    same reason as the developmental step.
 7. Validate, then read and show the letter — and **print its absolute
    path**, so the author can open it later without hunting.
-8. Record the completed pass: `redliner state pass <dir> line`.
+8. Re-apply author decisions (`redliner decisions apply <dir>`), then
+   record the completed pass: `redliner state pass <dir> line`.
 
 ## `/redliner:run continuity`
 
