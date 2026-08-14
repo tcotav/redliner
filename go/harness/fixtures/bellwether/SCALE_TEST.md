@@ -92,6 +92,59 @@ the deterministic prefilter a defined job and keeps option 1 alive.
 extrapolation stated: 330 facts is five sections, and a full novel is
 several times that in a single call.
 
+## Result, 2026-08-14 — holds up. 4/4 seeded, 0 false contradictions.
+
+Run after the rule above was committed (`7083f45`), scored against it.
+
+| Arm | Facts | Seeded recall | Items raised | Asserted `contradiction` | Tokens |
+| --- | --- | --- | --- | --- | --- |
+| Seeded | 334 | **4/4** | 5 | 4 (all four seeds) | 80,269 |
+| Control | 330 | — | 1 | **0** | 83,213 |
+
+Both threshold conditions for **holds up at scale** are met: recall ≥3/4,
+and the control asserted zero contradictions. The honest expectation on
+record — that it would degrade — was wrong.
+
+**Recall did not decay from section scale to corpus scale.** All four
+seeds were found, each as `kind: contradiction`, each citing both halves
+by fact id, including the three requiring an alias join across
+non-adjacent sections. Noise went up by a factor of four (84 facts → 330)
+and recall stayed at 4/4.
+
+**Precision is the surprise.** On 330 real facts with nothing planted,
+the agent asserted **no** contradictions and raised exactly one question
+— a district-naming inconsistency it correctly flagged as needing author
+confirmation rather than asserting. For scale: the deterministic matcher
+produced **69 collisions** on this same corpus, 87% of them
+mixed-attribute artifacts. The comparison is 1 item to read versus 69.
+The seeded arm raised the same district question and nothing else beyond
+its four seeds, so the seeds did not perturb baseline behaviour.
+
+### The result that complicates the story
+
+**The agent missed both items the pipeline's adjudicator surfaced.**
+`cont-001` and `cont-002` — pre-declared here as hits, not false
+positives — were raised by neither arm, and both were reachable from the
+facts alone (both concern an attribute recorded more than once). They are
+subtler than the seeds: same entity, no alias join, a thing *described
+twice* rather than asserted two incompatible ways.
+
+So neither approach is a superset of the other. The agent join wins
+decisively on cross-section, alias-bridging contradictions and on noise;
+the deterministic pass surfaced two same-entity re-description issues the
+agent walked past. **That argues for options 2 and 3, and against option
+4** — the deterministic layer has a demonstrated job, it is just not the
+job it currently has.
+
+### Cost
+
+~82K tokens per arm for 330 facts (an 88KB bundle), one call. Facts are
+almost all of the payload. A full-length novel is order 2,000 facts,
+roughly 6× this, which does not fit one call at this shape — so a real
+implementation needs either the fact bundle trimmed or the corpus
+partitioned. Note the partition cannot be by entity name: that is the
+cut `MORNING_EDIT.md` measured dead at 1/4.
+
 ## What this will NOT prove
 
 - **It measures the join, not extraction plus the join.** The seeds
