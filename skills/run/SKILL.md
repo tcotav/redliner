@@ -95,6 +95,15 @@ chapters.
 Tell the author where the copy is, by absolute path, and that their
 original is untouched.
 
+**This is a boundary, not a lock, and deliberately so** (decided
+2026-08-14). Agent `Write` is not path-restricted and there is no
+pre-write hook enforcing any of the above — enforcement was considered
+and **rejected**. A hard lock would fight the author on their own files
+to defend a principle that exists for their benefit, and the failure it
+prevents (an assistant rewriting prose unasked) is one this file's
+instructions already address. Don't add one later without a concrete
+incident to point at.
+
 ## Deterministic operations
 
 Everything below refers to a handful of deterministic operations —
