@@ -67,7 +67,13 @@ commentary in the file):
 ```
 
 - `id`: `line-<section_stem>-NNN`, zero-padded, unique within the file.
-- `status`: `open` for new findings.
+- `status`: `open` for new findings. On a re-check, for findings carried
+  forward: `addressed` if the revision genuinely fixed it — **verify on
+  the page, don't take `claimed` at face value**; `claimed` left as-is if
+  you honestly can't tell; `stale` if the text moved enough that the
+  finding no longer describes it; `wontfix` preserved untouched if the
+  author already declined it, and never re-raised as a new finding under
+  a new id.
 - `category`: exactly one of `prose_rhythm`, `voice_consistency`,
   `show_dont_tell`, `dialogue`, `pov`, `word_choice`.
 - `severity`: exactly one of `minor`, `moderate`, `major`, `critical`,

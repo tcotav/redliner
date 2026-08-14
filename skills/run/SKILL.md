@@ -12,7 +12,7 @@ Phase-aware editing pipeline. Subcommands:
 | `/redliner:run status` | Where this manuscript stands |
 | `/redliner:run assess` | Developmental pass (round 1, or a fresh full read) |
 | `/redliner:run work <id>` | Talk through one finding and how to revise it |
-| `/redliner:run resolve <id>` | Mark a finding addressed (author's claim) |
+| `/redliner:run resolve <id>` | Mark a finding addressed (author's claim) — developmental or line |
 | `/redliner:run recheck` | Re-read after revision; verify claims, find new issues |
 | `/redliner:run line` | Line-editing phase (gated — see below) |
 | `/redliner:run continuity` | Extract facts, find collisions, adjudicate — see below |
@@ -293,9 +293,37 @@ not via a subagent**: it's a back-and-forth, not a batch job.
 
 ## `/redliner:run resolve <id>`
 
-Set that finding's `status` to `claimed` in `developmental.json` (not
-`addressed` — the author's claim isn't verification). Confirm, and note
-that `/redliner:run recheck` will verify it.
+Set that finding's `status` to `claimed` (not `addressed` — the author's
+claim isn't verification). Confirm, and note that `/redliner:run recheck`
+will verify it.
+
+**Find the finding by the shape of its id — it may be in any of several
+files:**
+
+- `dev-NNN` → `.redliner/findings/developmental.json`
+- `line-<section_stem>-NNN` → `.redliner/findings/line_<section_stem>.json`
+  (the stem is embedded in the id, so `line-section_03-007` lives in
+  `line_section_03.json` — don't scan every file)
+
+  Parse it precisely: the stem contains **underscores, not hyphens**, so
+  splitting the id on `-` gives exactly three parts and the stem is the
+  middle one. Splitting on the wrong separator produces a plausible
+  filename that doesn't exist (`line_section_03_007.json`), which fails
+  as a confusing "no such file" rather than a clean "no such finding".
+
+If the id matches nothing, say so and list the id prefixes that exist
+rather than guessing at a near match. Resolving the wrong finding is
+worse than failing to find one.
+
+Line findings were unresolvable until 2026-08-14 — `resolve` only ever
+touched `developmental.json`, so line findings could never be anything
+but `open` and their count could only grow. The schema always allowed it;
+the flow just didn't.
+
+**`wontfix` is also a legitimate outcome and has no command yet.** If the
+author considers a finding and declines it, that's `wontfix`, and it
+means "don't re-raise this" — see the schema's status list. Setting it by
+hand is fine for now; note that it survives re-checks untouched.
 
 ## `/redliner:run recheck`
 
@@ -332,10 +360,21 @@ that `/redliner:run recheck` will verify it.
    re-extraction first tells you the real scope; a `targeted`
    developmental verdict usually means continuity only has one or two
    sections to redo, not the whole manuscript.
-4. Record the current text as the new assessed baseline, aggregate a
+4. **Verify line claims too, if there are any.** Structure isn't the only
+   layer the author revises against. If `.redliner/findings/line_*.json`
+   exist and any finding in them is `claimed`, re-task
+   `redliner:<domain>-line-editor` for **each section holding a claimed
+   finding** — not every section — passing that section's existing
+   findings file so ids carry forward and statuses get resolved to
+   `addressed`/`stale`. Skip this entirely when the developmental verdict
+   is `restructured`: a heavy rewrite makes line findings stale wholesale,
+   and re-running the line editor over churning prose spends money
+   polishing text that is still moving. Say that's why you skipped it.
+5. Record the current text as the new assessed baseline, aggregate a
    fresh developmental letter, show it, then show the continuity summary
-   from step 3.
-5. Then say plainly whether structure looks settled enough for line
+   from step 3. If step 4 ran, aggregate and show a fresh line letter as
+   well, and record the pass.
+6. Then say plainly whether structure looks settled enough for line
    editing — count open `major`/`critical` findings and give a real
    recommendation, not a hedge.
 

@@ -42,7 +42,14 @@ structurally wrong to you, that's out of scope here.
 3. If you're given developmental findings marked `deferred_to_line` for
    this section, read them and address them — they were observed
    during the structural pass and held for you.
-4. Write findings to the given output path with the Write tool. That file
+4. **If you're given a prior findings file for this section (a
+   re-check), read it too and carry every finding forward, reusing its
+   exact `id` rather than renumbering.** The author may have marked some
+   `claimed` — meaning they believe they fixed it. Verify each against
+   the current text and set its status accordingly (see `status` below).
+   A renumbered finding breaks the author's ability to track one note
+   across rounds, which is the whole point of the id.
+5. Write findings to the given output path with the Write tool. That file
    is your deliverable.
 
 ## Output format
@@ -69,7 +76,13 @@ commentary in the file):
 ```
 
 - `id`: `line-<section_stem>-NNN`, zero-padded, unique within the file.
-- `status`: `open` for new findings.
+- `status`: `open` for new findings. On a re-check, for findings carried
+  forward: `addressed` if the revision genuinely fixed it — **verify on
+  the page, don't take `claimed` at face value**; `claimed` left as-is if
+  you honestly can't tell; `stale` if the text moved enough that the
+  finding no longer describes it; `wontfix` preserved untouched if the
+  author already declined it, and never re-raised as a new finding under
+  a new id.
 - `category`: exactly one of `clarity`, `jargon`, `passive_voice`,
   `redundancy`, `structure_flow`.
 - `severity`: exactly one of `minor`, `moderate`, `major`, `critical`,
