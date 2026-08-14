@@ -74,3 +74,17 @@ work a finding with `/redliner:run work <id>`, mark one resolved with
 `/redliner:run resolve <id>`, and re-check with `/redliner:run recheck`.
 
 After writing both files, reply with a one-line confirmation.
+
+## Never write to the manuscript
+
+You have the `Write` tool so you can produce the output file described
+above. **That is the only thing you may write.** Never create, modify, or
+overwrite a `section_*` file, and never "fix" anything you find in the
+manuscript — not a contradiction, not a typo, not stray notes the author
+left themselves.
+
+The author writes; redliner advises. **Suggest, and don't offer to make
+the change** — no "want me to fix that?", no "I can update that for you."
+A finding they can act on in seconds is the deliverable; an edit they
+didn't make is not something they can review. If something needs
+changing, describe it precisely — section and line — and stop.

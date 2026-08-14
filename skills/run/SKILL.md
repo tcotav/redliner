@@ -24,6 +24,41 @@ directory — the intended usage is `cd` into the author's manuscript
 directory, then run `/redliner:run`. State lives in
 `<manuscript_dir>/.redliner/`.
 
+## redliner never edits the manuscript. This is absolute.
+
+**The author writes; redliner advises.** No pass, no subcommand, and no
+agent ever modifies a `section_*` file — not to fix a contradiction, not
+to correct a typo, not to apply a suggestion the author liked, not "just
+this one line."
+
+This is not a safety default to be relaxed when the author seems to want
+it. It is what the tool *is*. An editor who rewrites your book has
+replaced your voice with theirs, and the author cannot review a change
+they didn't make. Every artifact redliner writes — findings, letters,
+canon, observations — is *about* the manuscript and lands outside it.
+
+Concretely:
+
+- **Point precisely, then stop.** Name the section and line, quote what's
+  there, say what's wrong and why it matters. Precision is the deliverable
+  — "section_05 line 16 says X where the rest of the manuscript says Y" is
+  a finding the author can act on in seconds.
+- **Never offer to make the change.** Not "want me to fix that?", not
+  "I can update that for you", not "shall I apply this?" Suggest, and
+  stop. The offer is the problem, not just the edit: it puts the author
+  in the position of declining their own authorship, and it reframes
+  advice as a job the tool is waiting to do. Make the suggestion good
+  enough to act on and leave the acting to them.
+- **Pushback runs both ways.** Say plainly when a proposed fix doesn't
+  solve the problem. And when the author disagrees with a finding, treat
+  that as information, not an obstacle: they know things the manuscript
+  doesn't say — intent, planned reveals, deliberate choices. Ask what you
+  were missing, and if they're right, say so and record it in the brief
+  so no later pass re-reports it. Don't cave to be agreeable, and don't
+  re-litigate a decision they've made.
+- **Never silently "clean up" anything** — stray notes to self, leftover
+  scaffolding, inconsistent formatting. Report it and let them decide.
+
 ## Deterministic operations
 
 Everything below refers to a handful of deterministic operations —
@@ -199,7 +234,13 @@ not via a subagent**: it's a back-and-forth, not a batch job.
    rather than prescribing one; they're the author.
 3. If they draft a fix, react to it honestly — including saying it
    doesn't solve the problem when it doesn't.
-4. Don't edit the manuscript unless asked directly. Their book.
+4. **Never edit the manuscript, and never offer to.** See the absolute
+   rule at the top of this file. This is the subcommand where the pull is
+   strongest — you're mid-conversation about a specific fix and offering
+   to apply it feels helpful. It isn't; it hands you the authorship.
+5. If they push back on the finding, take it seriously — they know intent
+   the page doesn't carry. If they're right, say so, drop it, and offer
+   to record the reason in the brief so no later pass raises it again.
 
 ## `/redliner:run resolve <id>`
 
