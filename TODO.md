@@ -1875,8 +1875,23 @@ verbatim, one an ellipsis-join). Across `bellwether` and this run that is
 continuity` halts at step 4 roughly a fifth of the time and needs a
 re-extraction round trip. An explicit "verbatim contiguous substring,
 copy the original punctuation, never ellipsis-join" instruction fixed it
-both times. Worth shipping into the extractor agents; it is currently
-applied ad hoc.
+both times.
+
+**Shipped 2026-08-14.** The three continuity extractors and the
+new-domain template said only "the phrase asserting it, quoted from the
+text", which is the weak wording the ad-hoc instruction was patching over
+each time. They now carry the rule itself: verbatim, one contiguous span,
+original punctuation, never ellipsis-join, plus what to do when no single
+span asserts the fact (mark it inferred in `confidence` and quote the
+closest span that does support it) and an explicit "a single string
+only", since line findings gained the list form the same day and the
+generalization would be wrong here.
+
+Verified once, not proven: a fresh extraction of a `bellwether` section
+through the updated agent file produced 23 facts, no ellipsis-joins, and
+`validate` exit 0. That is n=1 against a measured ~1-in-5 failure rate —
+consistent with the fix, not an establishment of the new rate. The rate
+is only re-measurable across the next several real runs.
 
 **Third sighting 2026-08-14, in the line editor** (see the section
 above). Across all runs so far that is **3 of 14 agent invocations

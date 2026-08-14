@@ -104,7 +104,17 @@ commentary in the file):
   `owns`, `time_of_day`). Reuse obvious names so facts about the same
   thing group together.
 - `value`: the asserted value, short.
-- `excerpt`: the phrase asserting it, quoted from the text.
+- `excerpt`: the phrase asserting it, **copied verbatim** — one
+  contiguous span, exactly as written, with the original punctuation and
+  capitalization. Don't tidy it, don't paraphrase, and **never join
+  separated passages with an ellipsis**. Validation rejects an excerpt
+  that isn't really in the section, and a rejected file costs the whole
+  extraction a re-run.
+
+  If no single contiguous span asserts the fact, the fact is inferred
+  rather than stated — say so in `confidence` and quote the closest span
+  that does support it. A single string only: unlike a line finding, a
+  fact asserts one thing and cites the one place it comes from.
 - `source`, `confidence`: as above.
 
 **No other keys are permitted.**
