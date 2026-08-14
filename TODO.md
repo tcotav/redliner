@@ -1806,6 +1806,45 @@ ones an author can name in one line.
 
 Not built. Design it against more than one manuscript.
 
+### The excerpt field can't express a pattern across separated spans
+
+Found 2026-08-14 running the **line** phase for the first time on real
+prose. `validate` rejected one of five sections on 5 of 12 findings, all
+ellipsis-joins across separated passages.
+
+**This one is a design bug, not agent sloppiness.** `excerpt` is a single
+string (`go/internal/cli/validate.go:52-56`) required to be one
+contiguous normalized substring of the section. That fits the
+*extractor*, whose excerpt asserts one fact. It does not fit the **line
+editor**, whose `prose_rhythm`, `voice_consistency` and `pov` findings
+are frequently *about the relationship between two separated spans* —
+"this sentence's rhythm against that one four paragraphs later" has no
+single contiguous span to cite.
+
+The agent is handed two bad options: quote one fragment and lose the
+pattern that is the finding, or ellipsis-join and fail validation. It
+chose the latter five times, which is arguably the more honest of the
+two.
+
+**Candidate fix, not built:** let `excerpt` accept a list of strings,
+each individually validated as a verbatim contiguous substring. That
+keeps the guarantee that matters — every quoted fragment is really in the
+text, so a finding can't cite prose the author never wrote — while making
+the multi-span finding expressible. A single string stays valid, so
+nothing already written breaks.
+
+Scope before building: it touches the findings schema in both Go and
+`python-baseline` (harness parity), `validate.go`'s `verifyExcerpts`, and
+the output-format block in all 15 agent files plus 5 templates. Note this
+is the **findings** schema, not the fact schema — the "FACT_REQUIRED_KEYS
+stays sealed" argument was about keeping *extraction* judgment-free and
+does not transfer here.
+
+Stopgap in use meanwhile: tell the line editor to put one contiguous span
+in `excerpt` and describe the wider pattern in `note`, citing other
+locations in prose. It works, but it demotes the evidence for exactly the
+findings where evidence matters most.
+
 ### Extractor excerpt-validity defect, second sighting
 
 `validate` rejected one section's observations (3 of 66 excerpts not
@@ -1816,6 +1855,14 @@ re-extraction round trip. An explicit "verbatim contiguous substring,
 copy the original punctuation, never ellipsis-join" instruction fixed it
 both times. Worth shipping into the extractor agents; it is currently
 applied ad hoc.
+
+**Third sighting 2026-08-14, in the line editor** (see the section
+above). Across all runs so far that is **3 of 14 agent invocations
+rejected by `validate`** for non-verbatim excerpts — roughly one in five,
+each costing a re-run round trip. But the two causes are different and
+shouldn't be conflated: the extractor's are careless quoting, which a
+prompt line genuinely fixes; the line editor's are the schema failing to
+express a legitimate finding shape, which a prompt line only papers over.
 
 ### RULE: never record anything about a user's manuscript
 
