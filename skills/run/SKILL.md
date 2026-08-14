@@ -260,7 +260,11 @@ invites the author to start reacting to a half-finished picture.
    `section_*`, so a letter named this way is never mistaken for
    manuscript text.
 8. Validate again, then read and show the developmental letter, then the
-   continuity summary from step 5. **Print the letter's absolute path**
+   continuity summary from step 5.
+9. Record the completed pass: `redliner state pass <dir> developmental`
+   (and `... continuity`, since step 5 ran one). This is what lets
+   `status` tell the author what has actually been run rather than only
+   what phase they're in. **Print the letter's absolute path**
    when you show it — the author needs to be able to reopen it later
    without hunting for it, and telling them only that "the letter is
    written" is how a pass ends with the author unable to find its one
@@ -337,6 +341,19 @@ that `/redliner:run recheck` will verify it.
 
 ## `/redliner:run line`
 
+0. **Check the draft stage first — this gate is harder than the one
+   below, and skipping it wastes the author's money.** Read state's
+   `draft_stage`. If it is a stage whose implication rules out
+   line-level findings (fiction's `exploratory / partial`: "no
+   line-level findings at all"), **stop and say so before spawning
+   anything.** The line editors would each read the brief, correctly
+   return nothing, and hand the author an empty letter after N model
+   calls. Tell them the stage, quote its implication, and name the
+   command that changes it (`redliner state stage <dir> <stage>`).
+   Proceed only if they set a stage that permits line findings.
+
+   If `draft_stage` is unset, don't guess — say it's unset, show the
+   domain's stage list, and ask which applies.
 1. Read `developmental.json`. Count open findings at `major` or
    `critical`.
 2. **If any exist, warn before proceeding** — name them and explain that
@@ -364,6 +381,7 @@ that `/redliner:run recheck` will verify it.
    same reason as the developmental step.
 7. Validate, then read and show the letter — and **print its absolute
    path**, so the author can open it later without hunting.
+8. Record the completed pass: `redliner state pass <dir> line`.
 
 ## `/redliner:run continuity`
 
@@ -411,7 +429,8 @@ developmental round counter. It's safe to run any time after intake.
      subagent with the manuscript directory and output path
      `.redliner/canon/continuity.json`.
 7. Validate again.
-8. Report a short summary: entity/fact counts from the canon, and
+8. Record the completed pass: `redliner state pass <dir> continuity`.
+9. Report a short summary: entity/fact counts from the canon, and
    contradiction counts broken out by `kind` (`contradiction` vs.
    `unverified`) and by `severity`. Name any
    `likely_unpropagated_revision` collisions explicitly — those are the
@@ -428,5 +447,22 @@ is a known limitation, not an oversight; see `TODO.md`.
 Show phase, developmental round, open findings by severity, and the
 diff verdict if the text has moved since the last assessment. Also show
 open contradiction counts from `.redliner/canon/continuity.json` (if it
-exists) and whether any sections need re-extraction for continuity. End
-with one concrete recommended next command.
+exists) and whether any sections need re-extraction for continuity.
+
+Also show, because an author cannot otherwise see any of it:
+
+- **The draft stage**, from state's `draft_stage`, *with its severity
+  implication* from the domain's `draft_stages`. This is the setting that
+  most changes what redliner does and it is invisible everywhere else.
+  If it's unset, say so and say it must be set before a line pass.
+- **What has been run**, from state's `passes` — e.g. "developmental ×3,
+  line ×1, continuity ×4". Distinct from `developmental_round`, which
+  counts rounds *entered*, not passes *completed*.
+- **What's available next, and what isn't** — name the passes that can
+  run now, and for any that can't, say why in one line ("line editing is
+  gated at this draft stage; it would return nothing"). An author should
+  never discover a gate by paying for an empty pass.
+
+End with one concrete recommended next command, and be explicit about
+whether redliner is **waiting on them** (a revision, a decision, a stage
+change) or simply offering options.

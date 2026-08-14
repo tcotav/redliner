@@ -184,6 +184,30 @@ type State struct {
 	SectionFingerprints map[string]Fingerprint `json:"section_fingerprints"`
 	CreatedAt           string                 `json:"created_at"`
 	UpdatedAt           string                 `json:"updated_at,omitempty"`
+
+	// DraftStage is the manuscript's stage within its domain's
+	// `draft_stages` vocabulary. It gates severity harder than anything
+	// else in the tool -- at fiction's "exploratory / partial" the line
+	// editors correctly return nothing at all -- and until 2026-08-14 it
+	// lived only as prose inside brief.md, so no command could report it
+	// and no gate could check it. An author could therefore pay N model
+	// calls for a line pass that was always going to be empty, with
+	// nothing explaining why. The brief still carries the human
+	// explanation; this carries the machine-readable value.
+	//
+	// Optional: omitted when unset, so state written before this existed
+	// stays valid and the harness fixtures' goldens don't move.
+	DraftStage string `json:"draft_stage,omitempty"`
+
+	// Passes counts completed passes by kind ("developmental", "line",
+	// "continuity"), so status can answer "what have we actually run, and
+	// how many times" rather than only "what phase are we in". Distinct
+	// from DevelopmentalRound, which counts *rounds entered*, not passes
+	// completed -- a round that was started and abandoned still bumps the
+	// round counter.
+	//
+	// Optional, same reasoning as DraftStage.
+	Passes map[string]int `json:"passes,omitempty"`
 }
 
 // DomainName defaults an empty/absent domain to DefaultDomain, mirroring

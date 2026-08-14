@@ -14,7 +14,9 @@ const stateUsage = `Usage:
   redliner state status   <manuscript_dir>
   redliner state diff     <manuscript_dir>
   redliner state snapshot <manuscript_dir>            # record current text as assessed
-  redliner state phase    <manuscript_dir> <phase>`
+  redliner state phase    <manuscript_dir> <phase>
+  redliner state stage    <manuscript_dir> <draft_stage>   # gates severity; see the domain's draft_stages
+  redliner state pass     <manuscript_dir> <developmental|line|continuity>`
 
 // RunState mirrors redliner_state.py's main(), reshaped for the
 // `redliner state <subcommand> <dir> ...` argv layout decided in
@@ -51,6 +53,18 @@ func RunState(args []string, stdout io.Writer) int {
 			return 1
 		}
 		return cmdStatePhase(manuscriptDir, args[2], stdout)
+	case "stage":
+		if len(args) < 3 {
+			fmt.Fprintln(stdout, "stage requires a draft stage")
+			return 1
+		}
+		return cmdStateStage(manuscriptDir, args[2], stdout)
+	case "pass":
+		if len(args) < 3 {
+			fmt.Fprintln(stdout, "pass requires a phase")
+			return 1
+		}
+		return cmdStatePass(manuscriptDir, args[2], stdout)
 	default:
 		fmt.Fprintf(stdout, "Unknown command %s\n", pyReprStr(command))
 		fmt.Fprintln(stdout, stateUsage)
@@ -188,5 +202,95 @@ func cmdStatePhase(manuscriptDir, phase string, stdout io.Writer) int {
 		return 1
 	}
 	fmt.Fprintf(stdout, "Phase: %s -> %s (developmental_round: %d)\n", previous, phase, state.DevelopmentalRound)
+	return 0
+}
+
+// passKinds are the passes an author can actually run. Deliberately
+// distinct from schemas.Phases -- see cmdStatePass for why.
+var passKinds = []string{"developmental", "line", "continuity"}
+
+// cmdStateStage sets the manuscript's draft stage, validated against its
+// domain's own `draft_stages` vocabulary. See State.DraftStage for why
+// this needs to be machine-readable rather than prose in the brief.
+func cmdStateStage(manuscriptDir, stage string, stdout io.Writer) int {
+	state, ok := requireState(manuscriptDir, stdout)
+	if !ok {
+		return 1
+	}
+	domainsDir, err := schemas.FindDomainsDir()
+	if err != nil {
+		fmt.Fprintf(stdout, "Domain config error: %v\n", err)
+		return 1
+	}
+	domain, err := schemas.LoadDomain(domainsDir, state.DomainName())
+	if err != nil {
+		fmt.Fprintf(stdout, "Domain config error: %v\n", err)
+		return 1
+	}
+
+	names := domain.DraftStageNames()
+	valid := false
+	for _, n := range names {
+		if n == stage {
+			valid = true
+			break
+		}
+	}
+	if !valid {
+		fmt.Fprintf(stdout, "Unknown draft stage %s for domain %s. Must be one of: %s\n",
+			pyReprStr(stage), pyReprStr(state.DomainName()), strings.Join(names, ", "))
+		return 1
+	}
+
+	previous := state.DraftStage
+	state.DraftStage = stage
+	if _, err := schemas.SaveState(manuscriptDir, state); err != nil {
+		fmt.Fprintf(stdout, "Error saving state: %v\n", err)
+		return 1
+	}
+	if previous == "" {
+		previous = "(unset)"
+	}
+	fmt.Fprintf(stdout, "Draft stage: %s -> %s\n", previous, stage)
+	if impl := domain.DraftStageImplication(stage); impl != "" {
+		fmt.Fprintf(stdout, "Severity implication: %s\n", impl)
+	}
+	return 0
+}
+
+// cmdStatePass records that a pass of the given kind completed, so
+// status can report what has actually been run rather than only the
+// current phase.
+func cmdStatePass(manuscriptDir, kind string, stdout io.Writer) int {
+	// Deliberately NOT validated against schemas.Phases. The pass kinds
+	// and the phases are different sets: `continuity` is a real pass that
+	// is explicitly not phase-gated (it tracks its own per-section
+	// staleness), while `intake` and `complete` are phases nobody runs a
+	// pass of. Validating against Phases rejected `continuity` and
+	// accepted `intake`, both wrong.
+	valid := false
+	for _, k := range passKinds {
+		if k == kind {
+			valid = true
+			break
+		}
+	}
+	if !valid {
+		fmt.Fprintf(stdout, "Unknown pass %s. Must be one of: %s\n", pyReprStr(kind), strings.Join(passKinds, ", "))
+		return 1
+	}
+	state, ok := requireState(manuscriptDir, stdout)
+	if !ok {
+		return 1
+	}
+	if state.Passes == nil {
+		state.Passes = map[string]int{}
+	}
+	state.Passes[kind]++
+	if _, err := schemas.SaveState(manuscriptDir, state); err != nil {
+		fmt.Fprintf(stdout, "Error saving state: %v\n", err)
+		return 1
+	}
+	fmt.Fprintf(stdout, "Recorded %s pass (total: %d)\n", kind, state.Passes[kind])
 	return 0
 }

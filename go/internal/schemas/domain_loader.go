@@ -237,3 +237,45 @@ func (d Domain) Continuity() Domain {
 func (d Domain) RoundTrackedPhase() string {
 	return d.String("round_tracked_phase")
 }
+
+// DraftStageNames returns the domain's draft_stages `name` values, in
+// declaration order. Used to validate `redliner state stage` against the
+// domain's own vocabulary rather than a hardcoded list -- a design doc's
+// stages aren't a novel's.
+func (d Domain) DraftStageNames() []string {
+	raw, ok := d["draft_stages"].([]interface{})
+	if !ok {
+		return nil
+	}
+	var out []string
+	for _, entry := range raw {
+		stage, ok := entry.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if name, ok := stage["name"].(string); ok && name != "" {
+			out = append(out, name)
+		}
+	}
+	return out
+}
+
+// DraftStageImplication returns the severity implication recorded for a
+// named stage, or "" if the stage isn't in this domain.
+func (d Domain) DraftStageImplication(name string) string {
+	raw, ok := d["draft_stages"].([]interface{})
+	if !ok {
+		return ""
+	}
+	for _, entry := range raw {
+		stage, ok := entry.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if n, _ := stage["name"].(string); n == name {
+			impl, _ := stage["implication"].(string)
+			return impl
+		}
+	}
+	return ""
+}

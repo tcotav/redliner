@@ -109,14 +109,23 @@ hardcode fiction's fields here even as a fallback.
    - **Off-limits** — anything they don't want touched
    - **What they want from this pass** — specific worries beat "make it good"
 
-6. **Write the brief** to `<manuscript_dir>/.redliner/brief.md` using
+6. **Record the draft stage in state, not only in the brief.** Run the
+   set-draft-stage operation (`redliner state stage <manuscript_dir>
+   <stage>` on the CLI) with the name the author picked. The brief keeps
+   the human explanation; state keeps the machine-readable value, which
+   is what lets `status` report it and what lets the line phase refuse
+   up front instead of spawning a pass that was always going to return
+   nothing. Skipping this leaves the most consequential setting in the
+   tool visible only as prose.
+
+7. **Write the brief** to `<manuscript_dir>/.redliner/brief.md` using
    `reference/brief_template.md` in this skill directory as the structure
    — it's written generically, looping over whatever `brief_fields` and
    `draft_stages` the domain supplied. Write what the author actually
    said, in their framing — don't editorialize their intent into
    something tidier.
 
-7. **Confirm.** Show the brief and ask whether it reflects their intent.
+8. **Confirm.** Show the brief and ask whether it reflects their intent.
    Fix what's wrong. Then tell them the next step is `/redliner:run assess`.
 
 ## Draft stage gates severity
