@@ -2340,3 +2340,107 @@ and it is where signal-to-noise gets hard. The retroactive test still
 stands as the next honest one: replay The City's sections in written
 order, run a morning check after each, and see whether it catches
 anything the full pass caught — earlier, and cheaper.
+
+## Is deterministic collision-finding the right architecture? (open)
+
+**Raised:** 2026-08-14, after the morning-edit result. Nothing decided
+here. This exists because the standing plan — "fix entity matching, then
+continuity works" — was set before evidence existed that now cuts
+against it, and building either direction without writing this down
+would be choosing by default.
+
+README states the principle plainly: *"Deterministic detection, model
+judgment — kept as two separate steps. Section-hash diffing and
+continuity-collision finding are both exactly computable, so they're
+plain scripts. Judgment only happens after, on what the script already
+found."* The adjudicator agent's own description says it "adjudicates
+collisions that a script has already found."
+
+So the split is not deterministic-vs-model. Both steps already exist.
+The question is narrower and answerable: **is string matching the right
+way to generate the candidates the model then judges?**
+
+### The deterministic step is failing at both of its jobs at once
+
+Its job is recall — surface every pair worth judging — and its cost
+constraint is precision, since each candidate goes to an adjudicator.
+Measured, on this repo's own fixtures:
+
+- **Recall: 0/4** on `bellwether`. `ComputeReconcile` partitions facts by
+  `normEntity` (`go/internal/cli/canon.go:455-461`) and `linkByAttribute`
+  (`canon.go:309`) only ever runs inside one partition, so `Renata
+  Sowa`/`Ren`, `Emil`/`her father` and `Lyman`/`the boat` never meet —
+  twice with the attribute matching *exactly*.
+- **Precision: 87%** of real-prose collisions (60 of 69) are
+  mixed-attribute artifacts, 64% sit inside a single section, and one
+  entity produced 31 of 69 on its own through attributes sharing a
+  leading token.
+- **Scaling: facts^1.4**, still climbing at the end of a 5-section
+  corpus. Extrapolated to a full-length work that is order 1,000+
+  adjudicator calls, the overwhelming majority of them junk.
+
+Two proposed fixes are already dead: containment/substring entity
+matching (fuses `X` with `X's <relative>` — corrupts canon, not merely
+noisy) and G3-coarse (cut real prose 22%, treated as rejected).
+
+### And the thing it is bad at, an agent is good at
+
+The morning-edit test (`fixtures/bellwether/MORNING_EDIT.md`) scored
+**4/4 on the same four pairs**, and did it by making joins the matcher
+structurally cannot: it identified a 31-foot hull as the 26-foot `Lyman`
+by reasoning from shared construction details, never from the name.
+
+The sharpest datum is the inversion. `GROUND_TRUTH.md` calls the
+propositional pair "materially harder" and "not reachable by name
+matching at all" — and it is the *easy* one for an agent, the only one
+even the crippled entity-scoped arm caught. **The hard class for a
+string matcher and the hard class for a reader are different classes.**
+Every scoping and guard proposal in this file was designed against the
+matcher's notion of hard.
+
+### What the evidence does not say
+
+Recorded so this section can't be cited as more than it is:
+
+- The morning edit ran on **84 prior facts**, section-scoped. It is *not*
+  evidence that an agent can scan a whole novel's canon. Whole-manuscript
+  recall by agent is untested and may be where the deterministic layer
+  earns its place.
+- The deterministic layer buys reproducibility and predictable cost. A
+  scan whose recall varies run to run is a worse foundation for
+  `rounds`/diffing than a bad-but-stable one.
+- One fixture, synthetic prose. The 2026-08-13 real-prose numbers cover
+  precision and scaling, not agent-join recall.
+
+### The options, none chosen
+
+1. **Fix entity matching, keep the architecture.** The standing plan.
+   Cheapest to reason about; addresses recall but not the 87% precision
+   problem or the growth curve, and has already failed once when designed
+   blind.
+2. **Keep the deterministic layer but change its job** — stop asking it
+   to decide *what pairs*, and let it do what string matching is
+   genuinely good at: cheaply narrowing a corpus to a candidate region
+   (recency, section adjacency, shared rare tokens) that an agent then
+   joins. Loosens precision deliberately, on the bet that agent judgment
+   is what the candidates were being filtered for anyway.
+3. **Section-scoped agent join for the incremental case, matcher retained
+   for whole-manuscript sweeps.** Matches where the evidence actually is:
+   4/4 measured at section scope, nothing measured at novel scale.
+4. **Drop the matcher.** Not supportable on current evidence — nothing
+   has been measured at whole-manuscript scale.
+
+### What would settle it
+
+Cheap, and in the same pre-registered style as `MORNING_EDIT.md`: take
+the real-prose corpus (330 facts, 87 entities, 5 sections, 28 known
+alias pairs), and measure agent-join recall and cost at **full-corpus**
+scale rather than section scale. If it holds up there, option 2 or 3
+becomes buildable on evidence. If it degrades — which is the honest
+expectation, since that corpus is real prose with far worse
+signal-to-noise than `bellwether` — the deterministic prefilter has a
+defined job and option 1 stays alive.
+
+**Do not build any of these until that measurement exists.** The entity
+matching fix has already been designed blind once and died on contact
+with a second manuscript.
