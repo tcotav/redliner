@@ -2489,6 +2489,42 @@ does not fit this shape — so whatever gets built has to trim the bundle
 or partition the corpus. The partition cannot be by entity name;
 `MORNING_EDIT.md` measured that cut at 1/4.
 
+### Adjudicator variance, measured 2026-08-15 — and where that leaves it
+
+The hybrid shipped in v0.5.0. Then the half that was kept got measured
+the way the joiner had been, and it did not come out well.
+
+Five runs, identical input, the real corpus's nine collisions: kept **0,
+1, 0, 2, 0**. Union 2, intersection 0, one collision kept in exactly 2 of
+5 — the pre-registered *unstable* band. Median zero. No run ever asserted
+a `contradiction`.
+
+**And the yield was nothing new.** Across all five runs the deterministic
+pass produced exactly one collision that is a confirmed real error, and
+the author had already found it, recorded it in the brief, and asked that
+it not be re-reported — which every run correctly did. Zero new true
+findings, plus an unstable 0–2 questions per run.
+
+So the claim that picked the hybrid over option 4 — "neither approach
+subsumes the other" — is now supported only in the weakest sense. On this
+corpus the deterministic half contributes nothing an author would see.
+
+**Option 4 is the better-supported option on this corpus, and should
+still not be acted on yet.** These collisions are almost all
+re-descriptions; the case that would most favour keeping the pass is a
+manuscript whose collisions are mostly *real*, and nobody has measured
+that. Dropping the pass on one corpus is the same mistake the recall fix
+made in the other direction. `bellwether`'s adjudicator kept 2 of 4 in
+the full-flow run, which is the start of that evidence and is n=1.
+
+Second-order consequence, independent of which option wins: **the pass
+cannot honestly be described to an author as "the exhaustive mechanical
+check"**, because what survives adjudication is not reproducible. The fix
+for that is a prompt or a re-run policy, not the matcher. `skills/run`
+already tells the author the joiner's soft findings are a sample rather
+than an enumeration; the same is now true of the adjudicator's and is not
+yet said anywhere.
+
 **Still don't build blind.** What is measured is the *join*, on one
 corpus, with facts already extracted. A design that trims or partitions
 the bundle changes the input the 4/4 was obtained on, so it needs its own
