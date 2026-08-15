@@ -2356,7 +2356,7 @@ stands as the next honest one: replay The City's sections in written
 order, run a morning check after each, and see whether it catches
 anything the full pass caught — earlier, and cheaper.
 
-## Is deterministic collision-finding the right architecture? (open)
+## Is deterministic collision-finding the right architecture? (settled 2026-08-14, not built)
 
 **Raised:** 2026-08-14, after the morning-edit result. Nothing decided
 here. This exists because the standing plan — "fix entity matching, then
@@ -2481,3 +2481,46 @@ or partition the corpus. The partition cannot be by entity name;
 corpus, with facts already extracted. A design that trims or partitions
 the bundle changes the input the 4/4 was obtained on, so it needs its own
 pre-registered run rather than inheriting this one's number.
+
+## The orchestration's invariants are prose, and nothing tests them
+
+**Raised:** 2026-08-14, during a direction review. Not a bug sighting —
+no failure has been observed. It is written down because the failure mode
+of the worst case is silence, which is the class this project keeps
+getting caught by.
+
+`skills/run/SKILL.md` is 618 lines of instructions an agent is asked to
+follow. The Go suite tests the deterministic subcommands underneath it
+thoroughly. **Nothing tests the file that calls them** — no test in this
+repo reads any `SKILL.md` or any agent file. Two invariants in there are
+load-bearing:
+
+- **`SKILL.md:246` — continuity must run *before* the snapshot.**
+  Reconcile diffs against the state's current baseline to decide
+  `likely_unpropagated_revision`. Snapshot first and the baseline already
+  matches the text, so the diff comes back empty and the flag **silently
+  stops firing**. The file's entire enforcement is the sentence "Don't
+  reorder this." It looks harmless on a first-ever assess (empty baseline
+  either way) and only breaks on a re-run with a real prior baseline —
+  i.e. it would ship green and fail later, quietly, on exactly the path
+  that matters.
+- **`SKILL.md:283` — "Do not run line editing here, whatever the author
+  asked for."** Gates an expensive pass on draft stage. Failure is loud
+  and cheap by comparison: the author gets a pass they didn't want.
+
+The first one is the concerning one. Its failure produces *nothing* — no
+error, no wrong output, just a flag that never fires — which is
+indistinguishable from a manuscript that has no unpropagated revisions.
+Compare the 0/4: also a silent miss, also invisible from the author's
+seat, and it survived undetected until a fixture was built specifically
+to catch it.
+
+**Not proposing a fix here.** The obvious ones each have a real cost:
+asserting ordering inside `ComputeReconcile` coupled to state (the
+subcommands are deliberately independent), a lint over the skill file
+(tests prose, brittle), or an end-to-end fixture run (slow, and the
+agent-driven parts aren't deterministic). Worth deciding deliberately
+rather than by default — and worth noting that the cheapest honest
+option may be to make the ordering *unnecessary* rather than enforced, by
+having reconcile take the baseline it should diff against explicitly
+instead of reading whatever the state currently holds.
