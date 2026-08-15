@@ -530,3 +530,66 @@ nothing about the adjudicator on a manuscript whose collisions are mostly
 real, which is the case that would most favour keeping the pass. It also
 measures agreement between runs, not correctness — there is no ground
 truth for this corpus.
+
+## Adjudicator variance result, 2026-08-15 — unstable, and mostly empty
+
+Run after the rule above was committed (`87da048`). Five runs, identical
+input, nine collisions each.
+
+| Run | Kept | Which |
+| --- | --- | --- |
+| 1 | 0 | — |
+| 2 | 1 | outfit |
+| 3 | 0 | — |
+| 4 | 2 | outfit, device appearance |
+| 5 | 0 | — |
+
+**Union 2, intersection 0.** One collision was kept in **2 of 5** runs,
+which lands squarely in the pre-registered **unstable** band. Median kept
+is **0**. All items kept were `unverified`; no run asserted a
+`contradiction`.
+
+**All three predictions held**, with one qualification: the union (2)
+equals the largest single run rather than exceeding it, so prediction 2
+holds only in the weak sense — no run found something no other run did.
+
+### Setup error, and what it did and didn't affect
+
+The first attempt at this arm, and **the full-flow real-corpus run
+recorded above**, were both set up with `rm -f *.md`, which deleted the
+*section files* along with the letters. The adjudicator's instructions
+make reading sections optional, so both runs completed — on degraded
+input, without the context the agent uses to dissolve a collision.
+
+That makes yesterday's full-flow comparison unsound as stated: it
+compared a sections-present run against a sections-absent run and
+attributed the whole difference to run-to-run variance. **This arm was
+re-run from scratch with sections present**, and reaches the same verdict
+by a sound route: the decision really is unstable. The conclusion
+survives; the evidence offered for it yesterday did not.
+
+### The finding that matters more than the variance
+
+Across all five runs the deterministic pass produced **exactly one
+collision that is a confirmed real error** — and the author had already
+found it, recorded it in the brief, and asked for it not to be
+re-reported. Every run correctly suppressed it.
+
+So on this corpus, after narrowing, the deterministic pass's yield to the
+author is: **zero new true findings, and an unstable 0–2 questions per
+run.** That is a much weaker case for keeping it than "neither approach
+subsumes the other" implied.
+
+### What this settles, and what it doesn't
+
+Per the thresholds fixed in advance: the pass **cannot honestly be
+described to an author as the exhaustive mechanical check**, because what
+survives adjudication is not reproducible. The fix for that is a prompt
+or a re-run policy, not the matcher.
+
+**Option 4 stays open and is now the better-supported option on this
+corpus.** But this is one corpus whose collisions are almost all
+re-descriptions — the case that would most favour keeping the pass is a
+manuscript whose collisions are mostly real, and that has not been
+measured. Do not drop the deterministic pass on a single corpus's
+evidence; that is the mistake the recall fix made in the other direction.
