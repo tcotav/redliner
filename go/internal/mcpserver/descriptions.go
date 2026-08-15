@@ -39,7 +39,15 @@ observation files. Mirrors ` + "`redliner_canon.py stale <manuscript_dir>`" + `.
 const descCanonReconcile = `Rebuild the merged canon and find continuity collisions from every
 current observations file. Writes canon.json and collisions.json to
 the manuscript's .redliner/canon/ directory (same side effect as the
-CLI) and returns their contents. Mirrors ` + "`redliner_canon.py reconcile\n<manuscript_dir>`" + `.`
+CLI) and returns their contents. Mirrors ` + "`redliner_canon.py reconcile\n<manuscript_dir>`" + `.
+
+Pass snapshot_after: true when this call is part of an assess or recheck
+flow. It records the current text as the assessed baseline in the same
+call, which is what keeps likely_unpropagated_revision working: that flag
+is computed by diffing against the baseline currently in state, and a
+separate snapshot overwrites exactly that baseline. Doing them as two
+tool calls means one order works and the other silently disables the
+flag. Omit it for a standalone continuity run, which records no baseline.`
 
 const descDomainList = `List every domain config available (name, display name,
 description). Mirrors ` + "`redliner_domain.py list`" + `.`

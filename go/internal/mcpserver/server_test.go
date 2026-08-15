@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -141,12 +142,33 @@ func TestToolNamesAndDescriptions_MatchPython(t *testing.T) {
 		"canon_merge":     true,
 	}
 
+	// A ported tool that has grown a Go-only parameter needs somewhere to
+	// document it -- the description is what the calling model reads to
+	// decide how to invoke the tool, so a flag that exists but isn't
+	// described is a flag no model will pass. These tools' descriptions
+	// must still *begin* with Python's docstring verbatim (so drift in
+	// the ported part is still caught); what follows is Go-only text.
+	// Named individually, for the same reason goOnly is: growing this
+	// list stays a deliberate act.
+	goOnlyAddendum := map[string]bool{
+		"canon_reconcile": true, // snapshot_after, added 2026-08-15
+	}
+
 	got := map[string]string{}
 	for _, tool := range res.Tools {
 		if goOnly[tool.Name] {
 			continue
 		}
-		got[tool.Name] = tool.Description
+		desc := tool.Description
+		if goOnlyAddendum[tool.Name] {
+			if prefix, ok := want[tool.Name]; ok && strings.HasPrefix(desc, prefix) {
+				if strings.TrimSpace(desc[len(prefix):]) == "" {
+					t.Errorf("tool %q is listed as carrying a Go-only addendum but has none", tool.Name)
+				}
+				desc = prefix
+			}
+		}
+		got[tool.Name] = desc
 	}
 
 	if len(got) != len(want) {

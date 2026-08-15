@@ -2643,3 +2643,23 @@ would leave the newer findings unarchived. Bounded at 99.
 
 No oracle constraint — `rounds` appears in no golden fixture, so stdout
 was free to change.
+
+**What `--snapshot-after` cost, recorded rather than glossed:** it moves
+the snapshot from *after* the whole continuity flow to the middle of it.
+In assess, the snapshot used to be its own step following extraction,
+reconcile, adjudication, bundle, join and merge; it now lands at the
+reconcile substep, with the four agent-driven steps running after the
+baseline is already recorded as assessed.
+
+Those four are Task calls, i.e. the most failure-prone part of the flow.
+A join that dies now leaves a baseline recorded for an assessment that
+never finished, and the next assess diffs against it and sees nothing
+changed — where before, no snapshot had been taken and the re-run diffed
+against the last *completed* assessment. The stderr note fires and
+correctly says it cannot tell why the baseline matched.
+
+Accepted rather than fixed, deliberately. The window needs a mid-flow
+agent failure and costs one round of revision-tracking fidelity; the
+alternative is restoring an ordering hazard that was unconditional and
+silent. Revisit only if a real mid-flow failure is observed to have eaten
+a round — not on the strength of this paragraph.
