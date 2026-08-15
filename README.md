@@ -23,12 +23,20 @@ Three layers, run separately rather than as one pass:
    choice; for a design doc: clarity, jargon, passive voice, redundancy,
    flow). Gated behind developmental work settling — see below.
 3. **Continuity** — cross-cutting, runs alongside either phase. Extracts
-   checkable facts per section, finds contradictions mechanically
-   (same entity, same attribute, different value — computed exactly, not
-   guessed at), then has an agent judge only the collisions found: real
-   error vs. a lying character (or, for a design doc, a summary
-   legitimately simplifying a detail) vs. an edit you made in one
-   section that hasn't propagated to another yet.
+   checkable facts per section, then looks for contradictions two ways,
+   because they catch different things and neither subsumes the other:
+   - **Mechanically** — same entity, same attribute, different value.
+     Computed exactly, not guessed at. An agent then judges only what was
+     found: real error vs. a lying character (or, for a design doc, a
+     summary legitimately simplifying a detail) vs. an edit you made in
+     one section that hasn't propagated to another yet.
+   - **By reading the whole fact corpus at once** — which catches the
+     contradiction whose two halves are filed under *different names* for
+     the same thing, the join a string comparison structurally cannot
+     make. On a blind test manuscript the mechanical pass finds 0 of 4
+     planted contradictions and this one finds 4 of 4; on real prose it
+     asserted nothing false across five runs. Both numbers, and what they
+     don't prove, are in `go/harness/fixtures/bellwether/`.
 
 Which category vocabulary applies comes from the manuscript's **domain**
 — see "Domains" below. Every finding, in any domain, carries an `id`, a
@@ -192,14 +200,14 @@ redliner/                          (plugin root)
 │   ├── fiction-editorial-aggregator.md
 │   ├── fiction-continuity-extractor.md
 │   ├── fiction-continuity-adjudicator.md
-│   ├── design-doc-*.md           (same five roles, design-doc's own vocabulary)
-│   └── serial-fiction-*.md       (same five roles, episodic-fiction vocabulary)
+│   ├── design-doc-*.md           (same six roles, design-doc's own vocabulary)
+│   └── serial-fiction-*.md       (same six roles, episodic-fiction vocabulary)
 ├── skills/
 │   ├── run/SKILL.md              /redliner:run <status|assess|work|resolve|recheck|line|continuity>
 │   ├── intake/SKILL.md           /redliner:intake
 │   └── new-domain/
 │       ├── SKILL.md              /redliner:new-domain — design + generate a domain
-│       └── reference/templates/  FIXED/AUTHORED templates for the five agent roles
+│       └── reference/templates/  templates for the six agent roles
 ├── domains/                      vocabulary per kind of document (see below)
 │   ├── fiction/domain.json
 │   ├── design-doc/domain.json
@@ -254,7 +262,7 @@ Three domains exist today: `fiction`, `design-doc` (design docs /
 product proposals), and `serial-fiction` (fiction released in
 installments — a web serial, a Substack/Patreon serial — where a
 chapter is read both on its own and as part of an ongoing whole). Each
-domain also has its own five agent files in `agents/`
+domain also has its own six agent files in `agents/`
 (`agents/fiction-*.md`, `agents/design-doc-*.md`,
 `agents/serial-fiction-*.md`) — a domain is config plus a matching set
 of generated prompts, not config alone; see "Why this is static, not
@@ -266,7 +274,7 @@ continuity layer's entity types/sources/categories, brief fields, draft
 stages), enforces guardrails on the category design (4–7 categories per
 phase, each one a reviewer could plausibly disagree about being
 present, none redundant with severity), writes `domain.json`, generates
-the five agent files, and verifies all of it — including a live check
+the six agent files, and verifies all of it — including a live check
 that each generated agent actually registers under its expected name —
 before calling it done.
 

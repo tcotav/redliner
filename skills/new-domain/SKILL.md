@@ -1,11 +1,11 @@
 ---
 name: new-domain
-description: Walks someone through designing a new redliner domain (a kind of document to edit, beyond fiction) — category vocabulary for both editing phases, the continuity layer's entity types/sources/categories, brief fields, and draft stages — then generates that domain's domain.json and its five agent files. Use when the author wants redliner to work on something that isn't fiction (a design doc, product proposal, or any other long-form document) and no suitable domain exists yet.
+description: Walks someone through designing a new redliner domain (a kind of document to edit, beyond fiction) — category vocabulary for both editing phases, the continuity layer's entity types/sources/categories, brief fields, and draft stages — then generates that domain's domain.json and its six agent files. Use when the author wants redliner to work on something that isn't fiction (a design doc, product proposal, or any other long-form document) and no suitable domain exists yet.
 ---
 
 # redliner:new-domain
 
-Produces `domains/<name>/domain.json` and five agent files
+Produces `domains/<name>/domain.json` and six agent files
 (`agents/<name>-developmental-editor.md`, `<name>-line-editor.md`,
 `<name>-editorial-aggregator.md`, `<name>-continuity-extractor.md`,
 `<name>-continuity-adjudicator.md`), following the same shape as
@@ -152,9 +152,9 @@ config is malformed (missing keys, empty lists); fix it and re-check
 until it comes back clean. Don't hand-verify the shape yourself and skip
 this — the loader's validation is the actual contract, not a formality.
 
-## Step 6: Generate the five agent files
+## Step 6: Generate the six agent files
 
-For each of the five roles, use the matching template in
+For each of the six roles, use the matching template in
 `reference/templates/<role>.md` in this skill directory. Each template
 marks blocks `<!-- FIXED -->` (copy verbatim, substituting only
 `{{...}}` placeholders that come straight from `domain.json` — no

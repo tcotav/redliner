@@ -16,7 +16,8 @@ import (
 const canonUsage = `Usage:
   redliner canon stale     <manuscript_dir>   # which sections need re-extraction
   redliner canon reconcile <manuscript_dir>   # build canon + find collisions
-  redliner canon bundle    <manuscript_dir>   # every fact, one compact line each, for an agent to join`
+  redliner canon bundle    <manuscript_dir>   # every fact, one compact line each, for an agent to join
+  redliner canon merge     <manuscript_dir>   # fold the joiner's findings into continuity.json`
 
 func RunCanon(args []string, stdout io.Writer) int {
 	if len(args) < 2 {
@@ -37,6 +38,8 @@ func RunCanon(args []string, stdout io.Writer) int {
 		return cmdCanonReconcile(manuscriptDir, stdout)
 	case "bundle":
 		return cmdCanonBundle(manuscriptDir, stdout)
+	case "merge":
+		return cmdCanonMerge(manuscriptDir, stdout)
 	default:
 		fmt.Fprintf(stdout, "Unknown command %s\n", pyReprStr(command))
 		return 1
@@ -715,5 +718,122 @@ func cmdCanonBundle(manuscriptDir string, stdout io.Writer) int {
 	for _, line := range lines {
 		fmt.Fprintln(stdout, line)
 	}
+	return 0
+}
+
+// --- merge ---
+
+// JoinedFile is what the continuity joiner writes: the same contradiction
+// shape continuity.json uses, in its own file so two agents never write
+// one path. An agent that rewrites a file wholesale is how author
+// decisions got clobbered before (see the decisions command); the fix
+// there and here is the same -- each writer owns a file, and the merge is
+// deterministic.
+const joinedFileName = "joined.json"
+
+// joinerIDBase offsets merged ids into cont-5NN so provenance is legible
+// at a glance and the adjudicator's own cont-0NN numbering can never
+// collide with the joiner's. The id pattern allows exactly three digits,
+// so this leaves 499 slots on each side -- far past what either produces
+// on a real manuscript (9 collisions on a 330-fact corpus).
+const joinerIDBase = 500
+
+// MergeJoined folds the joiner's findings into continuity.json, keeping
+// the adjudicator's entries as they are. Matching on the fact-id set
+// makes it idempotent: re-running after a re-join adds what is new
+// instead of duplicating what is already there.
+//
+// Returns (added, skipped).
+func MergeJoined(manuscriptDir string) (int, int, error) {
+	dir := CanonDir(manuscriptDir)
+	joinedPath := filepath.Join(dir, joinedFileName)
+	raw, err := os.ReadFile(joinedPath)
+	if err != nil {
+		return 0, 0, err
+	}
+	var joined map[string]interface{}
+	if err := json.Unmarshal(raw, &joined); err != nil {
+		return 0, 0, fmt.Errorf("%s: %w", joinedFileName, err)
+	}
+
+	continuityPath := filepath.Join(dir, "continuity.json")
+	existing := map[string]interface{}{"contradictions": []interface{}{}}
+	if b, err := os.ReadFile(continuityPath); err == nil {
+		if err := json.Unmarshal(b, &existing); err != nil {
+			return 0, 0, fmt.Errorf("continuity.json: %w", err)
+		}
+	}
+
+	out, _ := existing["contradictions"].([]interface{})
+	seen := map[string]bool{}
+	usedIDs := map[string]bool{}
+	for _, item := range out {
+		m, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		seen[factIDKey(m)] = true
+		usedIDs[asStr(m["id"])] = true
+	}
+
+	added, skipped, next := 0, 0, joinerIDBase+1
+	for _, item := range reportField(joined, "contradictions") {
+		m, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if key := factIDKey(m); key == "" || seen[key] {
+			skipped++
+			continue
+		}
+		seen[factIDKey(m)] = true
+		for next < 1000 && usedIDs[fmt.Sprintf("cont-%03d", next)] {
+			next++
+		}
+		if next >= 1000 {
+			return added, skipped, fmt.Errorf("ran out of cont-5NN ids merging %s", joinedFileName)
+		}
+		m["id"] = fmt.Sprintf("cont-%03d", next)
+		usedIDs[asStr(m["id"])] = true
+		next++
+		out = append(out, m)
+		added++
+	}
+
+	existing["contradictions"] = out
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return added, skipped, err
+	}
+	return added, skipped, writeJSONFile(continuityPath, existing)
+}
+
+// factIDKey identifies a contradiction by the set of facts it cites,
+// order-independently -- the one part of an entry that is a fact about
+// the manuscript rather than a judgment about it, so it is what dedupes
+// across re-runs even when the wording of the note changes.
+func factIDKey(item map[string]interface{}) string {
+	raw, ok := item["fact_ids"].([]interface{})
+	if !ok || len(raw) == 0 {
+		return ""
+	}
+	ids := make([]string, 0, len(raw))
+	for _, v := range raw {
+		ids = append(ids, asStr(v))
+	}
+	sort.Strings(ids)
+	return strings.Join(ids, "\x00")
+}
+
+func cmdCanonMerge(manuscriptDir string, stdout io.Writer) int {
+	added, skipped, err := MergeJoined(manuscriptDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			fmt.Fprintf(stdout, "No %s in %s -- run the continuity joiner first.\n", joinedFileName, CanonDir(manuscriptDir))
+			return 1
+		}
+		fmt.Fprintf(stdout, "Merge failed: %v\n", err)
+		return 1
+	}
+	fmt.Fprintf(stdout, "Merged into continuity.json: %d added, %d already present.\n", added, skipped)
 	return 0
 }

@@ -131,8 +131,9 @@ name. Determine `<domain>` by checking the manuscript's current state
 and substitute it into every `redliner:<role>` reference below. So on a
 `design-doc` manuscript, "Task `redliner:<domain>-developmental-editor`"
 means Task `redliner:design-doc-developmental-editor`. This holds for
-all five roles: `developmental-editor`, `line-editor`,
-`editorial-aggregator`, `continuity-extractor`, `continuity-adjudicator`.
+all six roles: `developmental-editor`, `line-editor`,
+`editorial-aggregator`, `continuity-extractor`, `continuity-adjudicator`,
+`continuity-joiner`.
 
 ## Why phases are sequential
 
@@ -566,17 +567,51 @@ developmental round counter. It's safe to run any time after intake.
    extraction data.
 5. Reconcile the canon — this deterministically rebuilds
    `.redliner/canon/canon.json` (merged facts) and
-   `.redliner/canon/collisions.json` (entity+attribute pairs with more
-   than one asserted value) from every current observations file, not
-   just the ones just (re-)extracted.
-6. Read the resulting collisions.
-   - **Empty `collisions` list** — write
-     `.redliner/canon/continuity.json` as `{"contradictions": []}`
-     yourself. There's nothing to adjudicate, so don't spend a Task call
-     on it.
-   - **Non-empty** — Task the `redliner:<domain>-continuity-adjudicator`
-     subagent with the manuscript directory and output path
-     `.redliner/canon/continuity.json`.
+   `.redliner/canon/collisions.json` from every current observations
+   file, not just the ones just (re-)extracted.
+
+   **What `collisions.json` holds is narrower than it used to be**: one
+   entity carrying two different values under the *same attribute name*.
+   It no longer tries to link attributes that merely share a word. That
+   linking produced 87% of collisions on a real corpus as artifacts and
+   never made the join it was added for, because a string comparison
+   cannot tell that two names denote one thing. See TODO.md, "Is
+   deterministic collision-finding the right architecture?".
+
+6. **Two passes now run over this, not one.** They find different
+   classes, neither is a superset of the other, and both were measured:
+
+   a. **Adjudicate the collisions.** Read `collisions.json`.
+      - **Empty list** — nothing to adjudicate; don't spend a Task call.
+        Skip to (b).
+      - **Non-empty** — Task the
+        `redliner:<domain>-continuity-adjudicator` subagent with the
+        manuscript directory and output path
+        `.redliner/canon/continuity.json`.
+
+   b. **Join across the whole corpus.** Write the fact bundle with
+      `redliner canon bundle <dir> > <dir>/.redliner/canon/bundle.txt`,
+      then Task the `redliner:<domain>-continuity-joiner` subagent with
+      the manuscript directory and output path
+      `.redliner/canon/joined.json`.
+
+      This is the pass that catches a contradiction whose two halves are
+      filed under different names — measured at 4/4 on a manuscript where
+      the deterministic pass scores 0/4, and stable at 4/4 across five
+      runs. It reads one compact line per fact rather than the prose, so
+      it is one call regardless of manuscript length.
+
+   c. **Merge, deterministically.** `redliner canon merge <dir>` folds
+      `joined.json` into `continuity.json`, renumbering the joiner's ids
+      into the `cont-5NN` range so provenance stays readable and the two
+      agents never write the same file. Two agents editing one path is
+      how author decisions got clobbered before; the merge is a command,
+      not an instruction to an agent.
+
+      If neither pass produced anything, write
+      `.redliner/canon/continuity.json` as `{"contradictions": []}`
+      yourself.
+
 7. Validate again.
 8. Archive and record the pass: `redliner rounds archive <dir> continuity`,
    then `redliner state pass <dir> continuity`.
@@ -586,6 +621,14 @@ developmental round counter. It's safe to run any time after intake.
    `likely_unpropagated_revision` collisions explicitly — those are the
    ones the author can act on fastest ("section_02 changed since the
    last pass, section_07 didn't").
+
+**One run samples the soft findings; it does not enumerate them.**
+Measured across five identical runs, flat contradictions came back every
+time, but the judgment-call items (`kind: unverified`) rotated — seven
+items across five runs, with an empty intersection, every one of them a
+legitimate question. So a clean `unverified` list means "nothing was
+asserted falsely", not "there is nothing to ask about". Say it that way
+to the author, and don't treat one run's question set as exhaustive.
 
 Contradiction ids and status don't yet carry forward across runs the way
 developmental findings do — a collision that was open, gets fixed, then
