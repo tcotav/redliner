@@ -66,3 +66,26 @@ last snapshot, continuity staleness, and which .redliner files exist.
 Prefer this over calling state_status, domain_show, state_diff and
 canon_stale separately -- it returns all of them at once, and each
 avoided call is a full round trip.`
+
+// --- Go-only tools ---
+//
+// These have no mcp_server.py counterpart: they expose CLI subcommands
+// added after the Python implementation stopped being the reference. They
+// exist because the Cowork variant shares skills/ with the CLI variant by
+// symlink, so a command the skill invokes with no tool behind it leaves
+// Cowork unable to finish a run -- which is exactly what happened between
+// v0.4.0 and v0.5.0. See server_test.go's front-door parity guard.
+
+const descDecisionsApply = `Re-apply the author's recorded resolutions to the findings files, restoring any a pass overwrote. Returns counts and the ids of decisions whose finding no longer exists.`
+
+const descRoundsArchive = `Archive a completed pass's findings under .redliner/rounds/ so the next round has a "before" to diff against. Pass kind: developmental, line, or continuity.`
+
+const descRoundsList = `List the archived rounds under .redliner/rounds/.`
+
+const descStateStage = `Record the manuscript's draft stage, which gates how severely findings are reported and whether line editing runs at all.`
+
+const descStatePass = `Record that a pass of the given kind (developmental, line, continuity) completed, so status can report what has actually been run rather than only the current phase.`
+
+const descCanonBundle = `Return every extracted fact as one compact line, "id | entity | attribute | value", for the continuity joiner to read in a single call. Deliberately omits excerpts and metadata: measured at 86 bytes per fact against 267 for the full JSON, with no loss of join accuracy.`
+
+const descCanonMerge = `Fold the continuity joiner's findings (canon/joined.json) into canon/continuity.json, renumbering the joiner's ids into the cont-5NN range. Deduplicates on the set of facts cited, so re-running after a re-join adds only what is new.`

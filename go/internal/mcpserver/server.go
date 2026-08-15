@@ -48,6 +48,16 @@ func NewServer(domainsDir string) *mcp.Server {
 	mcp.AddTool(srv, &mcp.Tool{Name: "domain_show", Description: descDomainShow}, s.domainShow)
 	mcp.AddTool(srv, &mcp.Tool{Name: "validate_findings", Description: descValidateFindings}, s.validateFindings)
 
+	// Go-only, added 2026-08-15 so the shared skill files can drive this
+	// front door too -- see the front-door parity guard in server_test.go.
+	mcp.AddTool(srv, &mcp.Tool{Name: "decisions_apply", Description: descDecisionsApply}, s.decisionsApply)
+	mcp.AddTool(srv, &mcp.Tool{Name: "rounds_archive", Description: descRoundsArchive}, s.roundsArchive)
+	mcp.AddTool(srv, &mcp.Tool{Name: "rounds_list", Description: descRoundsList}, s.roundsList)
+	mcp.AddTool(srv, &mcp.Tool{Name: "state_stage", Description: descStateStage}, s.stateStage)
+	mcp.AddTool(srv, &mcp.Tool{Name: "state_pass", Description: descStatePass}, s.statePass)
+	mcp.AddTool(srv, &mcp.Tool{Name: "canon_bundle", Description: descCanonBundle}, s.canonBundle)
+	mcp.AddTool(srv, &mcp.Tool{Name: "canon_merge", Description: descCanonMerge}, s.canonMerge)
+
 	return srv
 }
 
@@ -313,4 +323,90 @@ func (s *redlinerServer) context(_ context.Context, _ *mcp.CallToolRequest, in m
 		return nil, errorResult("%s", err.Error()), nil
 	}
 	return nil, report, nil
+}
+
+// --- Go-only tools, added 2026-08-15 ---
+//
+// Thin wrappers that run the CLI command into a buffer, the same shape
+// validate_findings already uses. They are wrappers rather than ports of
+// the logic because the underlying operations print progress an author
+// reads ("2 restored", "Archived 3 file(s) to ..."), and duplicating that
+// text in a second implementation is how two front doors drift.
+
+type roundsArchiveInput struct {
+	ManuscriptDir string `json:"manuscript_dir"`
+	Pass          string `json:"pass"`
+}
+
+type stateStageInput struct {
+	ManuscriptDir string `json:"manuscript_dir"`
+	Stage         string `json:"draft_stage"`
+}
+
+type statePassInput struct {
+	ManuscriptDir string `json:"manuscript_dir"`
+	Kind          string `json:"kind"`
+}
+
+// runCLI is the shared body of every wrapper below: run the subcommand,
+// capture what it printed, report whether it succeeded.
+func runCLI(fn func([]string, *bytes.Buffer) int, args ...string) (any, error) {
+	var buf bytes.Buffer
+	exitCode := fn(args, &buf)
+	return map[string]any{"ok": exitCode == 0, "output": buf.String()}, nil
+}
+
+func (s *redlinerServer) decisionsApply(_ context.Context, _ *mcp.CallToolRequest, in manuscriptDirInput) (*mcp.CallToolResult, any, error) {
+	out, err := runCLI(func(a []string, b *bytes.Buffer) int { return cli.RunDecisions(a, b) }, "apply", in.ManuscriptDir)
+	return nil, out, err
+}
+
+func (s *redlinerServer) roundsArchive(_ context.Context, _ *mcp.CallToolRequest, in roundsArchiveInput) (*mcp.CallToolResult, any, error) {
+	args := []string{"archive", in.ManuscriptDir}
+	if in.Pass != "" {
+		args = append(args, in.Pass)
+	}
+	out, err := runCLI(func(a []string, b *bytes.Buffer) int { return cli.RunRounds(a, b) }, args...)
+	return nil, out, err
+}
+
+func (s *redlinerServer) roundsList(_ context.Context, _ *mcp.CallToolRequest, in manuscriptDirInput) (*mcp.CallToolResult, any, error) {
+	out, err := runCLI(func(a []string, b *bytes.Buffer) int { return cli.RunRounds(a, b) }, "list", in.ManuscriptDir)
+	return nil, out, err
+}
+
+func (s *redlinerServer) stateStage(_ context.Context, _ *mcp.CallToolRequest, in stateStageInput) (*mcp.CallToolResult, any, error) {
+	out, err := runCLI(func(a []string, b *bytes.Buffer) int { return cli.RunState(a, b) }, "stage", in.ManuscriptDir, in.Stage)
+	return nil, out, err
+}
+
+func (s *redlinerServer) statePass(_ context.Context, _ *mcp.CallToolRequest, in statePassInput) (*mcp.CallToolResult, any, error) {
+	out, err := runCLI(func(a []string, b *bytes.Buffer) int { return cli.RunState(a, b) }, "pass", in.ManuscriptDir, in.Kind)
+	return nil, out, err
+}
+
+// canonBundle returns the lines as data rather than one printed blob --
+// the joiner reads a file, but a Cowork session has no shell to redirect
+// stdout with, so the tool hands back the lines and the caller writes
+// them.
+func (s *redlinerServer) canonBundle(_ context.Context, _ *mcp.CallToolRequest, in manuscriptDirInput) (*mcp.CallToolResult, any, error) {
+	lines, err := cli.BundleFacts(in.ManuscriptDir)
+	if err != nil {
+		if err == cli.ErrNoObservations {
+			return nil, errorResult("No observations in %s. Run extraction first.", cli.ObservationsDir(in.ManuscriptDir)), nil
+		}
+		if ce, ok := err.(*schemas.SectionCollisionError); ok {
+			return nil, errorResult("Section file error: %s", ce.Error()), nil
+		}
+		return nil, nil, err
+	}
+	return nil, map[string]any{"fact_count": len(lines), "bundle": strings.Join(lines, "\n")}, nil
+}
+
+func (s *redlinerServer) canonMerge(_ context.Context, _ *mcp.CallToolRequest, in manuscriptDirInput) (*mcp.CallToolResult, any, error) {
+	added, skipped, err := cli.MergeJoined(in.ManuscriptDir)
+	if err != nil {
+		return nil, errorResult("Merge failed: %v", err), nil
+	}
+	return nil, map[string]any{"added": added, "already_present": skipped}, nil
 }

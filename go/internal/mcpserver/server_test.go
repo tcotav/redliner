@@ -130,7 +130,16 @@ func TestToolNamesAndDescriptions_MatchPython(t *testing.T) {
 	// comparison below -- but they must be listed here explicitly, so
 	// adding a tool stays a deliberate act rather than something that
 	// silently slips past this guard.
-	goOnly := map[string]bool{"context": true}
+	goOnly := map[string]bool{
+		"context":         true,
+		"decisions_apply": true,
+		"rounds_archive":  true,
+		"rounds_list":     true,
+		"state_stage":     true,
+		"state_pass":      true,
+		"canon_bundle":    true,
+		"canon_merge":     true,
+	}
 
 	got := map[string]string{}
 	for _, tool := range res.Tools {
