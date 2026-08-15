@@ -171,11 +171,25 @@ little:
   The "find why it exists" instruction didn't take. Findings without a
   what-would-break claim are opinions, not arguments.
 
+- **It hands your own uncertainty back as a finding.** Every ranked item
+  traces to a "press hardest" lead or to something TODO.md already
+  records as open, and the ranked answer to a direct either/or is a
+  restatement of the open question. This reads as a productive run — the
+  findings are all true — but it adds no information you didn't supply.
+  The tell is a finding that cites TODO.md as its evidence. Check how
+  many press-hardest leads drew *no* finding, too: a lead that goes
+  unanswered is data about the auditor, not a clean bill for that code.
+
 A good run disagrees with something specific and says what evidence
 would change its mind.
+
+**Verify the load-bearing facts before acting.** A run can restate the
+repo accurately and still be wrong about the code — the 2026-08-15 run
+got two mechanisms wrong at stated high confidence, both erring toward
+alarm. Every finding names a file; open it.
 
 ## Run log
 
 | Date | Model | Repo version | One thing they'd change | Notes |
 | --- | --- | --- | --- | --- |
-| | | | | |
+| 2026-08-15 | Claude Sonnet 5 | v0.5.0 (c7c4ed9) | Make `reconcile` take its snapshot baseline explicitly instead of reading ambient state — closes the silent-failure ordering invariant in `skills/run/SKILL.md` before building more on continuity. | Ranked 6 findings + 2 missing items. Top finding: the 2026-08-14/15 hybrid collision architecture sits on a deterministic pass TODO.md's own measurement says now yields zero new findings — reproduced independently on the bundled sample manuscript (1 real contradiction, 1 false positive, adjudicator correctly dropped the latter). Did not run a live `assess`/`line` pass through real subagents. Full report: see session transcript / requested artifact. **Cross-check 2026-08-15:** two ranked findings rest on false supporting facts, both stated at high confidence and both erring toward alarm — #4's "hard 100-id cap" is really ~499 ids (`canon.go` loops to `next < 1000` from 501), and #6's "no test reads any SKILL.md" is false (`frontdoor_parity_test.go` walks every skill file; the true claim is that no test checks *ordering*). The "reproduced independently" claim is reading a committed fixture from a 2026-08-09 run, not a fresh run. Findings #1–#5 restate the press-hardest leads; two leads (measurement ceremony, author-facing surface) drew no ranked finding at all.
