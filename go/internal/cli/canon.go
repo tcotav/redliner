@@ -15,11 +15,11 @@ import (
 
 const canonUsage = `Usage:
   redliner canon stale     <manuscript_dir>   # which sections need re-extraction
-  redliner canon reconcile <manuscript_dir>   # build canon + find collisions
+  redliner canon reconcile <manuscript_dir> [--snapshot-after]   # build canon + find collisions
   redliner canon bundle    <manuscript_dir>   # every fact, one compact line each, for an agent to join
   redliner canon merge     <manuscript_dir>   # fold the joiner's findings into continuity.json`
 
-func RunCanon(args []string, stdout io.Writer) int {
+func RunCanon(args []string, stdout, stderr io.Writer) int {
 	if len(args) < 2 {
 		fmt.Fprintln(stdout, canonUsage)
 		return 1
@@ -35,7 +35,17 @@ func RunCanon(args []string, stdout io.Writer) int {
 	case "stale":
 		return cmdCanonStale(manuscriptDir, stdout)
 	case "reconcile":
-		return cmdCanonReconcile(manuscriptDir, stdout)
+		snapshotAfter := false
+		for _, arg := range args[2:] {
+			switch arg {
+			case "--snapshot-after":
+				snapshotAfter = true
+			default:
+				fmt.Fprintf(stdout, "Unknown option %s\n%s\n", pyReprStr(arg), canonUsage)
+				return 1
+			}
+		}
+		return cmdCanonReconcile(manuscriptDir, snapshotAfter, stdout, stderr)
 	case "bundle":
 		return cmdCanonBundle(manuscriptDir, stdout)
 	case "merge":
@@ -338,6 +348,51 @@ func linkByAttribute(factIDs []string, factsByID map[string]*collisionFact) [][]
 // format this independently.
 var ErrNoObservations = errors.New("no observations to reconcile")
 
+// ReconcileDiagnostics reports what `likely_unpropagated_revision` had
+// to work with on this run. It exists because that flag's failure mode
+// is silence: with no baseline to diff against, every collision comes
+// back unflagged, which is indistinguishable from a manuscript that has
+// no unpropagated revisions in it.
+type ReconcileDiagnostics struct {
+	// BaselineSections is how many sections the supplied baseline
+	// covered. Zero means no snapshot has been taken yet.
+	BaselineSections int
+	// ChangedSections is what the baseline says has been edited since.
+	ChangedSections []string
+}
+
+// RevisionDetectionIdle reports that a baseline existed but matched the
+// manuscript in every section, so no collision could be flagged as an
+// unpropagated revision regardless of content.
+//
+// This is NOT necessarily a fault: an author who has changed nothing
+// since the last snapshot produces exactly this. It is also what a
+// caller sees when it snapshotted before reconciling instead of after,
+// and reconcile cannot tell those two apart -- which is the whole
+// reason it says so out loud rather than deciding.
+func (d ReconcileDiagnostics) RevisionDetectionIdle() bool {
+	return d.BaselineSections > 0 && len(d.ChangedSections) == 0
+}
+
+// BaselineFromState reads the snapshot baseline out of the manuscript's
+// recorded state -- the baseline every caller wants unless it has a
+// specific reason otherwise.
+//
+// Split out and exported so the read is visible at the call site rather
+// than buried inside ComputeReconcile. That matters because the value it
+// returns is destroyed by `state snapshot`: whoever calls reconcile is
+// making a claim about when they read this relative to snapshotting, and
+// a claim made in a caller is one a reader can check.
+func BaselineFromState(manuscriptDir string) map[string]schemas.Fingerprint {
+	// A missing or unreadable state file is not an error here, just
+	// "no baseline" -- mirrors Python's `load_state(...) or {}`.
+	state, err := schemas.LoadState(manuscriptDir)
+	if err != nil || state == nil {
+		return nil
+	}
+	return state.SectionFingerprints
+}
+
 // ComputeReconcile is cmd_reconcile's computation, pure (no I/O writer,
 // no file writes, no printing) -- exported so internal/mcpserver's
 // canon_reconcile tool can call it directly and get structured data back
@@ -346,23 +401,29 @@ var ErrNoObservations = errors.New("no observations to reconcile")
 // written to disk) still happens for both front doors, via the shared
 // WriteCanonFiles below -- only the in-process data path differs from
 // Python's, not the on-disk contract.
-func ComputeReconcile(manuscriptDir string) (Canon, []Collision, error) {
+//
+// baseline is passed in rather than read from state here. It used to be
+// read internally, which made `likely_unpropagated_revision` depend on
+// ambient state at an unmarked point in the middle of the function --
+// and since `state snapshot` overwrites that state, running the two in
+// the wrong order silently disabled the flag with nothing in the output
+// to say so. Callers now supply it (see BaselineFromState) and get back
+// diagnostics saying what it bought them.
+func ComputeReconcile(manuscriptDir string, baseline map[string]schemas.Fingerprint) (Canon, []Collision, ReconcileDiagnostics, error) {
 	observations, err := loadObservations(manuscriptDir)
 	if err != nil {
-		return Canon{}, nil, err
+		return Canon{}, nil, ReconcileDiagnostics{}, err
 	}
 	if len(observations) == 0 {
-		return Canon{}, nil, ErrNoObservations
+		return Canon{}, nil, ReconcileDiagnostics{}, ErrNoObservations
 	}
 
-	// `state = load_state(manuscript_dir) or {}` -- a missing state file
-	// is not an error here, just "nothing changed since snapshot".
-	state, _ := schemas.LoadState(manuscriptDir)
+	diagnostics := ReconcileDiagnostics{BaselineSections: len(baseline)}
 	changedSinceSnapshot := map[string]bool{}
-	if state != nil && len(state.SectionFingerprints) > 0 {
-		diff, err := schemas.DiffManuscript(manuscriptDir, state)
+	if len(baseline) > 0 {
+		diff, err := schemas.DiffManuscript(manuscriptDir, &schemas.State{SectionFingerprints: baseline})
 		if err != nil {
-			return Canon{}, nil, err
+			return Canon{}, nil, ReconcileDiagnostics{}, err
 		}
 		for _, s := range diff.Changed {
 			changedSinceSnapshot[s] = true
@@ -370,6 +431,10 @@ func ComputeReconcile(manuscriptDir string) (Canon, []Collision, error) {
 		for _, s := range diff.Added {
 			changedSinceSnapshot[s] = true
 		}
+		for s := range changedSinceSnapshot {
+			diagnostics.ChangedSections = append(diagnostics.ChangedSections, s)
+		}
+		sort.Strings(diagnostics.ChangedSections)
 	}
 
 	var sectionStems []string
@@ -541,7 +606,7 @@ func ComputeReconcile(manuscriptDir string) (Canon, []Collision, error) {
 		SectionsCovered: sectionStems,
 	}
 
-	return canon, collisions, nil
+	return canon, collisions, diagnostics, nil
 }
 
 // WriteCanonFiles writes canon.json and collisions.json to the
@@ -562,8 +627,21 @@ func WriteCanonFiles(manuscriptDir string, canon Canon, collisions []Collision) 
 	return nil
 }
 
-func cmdCanonReconcile(manuscriptDir string, stdout io.Writer) int {
-	canon, collisions, err := ComputeReconcile(manuscriptDir)
+// cmdCanonReconcile reconciles the canon, and with --snapshot-after also
+// records the current text as the assessed baseline in the same
+// invocation.
+//
+// That flag is the point. Reconcile must read the baseline *before* the
+// snapshot overwrites it, and the orchestration used to express that as
+// two ordered commands with the sentence "Don't reorder this" between
+// them -- an invariant whose failure is silent, because a snapshot-first
+// run produces an empty diff and simply never flags anything. Doing both
+// here means the wrong order can no longer be written down.
+//
+// Go-only, and default-off, so the ported surface the Python oracle
+// covers is unchanged -- same argument as `redliner context`.
+func cmdCanonReconcile(manuscriptDir string, snapshotAfter bool, stdout, stderr io.Writer) int {
+	canon, collisions, diagnostics, err := ComputeReconcile(manuscriptDir, BaselineFromState(manuscriptDir))
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrNoObservations):
@@ -589,6 +667,23 @@ func cmdCanonReconcile(manuscriptDir string, stdout io.Writer) int {
 			flag = " (likely unpropagated revision)"
 		}
 		fmt.Fprintf(stdout, "  - %s.%s: %s%s\n", c.Entity, c.Attribute, pyListRepr(c.DistinctValues), flag)
+	}
+
+	// On stderr, not stdout: the ported surface's stdout is compared
+	// byte-for-byte against the Python oracle's, and this is a Go-only
+	// observation. `domain list` already uses stderr the same way.
+	if diagnostics.RevisionDetectionIdle() {
+		fmt.Fprintf(stderr, "Note: the snapshot baseline (%d sections) matches the current text everywhere, "+
+			"so no collision could be flagged as an unpropagated revision this run. "+
+			"That is expected if nothing has been edited since the last snapshot; "+
+			"it also happens if the snapshot was taken before this reconcile rather than after "+
+			"(see --snapshot-after).\n", diagnostics.BaselineSections)
+	}
+
+	if snapshotAfter {
+		if code := cmdStateSnapshot(manuscriptDir, stdout); code != 0 {
+			return code
+		}
 	}
 	return 0
 }

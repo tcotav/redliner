@@ -33,7 +33,7 @@ func Dispatch(args []string, stdout, stderr io.Writer) int {
 	case "state":
 		return RunState(args[1:], stdout)
 	case "canon":
-		return RunCanon(args[1:], stdout)
+		return RunCanon(args[1:], stdout, stderr)
 	case "domain":
 		return RunDomain(args[1:], stdout, stderr)
 	case "validate":

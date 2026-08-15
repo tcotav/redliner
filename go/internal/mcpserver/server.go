@@ -78,6 +78,14 @@ type stateInitInput struct {
 	Domain        string `json:"domain,omitempty"`
 }
 
+// canonReconcileInput carries the Go-only snapshot_after flag alongside
+// the ported manuscript_dir field. See canonReconcile for why the flag
+// has to exist on this front door and not just the CLI.
+type canonReconcileInput struct {
+	ManuscriptDir string `json:"manuscript_dir"`
+	SnapshotAfter bool   `json:"snapshot_after,omitempty"`
+}
+
 type statePhaseInput struct {
 	ManuscriptDir string `json:"manuscript_dir"`
 	Phase         string `json:"phase"`
@@ -239,8 +247,8 @@ func (s *redlinerServer) canonStale(_ context.Context, _ *mcp.CallToolRequest, i
 	return nil, result, nil
 }
 
-func (s *redlinerServer) canonReconcile(_ context.Context, _ *mcp.CallToolRequest, in manuscriptDirInput) (*mcp.CallToolResult, any, error) {
-	canon, collisions, err := cli.ComputeReconcile(in.ManuscriptDir)
+func (s *redlinerServer) canonReconcile(_ context.Context, _ *mcp.CallToolRequest, in canonReconcileInput) (*mcp.CallToolResult, any, error) {
+	canon, collisions, diagnostics, err := cli.ComputeReconcile(in.ManuscriptDir, cli.BaselineFromState(in.ManuscriptDir))
 	if err != nil {
 		switch {
 		case err == cli.ErrNoObservations:
@@ -255,9 +263,42 @@ func (s *redlinerServer) canonReconcile(_ context.Context, _ *mcp.CallToolReques
 	if err := cli.WriteCanonFiles(in.ManuscriptDir, canon, collisions); err != nil {
 		return nil, nil, err
 	}
+	// Same composite the CLI's --snapshot-after provides, and it has to
+	// exist on both front doors: offering it only on the CLI would leave
+	// the MCP variant expressing "reconcile, then snapshot" as two
+	// separately-ordered tool calls -- exactly the invariant this removes.
+	snapshotted := false
+	if in.SnapshotAfter {
+		state, err := schemas.LoadState(in.ManuscriptDir)
+		if err != nil {
+			return nil, nil, err
+		}
+		if state == nil {
+			return nil, errorResult("No redliner state in %s", in.ManuscriptDir), nil
+		}
+		fingerprints, err := schemas.FingerprintManuscript(in.ManuscriptDir)
+		if err != nil {
+			if ce, ok := err.(*schemas.SectionCollisionError); ok {
+				return nil, errorResult("Section file error: %s", ce.Error()), nil
+			}
+			return nil, nil, err
+		}
+		state.SectionFingerprints = fingerprints
+		if _, err := schemas.SaveState(in.ManuscriptDir, state); err != nil {
+			return nil, nil, err
+		}
+		snapshotted = true
+	}
+	// The MCP caller gets the same observation the CLI writes to stderr,
+	// as data rather than prose -- an agent reading this result has no
+	// stderr to read.
 	return nil, map[string]any{
-		"canon":      canon,
-		"collisions": cli.OrEmptyCollisions(collisions),
+		"snapshotted":             snapshotted,
+		"canon":                   canon,
+		"collisions":              cli.OrEmptyCollisions(collisions),
+		"baseline_sections":       diagnostics.BaselineSections,
+		"changed_since_snapshot":  diagnostics.ChangedSections,
+		"revision_detection_idle": diagnostics.RevisionDetectionIdle(),
 	}, nil
 }
 

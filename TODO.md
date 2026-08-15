@@ -2572,3 +2572,74 @@ rather than by default — and worth noting that the cheapest honest
 option may be to make the ordering *unnecessary* rather than enforced, by
 having reconcile take the baseline it should diff against explicitly
 instead of reading whatever the state currently holds.
+
+### Resolved 2026-08-15: reconcile takes its baseline explicitly, and `--snapshot-after` removes the ordering
+
+Took the option this section already named as cheapest, plus the piece it
+didn't: making the ordering explicit was not enough on its own.
+
+`ComputeReconcile` now takes the baseline as a parameter instead of
+reading state mid-body, and callers get it from the named
+`BaselineFromState`. That alone changes no behaviour — it is the same
+read one level up — but it puts the dependency where a reader can see it
+and gives reconcile something to report on.
+
+**What actually removes the invariant is `canon reconcile <dir>
+--snapshot-after`** (MCP: `canon_reconcile` with `snapshot_after: true`),
+which reconciles and snapshots in one call. Two ordered commands could be
+written in the wrong order; one call cannot. `skills/run/SKILL.md`'s
+assess and recheck flows now use it, and the sentence "Don't reorder
+this" is gone from the file.
+
+The flag had to land on both front doors. Shipping it CLI-only would have
+left the Cowork variant expressing the same two steps as two separately
+ordered tool calls — the invariant, relocated rather than removed.
+
+Both are Go-only and default-off, so the ported surface the Python oracle
+covers is byte-identical; same argument `redliner context` already makes.
+No golden regeneration, no python-baseline edit.
+
+**Second-order:** reconcile now writes a note to *stderr* when it had a
+baseline that matched the text everywhere, i.e. when nothing could have
+been flagged. Deliberately not on stdout, which the oracle compares.
+Deliberately not fired when there is no baseline at all — that is a
+first-ever assess, nothing could be unpropagated yet, and a note there
+would fire on every manuscript's first run until readers learned to skip
+it. The note says outright that it cannot distinguish "author changed
+nothing" from "snapshot ran too early", because it can't.
+
+Checked what this section worried about: nothing between the continuity
+steps and the snapshot modifies manuscript text (redliner never writes
+`section_*` at all), so folding the snapshot into reconcile is
+equivalent, not early.
+
+## `rounds archive` overwrote same-round archives of one pass
+
+**Found 2026-08-15** while walking `go/internal/cli` for a code
+walkthrough — read out of the code, then reproduced against the binary
+before being believed.
+
+Every archive was named `<pass>-round<state.DevelopmentalRound>` and
+created with a bare `MkdirAll`. But the round counter only advances on
+entering the developmental phase, and continuity is explicitly not
+phase-gated (the distinction `cmdStatePass` already documents). Two
+continuity passes inside one developmental round both resolved to
+`continuity-round3/`, and the second `os.WriteFile` replaced the first.
+Same for a second line pass in one round.
+
+The command reported "Archived 1 file(s)" both times. The failure was
+silent and total: the "before" this command exists to preserve was gone,
+which is the same class as the 0/4 and the `findings/line.json` check.
+
+`TestRoundsArchive_KeepsEachPassSeparately` passed throughout. It
+archives one *line* pass and one *continuity* pass — separation across
+pass kinds, never two of one kind.
+
+**Fixed** by `freeArchiveDir`, which suffixes `.2`, `.3`, ... when the
+round-numbered directory is already occupied. Suffixing rather than
+refusing: the archive is a side effect of finishing a pass, so failing it
+would fail the pass for a reason the author cannot act on, and refusing
+would leave the newer findings unarchived. Bounded at 99.
+
+No oracle constraint — `rounds` appears in no golden fixture, so stdout
+was free to change.

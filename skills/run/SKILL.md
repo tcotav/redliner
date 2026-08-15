@@ -236,18 +236,20 @@ invites the author to start reacting to a half-finished picture.
    errors rather than aggregating bad data. (This checks the whole
    manuscript directory in one pass, not just the one file you just
    wrote.)
-5. Run the **continuity** steps below now — **before the snapshot in the
-   next step**, not after. Continuity's reconcile step diffs against
-   whatever baseline is currently in the manuscript's state to decide
-   `likely_unpropagated_revision`; if the snapshot runs first, that
-   baseline already matches the current text and the diff always comes
-   back empty, silently disabling the flag. This only looks harmless on
-   a first-ever assess (empty baseline either way); it breaks the moment
-   `assess` is re-run later as "a fresh full read" with a real prior
-   baseline. Don't reorder this.
-6. Record the current text as the assessed baseline — this is what lets
-   a later `recheck` tell what changed.
-7. Task `redliner:<domain>-editorial-aggregator` for the **developmental**
+5. Run the **continuity** steps below now, passing `--snapshot-after` to
+   the reconcile step. That flag records the current text as the assessed
+   baseline in the same call that reconciles — which is what lets a later
+   `recheck` tell what changed.
+
+   Use the flag rather than running `redliner state snapshot` separately.
+   Reconcile decides `likely_unpropagated_revision` by diffing against
+   the baseline currently in state, and a snapshot overwrites exactly
+   that baseline: doing them as two commands means one order works and
+   the other silently disables the flag, with identical output either
+   way. One call has no order to get wrong. If you do run them
+   separately for some reason, reconcile reports on stderr when it had
+   no usable baseline.
+6. Task `redliner:<domain>-editorial-aggregator` for the **developmental**
    letter, giving it **both output paths explicitly**:
    - Markdown → `<manuscript_dir>/Developmental Letter - Round <N>.md`
    - JSON → `<manuscript_dir>/.redliner/letters/developmental_round<N>.json`
@@ -268,9 +270,9 @@ invites the author to start reacting to a half-finished picture.
    Sitting beside the chapters is safe: section discovery globs
    `section_*`, so a letter named this way is never mistaken for
    manuscript text.
-8. Validate again, then read and show the developmental letter, then the
+7. Validate again, then read and show the developmental letter, then the
    continuity summary from step 5.
-9. Re-apply author decisions, archive the completed pass, and record it:
+8. Re-apply author decisions, archive the completed pass, and record it:
    `redliner decisions apply <dir>`, `redliner rounds archive <dir> developmental`
    (and `... continuity`), `redliner state pass <dir> developmental`.
    (and `... continuity`, since step 5 ran one). This is what lets
@@ -456,16 +458,18 @@ forever.
      stale and why; that's the case they can't assess themselves.
 
 2. Validate.
-3. Run the **continuity** steps below now — **before the snapshot in the
-   next step, not after.** This ordering matters more here than anywhere
-   else: revision is exactly when facts get out of sync (an edit in one
-   section not yet propagated to another), and `likely_unpropagated_
-   revision` is *the* signal continuity exists to surface on a recheck.
-   That signal comes from diffing against the baseline recorded at the
-   last assessment — if the snapshot (next step) runs first, the
-   baseline already matches the current text, the diff comes back empty,
-   and every collision looks like a standing issue instead of fresh
-   fallout from this revision. Checking which sections need
+3. Run the **continuity** steps below now, passing `--snapshot-after` to
+   the reconcile step so the new baseline is recorded in the same call.
+   This matters more here than anywhere else: revision is exactly when
+   facts get out of sync (an edit in one section not yet propagated to
+   another), and `likely_unpropagated_revision` is *the* signal
+   continuity exists to surface on a recheck. That signal comes from
+   diffing against the baseline recorded at the last assessment, and a
+   separate snapshot overwrites it — run first, it would leave every
+   collision looking like a standing issue instead of fresh fallout from
+   this revision. Reconciling and snapshotting in one call removes the
+   ordering question; if you ever do split them, reconcile says on
+   stderr when it had no usable baseline. Checking which sections need
    re-extraction first tells you the real scope; a `targeted`
    developmental verdict usually means continuity only has one or two
    sections to redo, not the whole manuscript.
@@ -479,10 +483,10 @@ forever.
    is `restructured`: a heavy rewrite makes line findings stale wholesale,
    and re-running the line editor over churning prose spends money
    polishing text that is still moving. Say that's why you skipped it.
-5. Record the current text as the new assessed baseline, aggregate a
-   fresh developmental letter, show it, then show the continuity summary
-   from step 3. If step 4 ran, aggregate and show a fresh line letter as
-   well, and record the pass.
+5. Aggregate a fresh developmental letter, show it, then show the
+   continuity summary from step 3. (Step 3 already recorded the new
+   assessed baseline via `--snapshot-after`.) If step 4 ran, aggregate
+   and show a fresh line letter as well, and record the pass.
 6. Then say plainly whether structure looks settled enough for line
    editing — count open `major`/`critical` findings and give a real
    recommendation, not a hedge.
@@ -569,6 +573,14 @@ developmental round counter. It's safe to run any time after intake.
    `.redliner/canon/canon.json` (merged facts) and
    `.redliner/canon/collisions.json` from every current observations
    file, not just the ones just (re-)extracted.
+
+   **When `assess` or `recheck` is what called this, pass
+   `--snapshot-after`** (CLI: `redliner canon reconcile <dir>
+   --snapshot-after`; MCP: `canon_reconcile` with `snapshot_after:
+   true`). Those two flows record a new assessed baseline, and doing it
+   in this call is what keeps `likely_unpropagated_revision` working —
+   see their steps above. A bare `/redliner:run continuity` is not
+   recording a baseline, so it omits the flag.
 
    **What `collisions.json` holds is narrower than it used to be**: one
    entity carrying two different values under the *same attribute name*.

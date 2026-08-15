@@ -54,6 +54,37 @@ func RunRounds(args []string, stdout io.Writer) int {
 	}
 }
 
+// freeArchiveDir picks a destination that doesn't already hold an
+// archive, appending `.2`, `.3`, ... to the round-numbered name.
+//
+// The plain `<pass>-round<N>` name is not unique per archive, and
+// assuming it was cost real data: the round counter only advances on
+// entering the developmental phase, while continuity is explicitly not
+// phase-gated (see cmdStatePass) and a line pass can legitimately run
+// twice in one round. Both archives resolved to one directory and the
+// second overwrote the first -- silently, reporting success, destroying
+// the "before" this command exists to keep.
+//
+// Suffixing rather than refusing: the archive is a side effect of
+// finishing a pass, so failing it would fail the pass for a reason the
+// author has no way to act on, and refusing would leave the newer
+// findings unarchived. Keeping both, in round order, loses nothing.
+func freeArchiveDir(roundsRoot, pass string, round int) (string, error) {
+	base := filepath.Join(roundsRoot, fmt.Sprintf("%s-round%d", pass, round))
+	if _, err := os.Stat(base); os.IsNotExist(err) {
+		return base, nil
+	}
+	// Bounded so a bug upstream can't spin here. 99 archives of one pass
+	// in one round is not a real workflow.
+	for n := 2; n <= 99; n++ {
+		candidate := fmt.Sprintf("%s.%d", base, n)
+		if _, err := os.Stat(candidate); os.IsNotExist(err) {
+			return candidate, nil
+		}
+	}
+	return "", fmt.Errorf("%s already holds 99 archives for this round", base)
+}
+
 func cmdRoundsArchive(manuscriptDir, pass string, stdout io.Writer) int {
 	valid := false
 	for _, k := range passKinds {
@@ -89,7 +120,11 @@ func cmdRoundsArchive(manuscriptDir, pass string, stdout io.Writer) int {
 		return 0
 	}
 
-	dest := filepath.Join(roundsDir(manuscriptDir), fmt.Sprintf("%s-round%d", pass, state.DevelopmentalRound))
+	dest, err := freeArchiveDir(roundsDir(manuscriptDir), pass, state.DevelopmentalRound)
+	if err != nil {
+		fmt.Fprintf(stdout, "Error choosing an archive directory: %v\n", err)
+		return 1
+	}
 	if err := os.MkdirAll(dest, 0o755); err != nil {
 		fmt.Fprintf(stdout, "Error creating %s: %v\n", dest, err)
 		return 1
