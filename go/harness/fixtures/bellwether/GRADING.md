@@ -67,3 +67,56 @@ because this fixture will get cited later:
   `FIXTURE_SCRIPTS`. The differential harness proves Go-matches-Python;
   this tests a behavioural property of the current matcher. Conflating
   them means regenerating goldens whenever these expectations change.
+
+---
+
+## End-to-end result, 2026-08-14 — 4/4 through the real pipeline
+
+The pipeline this file grades scored **0/4** on 2026-08-12. After the
+2026-08-14 architecture change (narrowed matcher + continuity joiner, see
+TODO.md), the same fixture run through the shipped commands and the
+shipped agent file scores **4/4**.
+
+| Planted | 2026-08-12 | 2026-08-14 | Reported as |
+| --- | --- | --- | --- |
+| 1. Absence length | MISS | **FOUND** | `unverified` (three values named) |
+| 2. Father's age at death | MISS | **FOUND** | `contradiction` |
+| 3. Length of the Lyman | MISS | **FOUND** | `contradiction` |
+| 4. Presence at the deathbed | MISS | **FOUND** | `unverified` |
+
+Scoring note, applied as written rather than as convenient: `unverified`
+is the *kept, needs author confirmation* bucket, not a dismissal — this
+file already treats it that way for decoys. A planted contradiction
+surfaced as `unverified` naming both halves reaches the author, so it is
+FOUND. A dismissal, meaning not reported at all, would still be a MISS.
+
+**Both Class A joins were made by name-independent reasoning**, which is
+the whole point: `Emil` was connected to `Ren's father`, and the
+thirty-one-foot hull to the twenty-six-foot `Lyman` via matching
+construction materials, never via the name.
+
+**Class B was found too.** `GROUND_TRUTH.md` calls it "not reachable by
+name matching at all" and "materially harder"; it was surfaced as
+`unverified`, correctly reasoning that section 2 might be Kaja's own
+telling rather than narration.
+
+**Decoy precision: clean.** None of the three reconcilable decoys was
+reported. One additional `unverified` item was raised that the fixture
+does not classify (a stated flight count against an arrival by rental
+car from an airport) — a legitimate question, correctly hedged.
+
+### What this run did and did not exercise
+
+- Ran: `canon reconcile`, `canon bundle`, the `fiction-continuity-joiner`
+  agent file as written, `canon merge`, `validate` (exit 0).
+- **Not run: the adjudicator.** Reconcile produced 4 collisions on this
+  fixture and they were left unadjudicated, so this measures the joiner
+  path end to end, not the whole `/redliner:run continuity` flow.
+- The fixture's `GROUND_TRUTH.md`, `GRADING.md`, `README.md` and
+  `expected/` were removed from the working copy before the agent ran.
+
+**This does not spend the fixture.** Nothing was tuned against it — the
+agent file was written from the corpus-scale measurements on a different
+manuscript, and this was its first run against bellwether. Keep it that
+way: if the joiner is later tuned until this passes, the number stops
+meaning anything.
