@@ -2,17 +2,11 @@ package cli
 
 import "testing"
 
-// These cover the collision-grouping normalization added 2026-08-12. The
-// bug it fixes was found by a real end-to-end run, not by a fixture: two
-// independent per-section extractions named one tide clock "tide clock"
-// and "the tide clock", with attributes "duration_not_working" and
-// "stopped_duration", so an exact (entity, attribute) match never
-// collided them and a blatant eleven-vs-fifteen-years contradiction was
-// reported as a clean manuscript. See TODO.md.
-//
-// The Python oracle in go/harness/python-baseline carries the identical
-// logic; the golden harness diffs the two. Change one, change both.
-
+// Entity normalization is unchanged: still lowercase + drop one leading
+// article, still the only thing standing between "tide clock" and "the
+// tide clock". It is deliberately no more than that -- containment
+// matching was measured on real prose and rejected (it fuses `X` with
+// `X's <relative>`), and cross-entity joining is an agent's job now.
 func TestNormEntity_DropsLeadingArticle(t *testing.T) {
 	for _, tc := range []struct{ in, want string }{
 		{"tide clock", "tide clock"},
@@ -30,108 +24,86 @@ func TestNormEntity_DropsLeadingArticle(t *testing.T) {
 	}
 }
 
-func TestAttrTokens_DropsStopwordsAndSeparators(t *testing.T) {
-	got := attrTokens("duration_not_working")
-	if !got["duration"] || !got["working"] {
-		t.Errorf("expected duration+working, got %v", got)
-	}
-	if got["not"] {
-		t.Errorf("stopword 'not' should be dropped, got %v", got)
-	}
-	// The pair that motivated all this must share a token.
-	if !tokensIntersect(attrTokens("duration_not_working"), attrTokens("stopped_duration")) {
-		t.Error("duration_not_working and stopped_duration must intersect")
-	}
-	// Unrelated attributes must not.
-	if tokensIntersect(attrTokens("owns"), attrTokens("contains")) {
-		t.Error("owns and contains must not intersect")
-	}
-}
+// These replace the token-merging tests removed on 2026-08-14 alongside
+// the merging itself. What they pin now is the narrowed contract: group
+// by exact attribute, nothing else, so a collision is only ever the same
+// attribute on the same entity carrying different values.
+//
+// The old tests covered pairwise-not-transitive merging, containment
+// supersession, and protect-exact. All three described machinery that
+// only existed because merging existed. Keeping them would have pinned
+// behaviour the measurements deleted.
 
-func TestLinkByAttribute_IsPairwiseNotTransitive(t *testing.T) {
-	// A shares "duration" with B; B shares "day" with C; A and C share
-	// nothing. A transitive closure would fuse all three into one
-	// malformed collision -- observed for real before this was fixed.
-	facts := map[string]*collisionFact{
-		"f1": {Attribute: "stopped_duration"},
-		"f2": {Attribute: "duration_on_day"},
-		"f3": {Attribute: "understood_on_day"},
-	}
-	for _, g := range linkByAttribute([]string{"f1", "f2", "f3"}, facts) {
-		if len(g) == 3 {
-			t.Fatalf("f1+f2+f3 were fused transitively: %v", g)
-		}
-	}
-}
-
-func TestLinkByAttribute_SupersedesContainedGroups(t *testing.T) {
-	// Two facts whose attributes overlap should be reported once as a
-	// merged pair, not additionally as their two singleton halves.
-	//
-	// Note the halves here are singletons -- neither is a collision on
-	// its own, so neither is protected. That distinction is the subject
-	// of the sibling test below.
+func TestLinkByAttribute_GroupsByExactAttributeOnly(t *testing.T) {
+	// The pair the merging was originally added for: two attribute names
+	// sharing the token "duration". They must now stay apart -- that join
+	// is the agent's, and the measured cost of doing it by token was 87%
+	// artifacts on real prose.
 	facts := map[string]*collisionFact{
 		"f1": {Attribute: "duration_not_working"},
 		"f2": {Attribute: "stopped_duration"},
 	}
 	groups := linkByAttribute([]string{"f1", "f2"}, facts)
-	if len(groups) != 1 || len(groups[0]) != 2 {
-		t.Fatalf("want one merged pair, got %v", groups)
+	if len(groups) != 2 {
+		t.Fatalf("want two separate groups, got %v", groups)
+	}
+	for _, g := range groups {
+		if len(g) != 1 {
+			t.Fatalf("attributes sharing a token must not be merged: %v", groups)
+		}
 	}
 }
 
-func TestLinkByAttribute_ProtectsExactGroupThatIsItselfACollision(t *testing.T) {
-	// The bellwether shape: one attribute carries a genuine two-value
-	// collision, and a neighbouring attribute shares a token with it.
-	// Containment used to let the merged superset supersede the clean
-	// pair, so `age_at_death: [eighty-one, seventy-seven]` was only ever
-	// reported alongside `hospice` -- signal hidden behind noise, which
-	// is a recall bug rather than a cosmetic one. The clean pair must
-	// survive as a group of its own.
+func TestLinkByAttribute_KeepsTheCaseItIsGoodAt(t *testing.T) {
+	// Same entity, same attribute, two values. This is what the
+	// deterministic pass keeps: the shape that caught two real
+	// re-description issues on a live manuscript which the agent join
+	// walked past.
 	facts := map[string]*collisionFact{
 		"f1": {Attribute: "age_at_death", Value: "eighty-one"},
 		"f2": {Attribute: "age_at_death", Value: "two months short of seventy-seven"},
 		"f3": {Attribute: "place_of_death", Value: "hospice"},
 	}
 	groups := linkByAttribute([]string{"f1", "f2", "f3"}, facts)
-
-	var foundClean bool
-	for _, g := range groups {
-		if len(g) == 2 && ((g[0] == "f1" && g[1] == "f2") || (g[0] == "f2" && g[1] == "f1")) {
-			foundClean = true
-		}
-	}
-	if !foundClean {
-		t.Fatalf("clean age_at_death collision was superseded by the merged group: %v", groups)
+	if len(groups) != 2 {
+		t.Fatalf("want age_at_death and place_of_death as two groups, got %v", groups)
 	}
 
-	// The merge itself is still reported -- this protects a group, it
-	// doesn't suppress the union.
-	var foundMerged bool
+	var found bool
 	for _, g := range groups {
-		if len(g) == 3 {
-			foundMerged = true
+		if len(g) == 2 && g[0] == "f1" && g[1] == "f2" {
+			found = true
 		}
 	}
-	if !foundMerged {
-		t.Errorf("the merged group should still be reported too, got %v", groups)
+	if !found {
+		t.Fatalf("the two age_at_death facts must group together: %v", groups)
 	}
 }
 
-func TestLinkByAttribute_SingleValuedExactGroupStaysUnprotected(t *testing.T) {
-	// Guard against over-reach: an exact-attribute group with only one
-	// distinct value is not a collision, so it must still be superseded
-	// by the merge. Otherwise every half comes back and the containment
-	// rule stops doing anything at all.
+func TestLinkByAttribute_AttributeMatchIsCaseAndSpaceInsensitive(t *testing.T) {
 	facts := map[string]*collisionFact{
-		"f1": {Attribute: "age_at_death", Value: "eighty-one"},
-		"f2": {Attribute: "age_at_death", Value: "eighty-one"},
-		"f3": {Attribute: "place_of_death", Value: "hospice"},
+		"f1": {Attribute: "Eye_Color", Value: "green"},
+		"f2": {Attribute: "  eye_color ", Value: "blue"},
 	}
-	for _, g := range linkByAttribute([]string{"f1", "f2", "f3"}, facts) {
-		if len(g) == 2 {
-			t.Fatalf("single-valued half should have been superseded, got %v", g)
+	groups := linkByAttribute([]string{"f1", "f2"}, facts)
+	if len(groups) != 1 || len(groups[0]) != 2 {
+		t.Fatalf("want one group of two, got %v", groups)
+	}
+}
+
+// First-appearance order within a group is load-bearing: collisions.json
+// reports the first fact's entity and attribute verbatim, so a reordering
+// silently changes the output's surface text.
+func TestLinkByAttribute_PreservesFirstAppearanceOrderWithinAGroup(t *testing.T) {
+	facts := map[string]*collisionFact{
+		"f1": {Attribute: "action", Value: "stole the ledger"},
+		"f2": {Attribute: "origin", Value: "Selkirk"},
+		"f3": {Attribute: "action", Value: "hid in a fish stall"},
+	}
+	groups := linkByAttribute([]string{"f1", "f2", "f3"}, facts)
+	for _, g := range groups {
+		if len(g) == 2 && (g[0] != "f1" || g[1] != "f3") {
+			t.Fatalf("action group lost input order: %v", g)
 		}
 	}
 }

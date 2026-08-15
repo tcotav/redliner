@@ -35,7 +35,6 @@ contradict."
 """
 
 import json
-import re
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -131,12 +130,6 @@ def cmd_stale(manuscript_dir: Path) -> int:
 # extraction: over-reporting is reviewed by the adjudicator, while
 # under-reporting has no safety net at all.
 _ARTICLES = ("the ", "a ", "an ")
-_ATTR_STOPWORDS = {
-    "of", "the", "a", "an", "is", "was", "are", "were", "be", "been",
-    "to", "in", "at", "on", "for", "not", "no",
-}
-
-
 def _norm_entity(value: str) -> str:
     """Lowercase, trim, drop one leading article."""
     text = str(value).strip().lower()
@@ -146,66 +139,33 @@ def _norm_entity(value: str) -> str:
     return text
 
 
-def _attr_tokens(value: str) -> set:
-    """Significant tokens of an attribute name, split on non-alphanumerics."""
-    parts = re.split(r"[^a-z0-9]+", str(value).strip().lower())
-    return {p for p in parts if p and p not in _ATTR_STOPWORDS}
-
-
 def _link_by_attribute(fact_ids, facts_by_id):
-    """Group facts for collision detection.
+    """Group one entity's facts by exact attribute name. That is the rule.
 
-    Exact-attribute groups first (the original behaviour), then *pairwise*
-    unions of two groups whose attribute names share a significant token.
-    Deliberately NOT a transitive closure: chaining A~B~C merges attributes
-    with nothing in common and hands the adjudicator a malformed collision
-    (observed: four unrelated values fused under one label). Pairwise keeps
-    each reported collision explainable.
+    This used to also union any two attribute groups sharing a significant
+    token, to catch `duration_not_working` against `stopped_duration`.
+    Measured and removed 2026-08-14: the merging produced 87% of the
+    collisions on a real 330-fact corpus as artifacts (`emotional_state`
+    against `physical_state` -- shared token "state", nothing else) and
+    drove collision count as facts^1.4. It also never bought the recall it
+    was added for, since the blind-manuscript run scored 0/4 on entity
+    partitioning before attribute matching ever came into play.
+
+    Cross-entity and cross-attribute joining is an agent's job now, at a
+    measured 4/4. What stays here is what a string comparison is genuinely
+    good at: the same attribute on one entity, recorded twice with
+    different values. See TODO.md, "Is deterministic collision-finding the
+    right architecture?".
+
+    Removed with the merging: _attr_tokens, _ATTR_STOPWORDS, and the
+    protected/containment pass, which existed only to stop a merged
+    superset swallowing a clean exact-attribute group.
     """
     exact = {}
     for fid in fact_ids:
         key = str(facts_by_id[fid]["attribute"]).strip().lower()
         exact.setdefault(key, []).append(fid)
-
-    keys = sorted(exact)
-    groups = [list(exact[k]) for k in keys]
-
-    tokens = [_attr_tokens(k) for k in keys]
-    for i in range(len(keys)):
-        for j in range(i + 1, len(keys)):
-            if tokens[i] & tokens[j]:
-                merged = exact[keys[i]] + exact[keys[j]]
-                merged.sort(key=fact_ids.index)
-                groups.append(merged)
-
-    # An exact-attribute group that is *itself* a collision (two or more
-    # distinct values under one attribute name) is never superseded --
-    # see the containment note below.
-    protected = set()
-    for k in keys:
-        if len({str(facts_by_id[f]["value"]).strip().lower() for f in exact[k]}) > 1:
-            protected.add(frozenset(exact[k]))
-
-    # Drop any group whose fact set is contained in a larger one, so a
-    # merged pair supersedes its two halves rather than reporting thrice.
-    #
-    # Except when a half is a real collision on its own. "The merged pair
-    # supersedes its halves" assumes the merge is at least as informative,
-    # and it isn't: the superset drags in values from the *other*
-    # attribute, so a clean `age_at_death: [eighty-one, seventy-seven]`
-    # gets replaced by one also carrying `hospice` and `March`. That hides
-    # signal behind noise -- a recall bug, not just a cosmetic one. Found
-    # 2026-08-12 by simulating an entity-matching fix over the bellwether
-    # fixture; see TODO.md.
-    seen, out = set(), []
-    for g in sorted(groups, key=len, reverse=True):
-        fs = frozenset(g)
-        if fs not in protected and any(fs <= s for s in seen):
-            continue
-        seen.add(fs)
-        out.append(g)
-    out.sort(key=lambda g: fact_ids.index(g[0]))
-    return out
+    return [list(exact[k]) for k in sorted(exact)]
 
 
 def cmd_reconcile(manuscript_dir: Path) -> int:

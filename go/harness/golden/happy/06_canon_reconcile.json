@@ -6,7 +6,7 @@
     "/Volumes/T7/code/ideas/redliner/go/harness/.work/happy"
   ],
   "exit_code": 0,
-  "stdout": "Canon: 12 entities, 46 facts.\nCollisions to adjudicate: 4\n  - Mira.action: ['hid in a fish stall behind a crate of herring', 'stole the ledger']\n  - Mira.arrival: ['late', 'reached the docks just as dawn broke over the water']\n  - Mira.emotional_state: ['heart pounding', 'scared']\n  - Mira.eye_color: ['blue', 'green']\n",
+  "stdout": "Canon: 12 entities, 46 facts.\nCollisions to adjudicate: 2\n  - Mira.action: ['hid in a fish stall behind a crate of herring', 'stole the ledger']\n  - Mira.eye_color: ['blue', 'green']\n",
   "stdout_json": null,
   "stderr": "",
   "state_dir_snapshot": {
@@ -513,76 +513,6 @@
               "section": "section_01",
               "value": "hid in a fish stall behind a crate of herring",
               "excerpt": "Ducking into a fish stall, Mira crouched behind a crate of herring and",
-              "location": "paragraph 3",
-              "source": "narration",
-              "confidence": "explicit"
-            }
-          ],
-          "all_narration": true,
-          "any_implied": false,
-          "sections_edited_since_snapshot": [],
-          "sections_untouched_since_snapshot": [
-            "section_01"
-          ],
-          "likely_unpropagated_revision": false
-        },
-        {
-          "entity": "Mira",
-          "attribute": "arrival",
-          "distinct_values": [
-            "late",
-            "reached the docks just as dawn broke over the water"
-          ],
-          "facts": [
-            {
-              "id": "fact-section_02-002",
-              "section": "section_02",
-              "value": "reached the docks just as dawn broke over the water",
-              "excerpt": "Mira reached the docks just as dawn broke over the water.",
-              "location": "paragraph 1",
-              "source": "narration",
-              "confidence": "explicit"
-            },
-            {
-              "id": "fact-section_02-020",
-              "section": "section_02",
-              "value": "late",
-              "excerpt": "\"You're late,\" Renne said.",
-              "location": "paragraph 4",
-              "source": "dialogue",
-              "confidence": "explicit"
-            }
-          ],
-          "all_narration": false,
-          "any_implied": false,
-          "sections_edited_since_snapshot": [],
-          "sections_untouched_since_snapshot": [
-            "section_02"
-          ],
-          "likely_unpropagated_revision": false
-        },
-        {
-          "entity": "Mira",
-          "attribute": "emotional_state",
-          "distinct_values": [
-            "heart pounding",
-            "scared"
-          ],
-          "facts": [
-            {
-              "id": "fact-section_01-008",
-              "section": "section_01",
-              "value": "scared",
-              "excerpt": "She was scared. She was very scared, and she felt fear",
-              "location": "paragraph 2",
-              "source": "narration",
-              "confidence": "explicit"
-            },
-            {
-              "id": "fact-section_01-010",
-              "section": "section_01",
-              "value": "heart pounding",
-              "excerpt": "Her heart was pounding. It was pounding very hard, like a drum,",
               "location": "paragraph 3",
               "source": "narration",
               "confidence": "explicit"

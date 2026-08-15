@@ -263,12 +263,6 @@ type Canon struct {
 // real contradiction because independent per-section extractions named
 // the same thing differently ("tide clock" vs "the tide clock";
 // "duration_not_working" vs "stopped_duration"). See TODO.md.
-var attrStopwords = map[string]bool{
-	"of": true, "the": true, "a": true, "an": true, "is": true, "was": true,
-	"are": true, "were": true, "be": true, "been": true, "to": true,
-	"in": true, "at": true, "on": true, "for": true, "not": true, "no": true,
-}
-
 // normEntity lowercases, trims, and drops one leading article.
 func normEntity(value string) string {
 	text := strings.ToLower(strings.TrimSpace(value))
@@ -280,45 +274,39 @@ func normEntity(value string) string {
 	return text
 }
 
-// attrTokens returns an attribute name's significant tokens.
-func attrTokens(value string) map[string]bool {
-	out := map[string]bool{}
-	for _, part := range strings.FieldsFunc(strings.ToLower(strings.TrimSpace(value)), func(r rune) bool {
-		return !((r >= 'a' && r <= 'z') || (r >= '0' && r <= '9'))
-	}) {
-		if part != "" && !attrStopwords[part] {
-			out[part] = true
-		}
-	}
-	return out
-}
-
-// groupKey identifies a group by its fact-id set, order-independently --
-// Python compares frozensets, so this stands in for that.
-func groupKey(factIDs []string) string {
-	sorted := append([]string(nil), factIDs...)
-	sort.Strings(sorted)
-	return strings.Join(sorted, "\x00")
-}
-
-func tokensIntersect(a, b map[string]bool) bool {
-	for k := range a {
-		if b[k] {
-			return true
-		}
-	}
-	return false
-}
-
-// linkByAttribute groups one entity's facts: exact-attribute groups, plus
-// pairwise unions of two groups sharing a significant attribute token.
-// Deliberately NOT transitive -- chaining A~B~C fuses attributes with
-// nothing in common and yields a malformed collision.
+// linkByAttribute groups one entity's facts by exact attribute name, in
+// first-appearance order. That is the whole rule.
+//
+// It used to do more: it also unioned any two attribute groups sharing a
+// significant token, to catch `duration_not_working` against
+// `stopped_duration`. That was measured and removed on 2026-08-14. The
+// merging generated **87% of the collisions on a real 330-fact corpus as
+// artifacts** -- pairs like `emotional_state` against `physical_state`,
+// which share the token "state" and nothing else -- and drove collision
+// count as facts^1.4, sending order 1,000+ non-collisions to an
+// adjudicator on a full-length manuscript. This repo's own oldest
+// fixture shows it in miniature: of the four collisions the sample
+// manuscript produced, two were token-merge artifacts.
+//
+// It also did not buy the recall it was added for. The case it was meant
+// to fix needs the two halves to be under the *same* entity, and the
+// blind-manuscript run scored 0/4 because entity partitioning kept them
+// apart regardless -- twice with the attribute matching exactly. Fuzzy
+// attributes never had a chance to help.
+//
+// Cross-entity and cross-attribute joining is now an agent's job, which
+// measured 4/4 against this same 0/4 (see TODO.md, "Is deterministic
+// collision-finding the right architecture?"). What is left here is the
+// case a string comparison is genuinely good at and an agent measurably
+// missed: the same attribute on the same entity, recorded twice with
+// different values.
+//
+// Removed with it: attrTokens, tokensIntersect, attrStopwords, and the
+// protect-exact/containment logic, which existed only to stop a merged
+// superset from swallowing a clean exact-attribute group. That fix
+// (v0.3.0) is moot once nothing merges -- this is a deliberate reversal
+// of it, not an oversight.
 func linkByAttribute(factIDs []string, factsByID map[string]*collisionFact) [][]string {
-	pos := map[string]int{}
-	for i, id := range factIDs {
-		pos[id] = i
-	}
 	exact := map[string][]string{}
 	var keys []string
 	for _, id := range factIDs {
@@ -330,80 +318,10 @@ func linkByAttribute(factIDs []string, factsByID map[string]*collisionFact) [][]
 	}
 	sort.Strings(keys)
 
-	var groups [][]string
+	out := make([][]string, 0, len(keys))
 	for _, k := range keys {
-		groups = append(groups, append([]string(nil), exact[k]...))
+		out = append(out, append([]string(nil), exact[k]...))
 	}
-	toks := make([]map[string]bool, len(keys))
-	for i, k := range keys {
-		toks[i] = attrTokens(k)
-	}
-	for i := 0; i < len(keys); i++ {
-		for j := i + 1; j < len(keys); j++ {
-			if tokensIntersect(toks[i], toks[j]) {
-				merged := append(append([]string(nil), exact[keys[i]]...), exact[keys[j]]...)
-				sort.Slice(merged, func(a, b int) bool { return pos[merged[a]] < pos[merged[b]] })
-				groups = append(groups, merged)
-			}
-		}
-	}
-
-	// An exact-attribute group that is *itself* a collision (two or more
-	// distinct values under one attribute name) is never superseded --
-	// see the containment note below.
-	protected := map[string]bool{}
-	for _, k := range keys {
-		values := map[string]bool{}
-		for _, id := range exact[k] {
-			values[strings.ToLower(strings.TrimSpace(fmt.Sprintf("%v", factsByID[id].Value)))] = true
-		}
-		if len(values) > 1 {
-			protected[groupKey(exact[k])] = true
-		}
-	}
-
-	// Drop groups contained in a larger one, so a merged pair supersedes
-	// its two halves rather than being reported three times.
-	//
-	// Except when a half is a real collision on its own. "The merged pair
-	// supersedes its halves" assumes the merge is at least as informative,
-	// and it isn't: the superset drags in values from the *other*
-	// attribute, so a clean `age_at_death: [eighty-one, seventy-seven]`
-	// gets replaced by one also carrying `hospice` and `March`. That hides
-	// signal behind noise -- a recall bug, not just a cosmetic one. Found
-	// 2026-08-12 by simulating an entity-matching fix over the bellwether
-	// fixture; see TODO.md.
-	sort.SliceStable(groups, func(a, b int) bool { return len(groups[a]) > len(groups[b]) })
-	var seen []map[string]bool
-	var out [][]string
-	for _, g := range groups {
-		set := map[string]bool{}
-		for _, id := range g {
-			set[id] = true
-		}
-		contained := false
-		if !protected[groupKey(g)] {
-			for _, s := range seen {
-				all := true
-				for id := range set {
-					if !s[id] {
-						all = false
-						break
-					}
-				}
-				if all {
-					contained = true
-					break
-				}
-			}
-		}
-		if contained {
-			continue
-		}
-		seen = append(seen, set)
-		out = append(out, g)
-	}
-	sort.SliceStable(out, func(a, b int) bool { return pos[out[a][0]] < pos[out[b][0]] })
 	return out
 }
 
