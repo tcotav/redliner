@@ -265,3 +265,66 @@ Everything in "What this will NOT prove" above still applies unchanged —
 this measures the join and not extraction, on one corpus, one model, one
 prompt, with a single run per arm. The novel-scale figure is an
 extrapolation from 330 facts, not a measurement at 2,000.
+
+---
+
+# Variance arm — grading rule fixed 2026-08-14, BEFORE any output was seen
+
+## Why
+
+Every number in this file and in `MORNING_EDIT.md` is **n=1 per
+condition**. Recall has come back 4/4 three times, across three different
+input shapes, which is reassuring but not the same as knowing the spread.
+And one instability is already visible: the control arm raised a
+*different* question in the JSON representation than in the compact one,
+so at least one reported quantity is known to move between runs.
+
+Building the hybrid on a number means knowing whether the number is 4/4
+or 4/4-most-of-the-time.
+
+## Method
+
+Re-run the **compact** arms — the representation the build would use —
+holding everything constant: same two bundles, same prompt wording, same
+model, same instructions. Only the run differs.
+
+**n=5 per arm**, counting the compact run already recorded above as run 1
+of 5, since it was produced under identical conditions. Four further runs
+per arm.
+
+Nothing about the corpus, the seeds, or the prompt changes. This measures
+run-to-run variance and nothing else.
+
+## What gets recorded
+
+Per arm, across the five runs:
+
+- **Seeded recall** per run, and the distribution.
+- **Asserted-`contradiction` count** per run.
+- **Non-seed items** raised, by subject, so the union and the
+  intersection across runs can be compared. This is the number that
+  settles the open observation above: an empty intersection means the
+  single control item is noise that happens to be plausible; a stable
+  core means it is a real finding the agent reliably reaches.
+
+## Thresholds
+
+| Outcome | Condition |
+| --- | --- |
+| **Stable enough to build on** | every run ≥ 3/4 recall, **and** every control run asserts ≤ 3 as `contradiction` |
+| **Unstable** | any run ≤ 2/4 recall, **or** any control run asserts ≥ 8 |
+| **Mixed** | anything between — report the spread, do not average it into a single figure |
+
+**Prediction, recorded so it can be wrong:** recall is stable at 4/4
+across all five seeded runs (the seeds are flat contradictions of value
+between two surface forms, not marginal judgment calls), while the
+non-seed items are **not** stable — the intersection across the five
+control runs will be smaller than the union, and may be empty. If that
+holds, the honest way to describe precision is "asserts nothing false"
+rather than "finds one real thing".
+
+## What this will NOT prove
+
+Five runs is a spread, not a distribution. One model, one prompt, one
+corpus, unchanged. It says nothing about variance under a different
+model, a re-worded prompt, or a manuscript with different noise.
