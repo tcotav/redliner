@@ -15,7 +15,8 @@ import (
 
 const canonUsage = `Usage:
   redliner canon stale     <manuscript_dir>   # which sections need re-extraction
-  redliner canon reconcile <manuscript_dir>   # build canon + find collisions`
+  redliner canon reconcile <manuscript_dir>   # build canon + find collisions
+  redliner canon bundle    <manuscript_dir>   # every fact, one compact line each, for an agent to join`
 
 func RunCanon(args []string, stdout io.Writer) int {
 	if len(args) < 2 {
@@ -34,6 +35,8 @@ func RunCanon(args []string, stdout io.Writer) int {
 		return cmdCanonStale(manuscriptDir, stdout)
 	case "reconcile":
 		return cmdCanonReconcile(manuscriptDir, stdout)
+	case "bundle":
+		return cmdCanonBundle(manuscriptDir, stdout)
 	default:
 		fmt.Fprintf(stdout, "Unknown command %s\n", pyReprStr(command))
 		return 1
@@ -612,4 +615,105 @@ func writeJSONFile(path string, v interface{}) error {
 		return err
 	}
 	return os.WriteFile(path, append(raw, '\n'), 0o644)
+}
+
+// --- bundle ---
+
+// BundleFacts renders every extracted fact as one line of
+// `id | entity | attribute | value`, sections in order, with a compact id
+// (`s{section}f{number}`) standing in for the full fact id.
+//
+// This is what gets handed to the continuity joiner. The format is not
+// cosmetic -- it was measured. The same facts as JSON, carrying
+// entity_type/source/confidence/excerpt, ran 267 bytes per fact; this
+// runs 86, a 68% reduction, and cost fell 44% (more than the input share
+// alone explains). Recall was unchanged at 4/4 across five runs, so the
+// dropped fields were not carrying the join. See
+// go/harness/fixtures/bellwether/SCALE_TEST.md.
+//
+// Size is the reason this exists: at 86 bytes/fact an order-2,000-fact
+// novel is a ~172KB bundle and fits one call, which means the corpus does
+// not have to be partitioned. That matters because every partitioning
+// scheme measured so far destroys exactly the long-range cross-entity
+// joins the join is for.
+//
+// `excerpt` is deliberately absent. Beyond size, a bundle carrying both a
+// value and its original quotation lets a reader spot a mismatch between
+// the two instead of doing the entity join -- which is a different, much
+// easier task, and would make any measurement of the join dishonest.
+func BundleFacts(manuscriptDir string) ([]string, error) {
+	observations, err := loadObservations(manuscriptDir)
+	if err != nil {
+		return nil, err
+	}
+	if len(observations) == 0 {
+		return nil, ErrNoObservations
+	}
+
+	var stems []string
+	for stem := range observations {
+		stems = append(stems, stem)
+	}
+	sort.Strings(stems)
+
+	var lines []string
+	for _, stem := range stems {
+		for _, raw := range reportField(observations[stem], "facts") {
+			fact, ok := raw.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			id, _ := fact["id"].(string)
+			if id == "" {
+				continue
+			}
+			lines = append(lines, fmt.Sprintf("%s | %s | %s | %v",
+				bundleFactID(stem, id),
+				asStr(fact["entity"]),
+				asStr(fact["attribute"]),
+				fact["value"],
+			))
+		}
+	}
+	return lines, nil
+}
+
+// bundleFactID compresses `fact-section_03-017` to `s3f017`. The section
+// number is kept in the id rather than repeated as a column, so the agent
+// can cite a section without the bundle paying for the word every line.
+// Anything that doesn't match the expected shape is passed through whole
+// rather than mangled -- an unfamiliar id is still a usable citation.
+func bundleFactID(stem, id string) string {
+	sec := strings.TrimPrefix(stem, "section_")
+	sec = strings.TrimLeft(sec, "0")
+	if sec == "" {
+		sec = "0"
+	}
+	num := id
+	if i := strings.LastIndex(id, "-"); i >= 0 {
+		num = id[i+1:]
+	}
+	if sec == stem || num == id {
+		return id
+	}
+	return "s" + sec + "f" + num
+}
+
+func cmdCanonBundle(manuscriptDir string, stdout io.Writer) int {
+	lines, err := BundleFacts(manuscriptDir)
+	if err != nil {
+		if errors.Is(err, ErrNoObservations) {
+			fmt.Fprintf(stdout, "No observations in %s. Run extraction first.\n", ObservationsDir(manuscriptDir))
+			return 1
+		}
+		if _, ok := err.(*schemas.SectionCollisionError); ok {
+			return reportSectionError(err, stdout)
+		}
+		fmt.Fprintf(stdout, "Error reading observations: %v\n", err)
+		return 1
+	}
+	for _, line := range lines {
+		fmt.Fprintln(stdout, line)
+	}
+	return 0
 }
