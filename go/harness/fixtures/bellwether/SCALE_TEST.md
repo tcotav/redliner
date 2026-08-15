@@ -328,3 +328,67 @@ rather than "finds one real thing".
 Five runs is a spread, not a distribution. One model, one prompt, one
 corpus, unchanged. It says nothing about variance under a different
 model, a re-worded prompt, or a manuscript with different noise.
+
+## Variance result, 2026-08-14 — recall is stable, the questions are not
+
+Run after the rule above was committed (`8327b9c`). Five runs per arm,
+compact representation, everything else held constant. Run 1 of each arm
+is the compression run already recorded.
+
+| Arm | Run 1 | 2 | 3 | 4 | 5 |
+| --- | --- | --- | --- | --- | --- |
+| Seeded, recall | 4/4 | 4/4 | 4/4 | 4/4 | 4/4 |
+| Seeded, asserted `contradiction` | 4 | 4 | 4 | 4 | 4 |
+| Control, asserted `contradiction` | **0** | **0** | **0** | **0** | **0** |
+| Control, items raised | 1 | 1 | 1 | 2 | 2 |
+
+**Stable enough to build on**, by both threshold conditions: every run
+4/4, every control run zero asserted contradictions. Tokens: seeded mean
+45,678 (range 42,958–47,888), control mean 52,043 (48,168–56,070).
+
+**Both predictions held.** Recall is stable at 4/4 across all five —
+these seeds are flat contradictions of value, not marginal judgment
+calls, and nothing about them is borderline. And the non-seed items are
+**not** stable: seven items across five control runs, and the
+intersection across all five is **empty**.
+
+### But it is not random noise — it samples from a real pool
+
+The rotating items are not arbitrary. Across the five control runs they
+cover **four distinct subjects**, two of which recur:
+
+| Subject | Runs raising it |
+| --- | --- |
+| An entity's identity — whether two names denote the same figure | 1, 3, 5 |
+| A place named three ways across two sections | 2, 4 |
+| A demographic term used one way once and another way elsewhere | 4 |
+| A character's sense reporting nothing where something is shown | 5 |
+
+Every one is a legitimate question about the corpus, every one was
+correctly hedged as `question` rather than asserted, and one of them
+corresponds to a real error already confirmed against this manuscript
+independently. The agent is sampling one or two items from a pool of
+genuine ambiguities, not inventing different things each time.
+
+### What that changes
+
+- **Precision should be described as "asserts nothing false", not "finds
+  one real thing".** Zero false contradictions in five runs is a strong,
+  stable claim. "It finds the district problem" is not — it found it
+  twice in five.
+- **A single run under-reports.** If the product is the question set, one
+  pass returns a sample of it. That is a design input for the hybrid:
+  either accept partial recall of the soft-question class per run, or
+  run the join more than once, or prompt for exhaustiveness explicitly
+  and re-measure. **None of those is tested here.**
+- **The hard class and the soft class behave differently.** Flat
+  contradictions are reproduced perfectly; judgment-call ambiguities are
+  sampled. Any future number should say which class it is measuring.
+
+### Still not proven
+
+Five runs is a spread, not a distribution, and the sampling behaviour
+above is characterized from seven items — too few to describe the pool's
+size or the per-run sampling rate. One model, one prompt, one corpus.
+Nothing here measures variance under a re-worded prompt, which is the
+most likely thing to change the soft-question behaviour.
