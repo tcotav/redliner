@@ -460,3 +460,73 @@ measured the way the joiner's was.
   already pending on one of them, applied broadly, would erase a
   deliberate choice elsewhere. That reasoning is not available to a
   string matcher at any threshold.
+
+---
+
+# Adjudicator variance arm — grading rule fixed 2026-08-15, BEFORE any output was seen
+
+## Why
+
+The variance arm above measured the *joiner* over five runs. The
+adjudicator was never measured, and the full-flow run then produced the
+result that made it necessary: a fresh adjudicator run dismissed all nine
+collisions on the real corpus, including the two an earlier run had kept.
+
+Those two findings are what the architecture section's "neither approach
+subsumes the other" rested on. If the adjudicator's keep/dismiss decision
+is a coin flip, the deterministic pass's contribution is a lottery rather
+than a class of findings, and **option 4 — drop the matcher — is back on
+the table**. If the decision is stable and the answer is "keep nothing on
+this corpus", that also argues for option 4, by a different route.
+
+Either way this is the measurement that decides whether the hybrid keeps
+both halves.
+
+## Method
+
+Five runs of the shipped `fiction-continuity-adjudicator` agent file
+against **identical input**: the real corpus's nine collisions, its brief,
+a fresh working copy per run so no run sees another's output. Same prompt,
+same model. Only the run differs.
+
+Recorded per run: how many collisions were kept, which ones (by
+entity+attribute), and the `kind` assigned.
+
+## Predictions, recorded so they can be wrong
+
+1. **The keep/dismiss decision is not stable.** At least one collision is
+   kept in some runs and dismissed in others — the two already observed
+   flipping between runs are the likeliest.
+2. **The union across five runs is larger than any single run**, as it
+   was for the joiner's soft findings.
+3. **Median kept is low — 0 to 2 of 9.** The narrowed collision set is
+   mostly re-descriptions, which is what an adjudicator should dismiss.
+
+## Thresholds
+
+| Outcome | Condition |
+| --- | --- |
+| **Stable** | every collision's keep decision is the same in at least 4 of 5 runs |
+| **Unstable** | any collision is kept in 2, 3, or 4 runs out of 5 — i.e. genuinely coin-flippy |
+
+**What each outcome means for the architecture**, fixed here so the
+result can't be read to taste:
+
+- **Stable and keeps ~nothing** → the deterministic pass contributes
+  nothing an author sees on this corpus. Option 4 becomes the leading
+  option, pending the same measurement on a second corpus.
+- **Stable and keeps a consistent set** → the hybrid is right as built,
+  and the earlier claim was correct after all; the full-flow run was the
+  outlier.
+- **Unstable** → the deterministic half is a lottery. That is not a
+  reason to keep it *or* to drop it on its own, but it means the pass
+  cannot be described to an author as "the exhaustive mechanical check",
+  and the fix is a prompt or a re-run policy, not the matcher.
+
+## What this will NOT prove
+
+One corpus, nine collisions, one model, one prompt, five runs. It says
+nothing about the adjudicator on a manuscript whose collisions are mostly
+real, which is the case that would most favour keeping the pass. It also
+measures agreement between runs, not correctness — there is no ground
+truth for this corpus.
