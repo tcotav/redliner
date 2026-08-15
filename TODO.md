@@ -2466,7 +2466,19 @@ shape the seeds are not: same entity, no alias join, an attribute
 
 So **neither approach subsumes the other**. That rules out option 4 and
 picks the hybrids: the deterministic layer keeps a real job, but not the
-job it currently has. Option 1 alone is no longer defensible — fixing
+job it currently has.
+
+**Corrected 2026-08-15, and the correction matters.** A fresh adjudicator
+run on the same corpus dismissed all nine collisions, `cont-001` and
+`cont-002` among them — the two items the sentence above rests on. The
+adjudicator's output varies run-to-run just as the joiner's soft findings
+do, which was measured for the joiner and never for the adjudicator. So
+the claim holds only at the level of *classes* (the deterministic pass
+raises same-entity/same-attribute re-descriptions that the joiner did
+not), not at the level of those two findings. **Option 4 goes back to
+open**, and settling it needs the adjudicator's variance measured the way
+the joiner's was. The narrowing is unaffected: it rested on 87% artifacts
+and a facts^1.4 curve, neither of which depends on this. Option 1 alone is no longer defensible — fixing
 entity matching addresses recall while leaving the 87% precision problem
 and the facts^1.4 growth curve untouched, and the agent already beats it
 on both.

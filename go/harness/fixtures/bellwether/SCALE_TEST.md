@@ -392,3 +392,71 @@ above is characterized from seven items — too few to describe the pool's
 size or the per-run sampling rate. One model, one prompt, one corpus.
 Nothing here measures variance under a re-worded prompt, which is the
 most likely thing to change the soft-question behaviour.
+
+---
+
+# Full-flow run, 2026-08-15 — and a correction to the section above
+
+First run of the *complete* continuity flow — reconcile, adjudicator,
+bundle, joiner, merge, validate — through the shipped commands and the
+shipped agent files. Two manuscripts.
+
+## bellwether: 4/4, both id ranges coexisting
+
+| Stage | Output |
+| --- | --- |
+| `canon reconcile` | 4 collisions |
+| adjudicator | 2 `unverified` (`cont-001`, `cont-002`), 2 dismissed as general-vs-specific phrasing |
+| `canon bundle` | 111 facts |
+| joiner | 4 findings (3 `contradiction`, 1 `unverified`) |
+| `canon merge` | 4 added, 0 duplicate → `cont-501`–`cont-504` |
+| `validate` | exit 0 |
+
+**Planted recall 4/4**, with the adjudicator's `cont-0NN` and the
+joiner's `cont-5NN` sitting in one validated file — the coexistence that
+until now had only ever been unit-tested.
+
+## Real corpus: the result that corrects this document
+
+| Stage | Old pipeline (2026-08-13) | Now |
+| --- | --- | --- |
+| Collisions to adjudicate | 69 | **9** |
+| Adjudicator kept | 2 `unverified` | **0** |
+| Joiner | — | 1 `unverified` |
+| **Author-facing total** | 2 | **1** |
+
+**The adjudicator dismissed all nine collisions — including the two it
+had previously kept.** `cont-001` and `cont-002` are the items this
+document cites above as proof that "neither approach subsumes the other",
+and a fresh run of the same agent on the same data judged both to be
+general-vs-specific phrasing rather than conflicts.
+
+**So that claim was weaker than it was stated.** It rested on one
+adjudicator run, and adjudicator output turns out to vary run-to-run in
+the same way the joiner's soft findings do — which the variance arm
+measured for the joiner and nobody measured for the adjudicator. The
+honest version: the deterministic pass surfaces a *class* the joiner did
+not raise (same entity, same attribute, described twice), and whether any
+given member of that class survives judgment is not stable.
+
+What this does **not** change: the narrowing. That rested on 87%
+artifacts and a facts^1.4 growth curve, both independent of this. Nine
+collisions rather than 69 is the same result either way.
+
+What it does change: **option 4 (drop the matcher) is no longer clearly
+ruled out.** It should be reopened as an open question rather than
+treated as settled, and settling it needs the adjudicator's own variance
+measured the way the joiner's was.
+
+## Two things that worked, worth recording
+
+- **Brief-based suppression already works.** Both agents read the brief's
+  deliberate-choices list, recognized an error the author had already
+  recorded there as known, and declined to re-report it. That is the
+  mechanism TODO.md's "author-declared alias table" proposes to extend —
+  it is not missing, it is narrower than proposed.
+- **The joiner's single finding was the kind an author can use**: not
+  just "these two names may be the same thing", but a warning that a fix
+  already pending on one of them, applied broadly, would erase a
+  deliberate choice elsewhere. That reasoning is not available to a
+  string matcher at any threshold.
