@@ -6,7 +6,6 @@
     "/Volumes/T7/code/ideas/redliner/go/harness/.work/happy"
   ],
   "exit_code": 0,
-  "stdout": "{\n  \"needs_extraction\": [],\n  \"never_extracted\": [],\n  \"changed_since_extraction\": [],\n  \"current_hashes\": {},\n  \"orphaned_observations\": []\n}\n",
   "stdout_json": {
     "needs_extraction": [],
     "never_extracted": [],

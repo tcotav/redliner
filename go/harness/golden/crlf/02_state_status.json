@@ -6,7 +6,6 @@
     "/Volumes/T7/code/ideas/redliner/go/harness/.work/crlf"
   ],
   "exit_code": 0,
-  "stdout": "{\n  \"manuscript_dir\": \"/Volumes/T7/code/ideas/redliner/go/harness/.work/crlf\",\n  \"domain\": \"fiction\",\n  \"phase\": \"intake\",\n  \"developmental_round\": 0,\n  \"section_fingerprints\": {},\n  \"created_at\": \"2026-08-13T00:59:38.087322+00:00\",\n  \"updated_at\": \"2026-08-13T00:59:38.087530+00:00\"\n}\n",
   "stdout_json": {
     "manuscript_dir": "/Volumes/T7/code/ideas/redliner/go/harness/.work/crlf",
     "domain": "fiction",

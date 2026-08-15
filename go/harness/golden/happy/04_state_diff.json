@@ -6,7 +6,6 @@
     "/Volumes/T7/code/ideas/redliner/go/harness/.work/happy"
   ],
   "exit_code": 0,
-  "stdout": "{\n  \"verdict\": \"unchanged\",\n  \"added\": [],\n  \"removed\": [],\n  \"changed\": [],\n  \"large_delta\": []\n}\n",
   "stdout_json": {
     "verdict": "unchanged",
     "added": [],

@@ -161,8 +161,16 @@ def capture_all(golden_dir: Path) -> None:
         for label, cmd_builder in steps:
             cmd = cmd_builder(work)
             result = capture_step(work, cmd)
+            # Write the *comparable* view, not the raw one. For a
+            # JSON-stdout step the raw `stdout` string still carries live
+            # timestamps that nothing compares -- `comparable()` already
+            # drops it for the self-check, and the Go golden test reads
+            # `stdout` only for non-JSON steps. Leaving it in meant every
+            # regeneration produced a spurious diff on exactly those
+            # steps, which makes a real diff impossible to see.
             (out_dir / f"{label}.json").write_text(
-                json.dumps(result, indent=2, default=str) + "\n", encoding="utf-8"
+                json.dumps(comparable(result), indent=2, default=str) + "\n",
+                encoding="utf-8",
             )
         print(f"{fixture}: {len(steps)} steps captured -> {out_dir}")
 
