@@ -46,6 +46,44 @@ Everything else — the goal statement, the novelist question, the two
 opposed rules, the output shape — should stay fixed, so two runs a year
 apart are comparable.
 
+### How to word a "press hardest" entry
+
+**State the charge, not the defense.** Every entry above does this, and
+it is the thing to preserve — not brevity, which varies. "~1,500 lines of
+a dead implementation kept alive only to regenerate golden files" is a
+charge. "Is that discipline proportionate, or is it ceremony that slowed
+delivery?" is a charge in the form of a question. Both leave the auditor
+somewhere to stand.
+
+The failure looks helpful: naming the thing, then explaining why it was
+built that way, what it would cost to change, and how TODO.md resolved
+it. That entry reads as more informative and measures less.
+
+Two reasons.
+
+**A lead does not merely point an auditor somewhere; it largely decides
+what comes back.** The 2026-08-15 run's findings traced, without
+exception, to a press-hardest entry or a TODO.md open question — and the
+two entries that drew no finding were the only areas that went
+unexamined. Whatever is listed here is close to a decision about what the
+next run will report, so the list should be short and its entries should
+open a question rather than answer one.
+
+**Whoever made the decision will word the lead in the terms they defended
+it in** — usually without noticing, because those are the terms they have.
+An auditor who meets that reasoning here has met it twice: once in
+TODO.md and once in the instrument meant to interrogate TODO.md. That is
+not tuning toward a preferred conclusion, which the rule above forbids
+outright, but it points the same way. The auditor is already told to
+distrust this repo's justifications; don't hand it one more, in the
+prompt.
+
+Write entries as long as they need to be. Just check, before adding one,
+whether you have written the case against the thing or the case for it —
+and if the reasoning feels necessary to include, that is the signal it
+belongs in TODO.md, where the auditor will find it and is instructed to
+doubt it.
+
 ## The prompt
 
 ```
