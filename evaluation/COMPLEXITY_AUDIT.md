@@ -53,7 +53,7 @@ You are evaluating a codebase. Evaluation and suggestions only — do not
 change any file, do not commit, do not "fix" anything you find. I will
 take your suggestions and cross-check them separately.
 
-Repo: /Volumes/T7/code/ideas/redliner (currently v0.5.0)
+Repo: /Volumes/T7/code/ideas/redliner (currently v0.6.0)
 
 ## What the tool is for
 
@@ -134,6 +134,14 @@ view; don't assume they're right that these are the weak spots.
 - The author-facing surface: nine command forms, findings with five
   statuses, contradictions carrying kind + category + severity, draft
   stages gating passes.
+- (added 2026-08-15) `canon reconcile --snapshot-after` folds a snapshot
+  into reconcile to delete an ordering invariant that was previously
+  enforced by the sentence "Don't reorder this" in skills/run/SKILL.md.
+  It moves the snapshot from after the whole continuity flow to the
+  middle of it, so the agent-driven steps now run with the baseline
+  already recorded. TODO.md accepts that window rather than fixing it.
+  Is that trade right, and is a flag on a ported command the right shape
+  for it?
 
 ## Already decided — argue against the reasons, don't rediscover them
 
