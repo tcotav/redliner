@@ -134,14 +134,9 @@ view; don't assume they're right that these are the weak spots.
 - The author-facing surface: nine command forms, findings with five
   statuses, contradictions carrying kind + category + severity, draft
   stages gating passes.
-- (added 2026-08-15) `canon reconcile --snapshot-after` folds a snapshot
-  into reconcile to delete an ordering invariant that was previously
-  enforced by the sentence "Don't reorder this" in skills/run/SKILL.md.
-  It moves the snapshot from after the whole continuity flow to the
-  middle of it, so the agent-driven steps now run with the baseline
-  already recorded. TODO.md accepts that window rather than fixing it.
-  Is that trade right, and is a flag on a ported command the right shape
-  for it?
+- (added 2026-08-15) `canon reconcile --snapshot-after` moves the
+  snapshot into the middle of the continuity flow. Right trade, right
+  shape?
 
 ## Already decided — argue against the reasons, don't rediscover them
 
