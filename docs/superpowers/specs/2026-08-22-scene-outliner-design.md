@@ -149,6 +149,53 @@ fields. It drives both the generated agent prompt and the validator.
 The block must be genuinely optional — `domain_loader.go` and the
 validators handle its absence rather than erroring.
 
+## The published boundary
+
+Serial fiction has a constraint novels do not: once a chapter goes out,
+it is fixed. Authors do not revise published installments except when
+re-editing for a book version. A scene above that line cannot be moved
+or cut, which makes the boundary the single most load-bearing fact in a
+view whose whole purpose is deciding what to move and what to cut.
+
+`state.json` gains an optional `published_through` field naming the last
+published section stem (e.g. `"section_11"`), set at intake for
+serial-fiction manuscripts and changeable with a command as chapters go
+out. Absent or null means nothing is published — the correct default for
+`fiction`, and for a serial being drafted before launch.
+
+**`Outline.md` renders the boundary as a visible line**, with everything
+above it marked as shipped. That is the whole of this spec's use of the
+field: a rendering cue, not a behavior change. Recording is unaffected —
+a published chapter is already never re-recorded, because SHA-skip means
+an unchanged section is skipped whether or not anyone declared it
+frozen.
+
+The field is deliberately a *section* boundary rather than a scene one.
+Publication happens per installment; there is no such thing as half a
+chapter being live.
+
+## Cost model
+
+Worth stating plainly, because "re-run the outline" sounds expensive and
+is not.
+
+A re-run costs: a deterministic staleness check (free), **one agent call
+per section whose hash changed**, then a deterministic join and render
+(free). Writing chapter 12 and re-running is one call; chapters 1–11 are
+never opened. A full re-record happens only if every section's hash
+changed — a global find-replace or a reformat, not ordinary writing.
+
+So "outline after every chapter" and "outline after five chapters" cost
+the same in total; they differ only in when the author sees the view.
+This is the reason the layer is built on the continuity layer's
+staleness machinery rather than as a one-shot pass, and it is what makes
+the "run it repeatedly as you write" workflow viable rather than
+aspirational.
+
+Inside `assess`, the developmental editor additionally reads
+`outline.json`. That is a compact structural file, and it replaces work
+the editor was already doing by re-deriving scene structure from prose.
+
 ## Commands and wiring
 
 Two entry points, matching the continuity precedent:
@@ -259,6 +306,11 @@ having even before a tool reads it.
 - `new-domain` generates concrete per-domain agent files (the B1
   decision). It needs a seventh template, plus a regeneration story for
   existing domains.
+- `state.json` gains optional `published_through`; `project_state.go`
+  and its validator must accept its absence (every existing manuscript,
+  and every `fiction` one, lacks it). `intake` asks for it on
+  serial-fiction manuscripts only, and a command sets it as chapters
+  ship.
 - `run/SKILL.md` needs the new subcommand section, the assess-flow
   insertion between steps 2 and 3, and `status` should report whether any
   sections need re-recording — as it already does for continuity.
@@ -280,3 +332,24 @@ Open sub-questions it would need to answer: with `order` positional and
 ids non-durable, matching scenes across rounds has to be done by
 content similarity or `anchor`, not by position — a naive positional
 diff would report every scene after an insertion as changed.
+
+**Teaching the developmental pass about the locked prefix.** This spec
+adds `published_through` and uses it only to draw a line in
+`Outline.md`. The larger use is that
+`serial-fiction-developmental-editor` currently reasons about
+"everything released so far" — the phrase appears throughout its prompt
+— with no way to know which chapters those are, so it can emit findings
+against text the author cannot change.
+
+The actionable form of a finding about a published chapter is different,
+not absent: not "restructure chapter 4's midpoint" but "chapter 4 left
+this unpaid — pay it in chapter 13." Same observation, forward-directed
+advice.
+
+That implies a mode rather than a filter: **serial mode** (locked
+prefix, findings must be actionable forward) versus **book-version
+re-edit** (nothing locked, restructure anything). Which one applies is a
+fact only the author has.
+
+Scope: the agent prompt, the findings schema's `scope` field, and
+intake. Its own spec, not this one.
