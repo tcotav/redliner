@@ -612,6 +612,17 @@ func TestOutlineTools_ActuallyWork(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(v1Dir, "outline.json")); err != nil {
 		t.Fatalf("outline_archive (first) did not create %s: %v", v1Dir, err)
 	}
+	firstOut, ok := res.StructuredContent.(map[string]any)
+	if !ok {
+		t.Fatalf("outline_archive (first): StructuredContent is %T, want map[string]any", res.StructuredContent)
+	}
+	firstMessage, _ := firstOut["output"].(string)
+	if !strings.Contains(firstMessage, "Archived") {
+		t.Errorf("outline_archive (first) output does not report that it archived something: %q", firstMessage)
+	}
+	if !strings.Contains(firstMessage, "v1") {
+		t.Errorf("outline_archive (first) output does not name the version it wrote: %q", firstMessage)
+	}
 
 	// outline_archive, second call: nothing changed since v1, so this
 	// must be a no-op -- proving the tool reaches ArchiveOutlineVersion's
@@ -628,5 +639,19 @@ func TestOutlineTools_ActuallyWork(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(cli.OutlineVersionsDir(dir), "v2")); err == nil {
 		t.Error("outline_archive (second) created v2 even though nothing changed")
+	}
+	secondOut, ok := res.StructuredContent.(map[string]any)
+	if !ok {
+		t.Fatalf("outline_archive (second): StructuredContent is %T, want map[string]any", res.StructuredContent)
+	}
+	secondMessage, _ := secondOut["output"].(string)
+	if !strings.Contains(strings.ToLower(secondMessage), "nothing archived") {
+		t.Errorf("outline_archive (second) output does not say nothing was archived: %q", secondMessage)
+	}
+	if strings.Contains(secondMessage, "Archived ") {
+		t.Errorf("outline_archive (second) output still contains the 'Archived <path>' wording: %q", secondMessage)
+	}
+	if firstMessage == secondMessage {
+		t.Fatalf("outline_archive's two outcomes produced identical output -- they must be distinguishable: %q", firstMessage)
 	}
 }

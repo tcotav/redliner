@@ -816,3 +816,108 @@ func TestRunOutlineVersions_EmptyIsNotAnError(t *testing.T) {
 		t.Errorf("unhelpful empty listing: %s", buf.String())
 	}
 }
+
+// TestRunOutlineArchive_WritesVersionAndReportsPath covers the CLI-level
+// `archive` command's first-run outcome: a version is written, and the
+// printed message names it -- unlike `versions` (TestRunOutlineVersions_
+// ListsWhatIsKept above), archive had no CLI-level test at all before
+// this, even though it's the one whose message tells an author whether
+// anything happened.
+func TestRunOutlineArchive_WritesVersionAndReportsPath(t *testing.T) {
+	dir := newOutlineFixture(t, "section_01")
+	stale, _ := ComputeOutlineStale(dir)
+	writeOutlineSectionWithScenes(t, dir, "section_01", stale.CurrentHashes["section_01"],
+		[]map[string]interface{}{scene(1, "enter")})
+
+	var buf bytes.Buffer
+	if code := RunOutline([]string{"archive", dir, "section_01"}, &buf, &buf); code != 0 {
+		t.Fatalf("exit %d: %s", code, buf.String())
+	}
+	out := buf.String()
+	if !strings.Contains(out, "Archived") {
+		t.Errorf("first archive did not report that it archived something: %s", out)
+	}
+	if !strings.Contains(out, filepath.Join("v1")) {
+		t.Errorf("first archive message does not name the version it wrote: %s", out)
+	}
+	if _, err := os.Stat(filepath.Join(OutlineVersionsDir(dir), "v1", "outline.json")); err != nil {
+		t.Fatalf("archive did not create v1/outline.json: %v", err)
+	}
+}
+
+// TestRunOutlineArchive_NoChangeReportsNothingArchived covers the second
+// outcome: re-archiving unchanged content must say so, and that message
+// must actually differ from the "Archived ..." one -- a future edit that
+// collapsed both branches into the same string, or swapped them, would
+// otherwise pass every existing check.
+func TestRunOutlineArchive_NoChangeReportsNothingArchived(t *testing.T) {
+	dir := newOutlineFixture(t, "section_01")
+	stale, _ := ComputeOutlineStale(dir)
+	writeOutlineSectionWithScenes(t, dir, "section_01", stale.CurrentHashes["section_01"],
+		[]map[string]interface{}{scene(1, "enter")})
+
+	var first bytes.Buffer
+	if code := RunOutline([]string{"archive", dir, "section_01"}, &first, &first); code != 0 {
+		t.Fatalf("first archive: exit %d: %s", code, first.String())
+	}
+
+	var second bytes.Buffer
+	if code := RunOutline([]string{"archive", dir}, &second, &second); code != 0 {
+		t.Fatalf("second archive: exit %d: %s", code, second.String())
+	}
+	out := second.String()
+	if !strings.Contains(out, "nothing archived") && !strings.Contains(out, "Nothing archived") {
+		t.Errorf("re-archiving unchanged content did not say nothing was archived: %s", out)
+	}
+	if strings.Contains(out, "Archived ") {
+		t.Errorf("no-op archive message still contains the 'Archived <path>' wording: %s", out)
+	}
+	if first.String() == second.String() {
+		t.Fatalf("archived and no-op messages are identical -- the two outcomes are indistinguishable: %q", first.String())
+	}
+	if _, err := os.Stat(filepath.Join(OutlineVersionsDir(dir), "v2")); err == nil {
+		t.Error("second archive created v2 even though nothing changed")
+	}
+}
+
+// TestRunOutlineArchive_ZeroTrailingArgsStillArchivesOnChange covers the
+// brief's specific meaning for zero trailing arguments: "nothing was
+// re-recorded this run" is not the same claim as "nothing to archive".
+// Deleting a per-section file changes the joined outline (one fewer
+// section) without anything being re-recorded, so an archive call with
+// no changed-section arguments must still write a new version.
+func TestRunOutlineArchive_ZeroTrailingArgsStillArchivesOnChange(t *testing.T) {
+	dir := newOutlineFixture(t, "section_01", "section_02")
+	stale, _ := ComputeOutlineStale(dir)
+	writeOutlineSectionWithScenes(t, dir, "section_01", stale.CurrentHashes["section_01"],
+		[]map[string]interface{}{scene(1, "enter")})
+	writeOutlineSectionWithScenes(t, dir, "section_02", stale.CurrentHashes["section_02"],
+		[]map[string]interface{}{scene(1, "begin")})
+
+	var first bytes.Buffer
+	if code := RunOutline([]string{"archive", dir, "section_01", "section_02"}, &first, &first); code != 0 {
+		t.Fatalf("first archive: exit %d: %s", code, first.String())
+	}
+	if _, err := os.Stat(filepath.Join(OutlineVersionsDir(dir), "v1")); err != nil {
+		t.Fatalf("first archive did not create v1: %v", err)
+	}
+
+	// Remove section_02's recorded outline entirely -- the join now has
+	// one fewer section, so the joined content differs, but nothing was
+	// "re-recorded" this run.
+	if err := os.Remove(filepath.Join(OutlineSectionsDir(dir), "section_02.json")); err != nil {
+		t.Fatal(err)
+	}
+
+	var second bytes.Buffer
+	if code := RunOutline([]string{"archive", dir}, &second, &second); code != 0 {
+		t.Fatalf("second archive (zero trailing args): exit %d: %s", code, second.String())
+	}
+	out := second.String()
+	if !strings.Contains(out, "Archived") {
+		t.Errorf("archive with zero trailing args did not archive the orphan-removal change: %s", out)
+	}
+	if _, err := os.Stat(filepath.Join(OutlineVersionsDir(dir), "v2", "outline.json")); err != nil {
+		t.Fatalf("archive with zero trailing args did not create v2: %v", err)
+	}
+}
