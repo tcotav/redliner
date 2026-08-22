@@ -94,6 +94,7 @@ Per-section file:
 {
   "section": "section_03",
   "section_sha256": "<the hash the recorder was given>",
+  "leaves_open": "Whether the guard reports her. (serial-fiction only)",
   "scenes": [
     {
       "order": 1,
@@ -106,6 +107,10 @@ Per-section file:
   ]
 }
 ```
+
+Domain-configured section-level fields (currently only
+serial-fiction's `leaves_open`) sit at the top level of the file,
+outside the `scenes` array. Domains without them omit the key entirely.
 
 **Rows are scene-level, not section-level.** The unit redliner tracks is
 `section`, but a section usually holds several scenes, and the author's
@@ -165,11 +170,26 @@ Standalone. Safe any time after intake.
 
 ### Inside `assess`
 
-**Outline refresh is step 1 of the assess flow — not a precondition the
-author is trusted to have satisfied.** It is hash-driven and idempotent,
-so on an unchanged manuscript it costs nearly nothing, and on a changed
-one it is the difference between a spine that matches the prose and one
-that does not.
+**Outline refresh happens inside the assess flow — not as a
+precondition the author is trusted to have satisfied.** It is
+hash-driven and idempotent, so on an unchanged manuscript it costs
+nearly nothing, and on a changed one it is the difference between a
+spine that matches the prose and one that does not.
+
+**Its exact position matters, because refresh overwrites
+`outline.json`.** The existing flow is: step 1 moves to the
+developmental phase and increments the round counter; step 2 archives
+the previous round *before* clearing anything; step 3 tasks the
+developmental editor. The outline refresh goes **after step 2's archive
+and before step 3** — never before step 2.
+
+Put it earlier and round N-1's recorded scene structure is destroyed.
+Unlike `continuity.json`, which is deterministically rebuildable from
+per-section observations, `outline.json` is a join of agent output: once
+overwritten without an archive, that round's outline is gone, and the
+deferred diff tool inherits a hole. This is verbatim the failure step 2
+exists to prevent — *"every pass rewrites findings in place, so clearing
+without archiving left nothing to compare a later round against."*
 
 This mirrors the `--snapshot-after` lesson recorded in `run/SKILL.md`:
 splitting two ordered operations means "one order works and the other
@@ -191,10 +211,27 @@ questions legible.
 ## Archiving
 
 The outline is archived per round alongside developmental findings.
-`rounds.go` gains `outline` in `passKinds` and a case archiving
+`rounds.go` gains an `outline` archive kind and a case archiving
 `.redliner/outline/outline.json` into
-`.redliner/rounds/outline-round<N>/`. `state pass` accepts the same new
-kind (`passKinds` is shared by both).
+`.redliner/rounds/outline-round<N>/`.
+
+**It archives at both points developmental findings do** — in assess
+step 2 (before the refresh overwrites it) and again in the closing step.
+That is not redundant: the closing archive preserves each completed
+round, and the step 2 archive is the safety net for a round that ended
+without one. `freeArchiveDir` already suffixes `.2`, `.3` for exactly
+this case.
+
+**`outline` is an archive kind, not a pass kind.** `passKinds` is
+currently shared by `rounds archive` and `state pass`, and that has to
+split: `state pass` records "the author ran this pass," which drives
+`status`. The outline refreshes automatically inside every assess, so
+recording it there would make `status` report "outline: run" permanently
+— a constant, and therefore no signal at all. The informative report is
+the per-section staleness `status` already shows for continuity. So
+`rounds.go` validates against a new `archiveKinds` list (developmental,
+line, continuity, outline) while `state pass` keeps `passKinds`
+unchanged, and `state pass outline` stays deliberately unavailable.
 
 Archives are numbered by the developmental round counter even though
 the layer is not phase-gated. That is the continuity precedent exactly —
@@ -222,9 +259,13 @@ having even before a tool reads it.
 - `new-domain` generates concrete per-domain agent files (the B1
   decision). It needs a seventh template, plus a regeneration story for
   existing domains.
-- `run/SKILL.md` needs the new subcommand section, and `status` should
-  report whether any sections need re-recording — as it already does for
-  continuity.
+- `run/SKILL.md` needs the new subcommand section, the assess-flow
+  insertion between steps 2 and 3, and `status` should report whether any
+  sections need re-recording — as it already does for continuity.
+- `Outline.md` in the manuscript folder is confirmed safe:
+  `schemas.SectionFiles` globs `section_*` with a `.txt`/`.md`
+  extension, non-recursively, so nothing else in the directory is
+  discovered as manuscript text.
 - MCP surface: the deterministic operations (staleness check, join)
   need tool equivalents alongside the CLI ones, per the "use whichever
   concrete tool this session has" contract in `run/SKILL.md`.
