@@ -17,6 +17,7 @@ const outlineUsage = `Usage:
   redliner outline stale    <manuscript_dir>   # which sections need re-recording
   redliner outline join     <manuscript_dir>   # rebuild outline.json from every section file
   redliner outline render   <manuscript_dir>   # write the author-readable Outline.md
+  redliner outline archive  <manuscript_dir> [changed_section...]  # archive a version if the joined outline changed
   redliner outline versions <manuscript_dir>   # list archived outline versions`
 
 // RunOutline resolves its own domainsDir via schemas.FindDomainsDir() --
@@ -60,6 +61,13 @@ func RunOutlineWithDomainsDir(args []string, domainsDir string, stdout, stderr i
 		return cmdOutlineJoin(manuscriptDir, stdout)
 	case "render":
 		return cmdOutlineRender(manuscriptDir, domainsDir, stdout)
+	case "archive":
+		// Trailing args after manuscriptDir are the changed section
+		// stems -- zero of them is valid and means "nothing was
+		// re-recorded this run", not "nothing to archive": the joined
+		// outline may still differ (e.g. an orphaned section's record
+		// was deleted), and that's still worth a version.
+		return cmdOutlineArchive(manuscriptDir, domainsDir, args[2:], stdout)
 	case "versions":
 		return cmdOutlineVersions(manuscriptDir, stdout)
 	default:
@@ -450,12 +458,13 @@ type OutlineVersionMeta struct {
 // means hand-reading JSON inside a hidden directory. It costs a file
 // copy because the render is deterministic.
 //
-// Resolves its own domainsDir via schemas.FindDomainsDir() -- correct
-// here because, unlike cmdOutlineRender, this function has no MCP-facing
-// caller yet (only RunOutline's CLI path and tests call it), so there is
-// no already-resolved domainsDir to reuse. If that changes, thread
-// domainsDir through the same way RunOutlineWithDomainsDir does.
-func ArchiveOutlineVersion(manuscriptDir string, changedSections []string) (string, bool, error) {
+// Takes domainsDir as a parameter rather than resolving it via
+// schemas.FindDomainsDir() -- same reason as outlineFieldsFor and
+// cmdOutlineRender: a self-resolved call here would search from
+// whatever binary is currently running, not from the domainsDir the
+// caller (RunOutlineWithDomainsDir on both front doors) already
+// resolved once.
+func ArchiveOutlineVersion(manuscriptDir, domainsDir string, changedSections []string) (string, bool, error) {
 	joined, err := ComputeOutlineJoin(manuscriptDir)
 	if err != nil {
 		return "", false, err
@@ -492,10 +501,6 @@ func ArchiveOutlineVersion(manuscriptDir string, changedSections []string) (stri
 		return "", false, err
 	}
 
-	domainsDir, err := schemas.FindDomainsDir()
-	if err != nil {
-		return "", false, err
-	}
 	rowFields, sectionFields, err := outlineFieldsFor(manuscriptDir, domainsDir)
 	if err != nil {
 		return "", false, err
@@ -528,6 +533,33 @@ func ArchiveOutlineVersion(manuscriptDir string, changedSections []string) (stri
 		return "", false, err
 	}
 	return dest, true, nil
+}
+
+// cmdOutlineArchive is the CLI/MCP-reachable wrapper around
+// ArchiveOutlineVersion. Its output states plainly which of the two
+// outcomes happened -- an author re-running this after every chapter
+// needs to be able to tell "archived v4" from "nothing changed" at a
+// glance, not infer it from silence.
+func cmdOutlineArchive(manuscriptDir, domainsDir string, changedSections []string, stdout io.Writer) int {
+	path, archived, err := ArchiveOutlineVersion(manuscriptDir, domainsDir, changedSections)
+	if err != nil {
+		if err == ErrNoOutlineSections {
+			fmt.Fprintf(stdout, "No outline sections in %s. Run `redliner outline stale` and record them first.\n", OutlineSectionsDir(manuscriptDir))
+			return 1
+		}
+		fmt.Fprintf(stdout, "Error archiving outline version: %v\n", err)
+		return 1
+	}
+	if !archived {
+		fmt.Fprintln(stdout, "Outline unchanged since the last archived version. Nothing archived.")
+		return 0
+	}
+	abs, absErr := filepath.Abs(path)
+	if absErr != nil {
+		abs = path
+	}
+	fmt.Fprintf(stdout, "Archived %s\n", abs)
+	return 0
 }
 
 func cmdOutlineVersions(manuscriptDir string, stdout io.Writer) int {

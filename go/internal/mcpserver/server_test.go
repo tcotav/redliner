@@ -147,6 +147,7 @@ func TestToolNamesAndDescriptions_MatchPython(t *testing.T) {
 		"outline_stale":    true,
 		"outline_join":     true,
 		"outline_render":   true,
+		"outline_archive":  true,
 		"outline_versions": true,
 	}
 
@@ -472,7 +473,7 @@ func TestOutlineToolsAreRegistered(t *testing.T) {
 	for _, tl := range listToolsForParity(t, srv) {
 		tools[tl.Name] = true
 	}
-	for _, name := range []string{"outline_stale", "outline_join", "outline_render", "outline_versions"} {
+	for _, name := range []string{"outline_stale", "outline_join", "outline_render", "outline_archive", "outline_versions"} {
 		if !tools[name] {
 			t.Errorf("MCP server exposes no %q tool -- the Cowork front door cannot follow the outline skill prose without it", name)
 		}
@@ -592,5 +593,40 @@ func TestOutlineTools_ActuallyWork(t *testing.T) {
 	}
 	if !strings.Contains(string(body), "section_01") {
 		t.Errorf("Outline.md does not mention section_01:\n%s", body)
+	}
+
+	// outline_archive, first call: the joined outline has never been
+	// archived, so this must write v1 -- proving the tool is wired to
+	// ArchiveOutlineVersion and not, say, always reporting "unchanged".
+	res, err = session.CallTool(ctx, &mcp.CallToolParams{
+		Name:      "outline_archive",
+		Arguments: map[string]any{"manuscript_dir": dir, "changed_sections": []string{"section_01"}},
+	})
+	if err != nil {
+		t.Fatalf("outline_archive (first): protocol error: %v", err)
+	}
+	if res.IsError {
+		t.Fatalf("outline_archive (first): unexpected soft error: %+v", res.StructuredContent)
+	}
+	v1Dir := filepath.Join(cli.OutlineVersionsDir(dir), "v1")
+	if _, err := os.Stat(filepath.Join(v1Dir, "outline.json")); err != nil {
+		t.Fatalf("outline_archive (first) did not create %s: %v", v1Dir, err)
+	}
+
+	// outline_archive, second call: nothing changed since v1, so this
+	// must be a no-op -- proving the tool reaches ArchiveOutlineVersion's
+	// real dedup logic rather than archiving unconditionally.
+	res, err = session.CallTool(ctx, &mcp.CallToolParams{
+		Name:      "outline_archive",
+		Arguments: map[string]any{"manuscript_dir": dir},
+	})
+	if err != nil {
+		t.Fatalf("outline_archive (second): protocol error: %v", err)
+	}
+	if res.IsError {
+		t.Fatalf("outline_archive (second): unexpected soft error: %+v", res.StructuredContent)
+	}
+	if _, err := os.Stat(filepath.Join(cli.OutlineVersionsDir(dir), "v2")); err == nil {
+		t.Error("outline_archive (second) created v2 even though nothing changed")
 	}
 }

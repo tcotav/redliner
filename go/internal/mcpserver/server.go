@@ -60,6 +60,7 @@ func NewServer(domainsDir string) *mcp.Server {
 	mcp.AddTool(srv, &mcp.Tool{Name: "outline_stale", Description: descOutlineStale}, s.outlineStale)
 	mcp.AddTool(srv, &mcp.Tool{Name: "outline_join", Description: descOutlineJoin}, s.outlineJoin)
 	mcp.AddTool(srv, &mcp.Tool{Name: "outline_render", Description: descOutlineRender}, s.outlineRender)
+	mcp.AddTool(srv, &mcp.Tool{Name: "outline_archive", Description: descOutlineArchive}, s.outlineArchive)
 	mcp.AddTool(srv, &mcp.Tool{Name: "outline_versions", Description: descOutlineVersions}, s.outlineVersions)
 
 	return srv
@@ -457,9 +458,18 @@ func (s *redlinerServer) canonMerge(_ context.Context, _ *mcp.CallToolRequest, i
 }
 
 // --- outline_* -- the scene outliner layer. outlineStale returns the
-// computed struct directly (like canonStale); the other three run the
+// computed struct directly (like canonStale); the other four run the
 // CLI command and return its human-readable stdout, because their whole
 // value is a written file plus the path to it. ---
+
+// outlineArchiveInput adds changed_sections to the shared manuscript_dir
+// field -- the section stems re-recorded this run. Omitting it (an empty
+// list) is valid: see descOutlineArchive for why that's not the same as
+// "nothing to archive".
+type outlineArchiveInput struct {
+	ManuscriptDir   string   `json:"manuscript_dir"`
+	ChangedSections []string `json:"changed_sections,omitempty"`
+}
 
 func (s *redlinerServer) outlineStale(_ context.Context, _ *mcp.CallToolRequest, in manuscriptDirInput) (*mcp.CallToolResult, any, error) {
 	result, err := cli.ComputeOutlineStale(in.ManuscriptDir)
@@ -480,6 +490,10 @@ func (s *redlinerServer) outlineRender(_ context.Context, _ *mcp.CallToolRequest
 	return s.runOutlineCommand("render", in.ManuscriptDir)
 }
 
+func (s *redlinerServer) outlineArchive(_ context.Context, _ *mcp.CallToolRequest, in outlineArchiveInput) (*mcp.CallToolResult, any, error) {
+	return s.runOutlineCommand("archive", in.ManuscriptDir, in.ChangedSections...)
+}
+
 func (s *redlinerServer) outlineVersions(_ context.Context, _ *mcp.CallToolRequest, in manuscriptDirInput) (*mcp.CallToolResult, any, error) {
 	return s.runOutlineCommand("versions", in.ManuscriptDir)
 }
@@ -489,10 +503,12 @@ func (s *redlinerServer) outlineVersions(_ context.Context, _ *mcp.CallToolReque
 // schemas.FindDomainsDir(), which would search from this process's own
 // binary rather than reusing the directory this server was constructed
 // with. See internal/cli/outline.go's RunOutline doc comment (same
-// hazard, same fix, as validate_findings's ValidateManuscript).
-func (s *redlinerServer) runOutlineCommand(command, manuscriptDir string) (*mcp.CallToolResult, any, error) {
+// hazard, same fix, as validate_findings's ValidateManuscript). trailing
+// carries archive's changed-section stems; every other command ignores it.
+func (s *redlinerServer) runOutlineCommand(command, manuscriptDir string, trailing ...string) (*mcp.CallToolResult, any, error) {
 	var out bytes.Buffer
-	code := cli.RunOutlineWithDomainsDir([]string{command, manuscriptDir}, s.domainsDir, &out, &out)
+	args := append([]string{command, manuscriptDir}, trailing...)
+	code := cli.RunOutlineWithDomainsDir(args, s.domainsDir, &out, &out)
 	if code != 0 {
 		return nil, errorResult("%s", strings.TrimSpace(out.String())), nil
 	}

@@ -104,4 +104,6 @@ const descOutlineJoin = `Rebuild .redliner/outline/outline.json from every curre
 
 const descOutlineRender = `Write the author-readable Outline.md into the manuscript directory (not .redliner/), rendering every recorded scene and the published boundary. Deterministic; no model call.`
 
+const descOutlineArchive = `Save the current joined outline as a new numbered version under .redliner/outline/versions/, so a later question like "what did this look like two chapters ago" has an answer. Pass changed_sections as the stems re-recorded this run, or omit it -- an empty list is valid and still checked, since a run that only deleted an orphaned section still changed the joined outline. A no-op, reported as such rather than as an error, when the joined outline is unchanged since the last archived version: call it after every render without worrying about creating noise.`
+
 const descOutlineVersions = `List the archived outline versions under .redliner/outline/versions/, newest counter last, with the date, what changed, and the path to each version's readable Outline.md.`

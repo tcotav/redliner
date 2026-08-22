@@ -547,13 +547,26 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
+// testDomainsDir gives ArchiveOutlineVersion's tests a real domainsDir
+// to pass now that it's a parameter instead of self-resolved -- TestMain
+// above guarantees REDLINER_DOMAINS_DIR is set, so schemas.FindDomainsDir
+// always succeeds here.
+func testDomainsDir(t *testing.T) string {
+	t.Helper()
+	dir, err := schemas.FindDomainsDir()
+	if err != nil {
+		t.Fatalf("testDomainsDir: %v", err)
+	}
+	return dir
+}
+
 func TestArchiveOutlineVersion_FirstRunCreatesV1(t *testing.T) {
 	dir := newOutlineFixture(t, "section_01")
 	stale, _ := ComputeOutlineStale(dir)
 	writeOutlineSectionWithScenes(t, dir, "section_01", stale.CurrentHashes["section_01"],
 		[]map[string]interface{}{scene(1, "enter")})
 
-	path, archived, err := ArchiveOutlineVersion(dir, []string{"section_01"})
+	path, archived, err := ArchiveOutlineVersion(dir, testDomainsDir(t), []string{"section_01"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -594,7 +607,7 @@ func TestArchiveOutlineVersion_NoOpRunArchivesNothing(t *testing.T) {
 	writeOutlineSectionWithScenes(t, dir, "section_01", stale.CurrentHashes["section_01"],
 		[]map[string]interface{}{scene(1, "enter")})
 
-	if _, archived, err := ArchiveOutlineVersion(dir, []string{"section_01"}); err != nil || !archived {
+	if _, archived, err := ArchiveOutlineVersion(dir, testDomainsDir(t), []string{"section_01"}); err != nil || !archived {
 		t.Fatalf("first archive: archived=%v err=%v", archived, err)
 	}
 
@@ -609,7 +622,7 @@ func TestArchiveOutlineVersion_NoOpRunArchivesNothing(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, archived, err := ArchiveOutlineVersion(dir, nil)
+	_, archived, err := ArchiveOutlineVersion(dir, testDomainsDir(t), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -631,13 +644,13 @@ func TestArchiveOutlineVersion_ChangedContentCreatesV2(t *testing.T) {
 	stale, _ := ComputeOutlineStale(dir)
 	writeOutlineSectionWithScenes(t, dir, "section_01", stale.CurrentHashes["section_01"],
 		[]map[string]interface{}{scene(1, "enter")})
-	if _, _, err := ArchiveOutlineVersion(dir, []string{"section_01"}); err != nil {
+	if _, _, err := ArchiveOutlineVersion(dir, testDomainsDir(t), []string{"section_01"}); err != nil {
 		t.Fatal(err)
 	}
 
 	writeOutlineSectionWithScenes(t, dir, "section_01", stale.CurrentHashes["section_01"],
 		[]map[string]interface{}{scene(1, "enter"), scene(2, "flee")})
-	path, archived, err := ArchiveOutlineVersion(dir, []string{"section_01"})
+	path, archived, err := ArchiveOutlineVersion(dir, testDomainsDir(t), []string{"section_01"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -665,7 +678,7 @@ func TestArchiveOutlineVersion_MetaRecordsChangedSections(t *testing.T) {
 	writeOutlineSectionWithScenes(t, dir, "section_01", stale.CurrentHashes["section_01"],
 		[]map[string]interface{}{scene(1, "enter")})
 
-	path, _, err := ArchiveOutlineVersion(dir, []string{"section_01"})
+	path, _, err := ArchiveOutlineVersion(dir, testDomainsDir(t), []string{"section_01"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -710,7 +723,7 @@ func TestArchiveOutlineVersion_CounterComesFromStateNotDirectoryCount(t *testing
 		t.Fatal(err)
 	}
 
-	path, archived, err := ArchiveOutlineVersion(dir, []string{"section_01"})
+	path, archived, err := ArchiveOutlineVersion(dir, testDomainsDir(t), []string{"section_01"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -735,7 +748,7 @@ func TestRunOutlineVersions_ListsWhatIsKept(t *testing.T) {
 	stale, _ := ComputeOutlineStale(dir)
 	writeOutlineSectionWithScenes(t, dir, "section_01", stale.CurrentHashes["section_01"],
 		[]map[string]interface{}{scene(1, "enter")})
-	if _, _, err := ArchiveOutlineVersion(dir, []string{"section_01"}); err != nil {
+	if _, _, err := ArchiveOutlineVersion(dir, testDomainsDir(t), []string{"section_01"}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -745,12 +758,12 @@ func TestRunOutlineVersions_ListsWhatIsKept(t *testing.T) {
 	// never touches.
 	writeOutlineSectionWithScenes(t, dir, "section_01", stale.CurrentHashes["section_01"],
 		[]map[string]interface{}{scene(1, "enter"), scene(2, "flee")})
-	if _, archived, err := ArchiveOutlineVersion(dir, []string{"section_01"}); err != nil || !archived {
+	if _, archived, err := ArchiveOutlineVersion(dir, testDomainsDir(t), []string{"section_01"}); err != nil || !archived {
 		t.Fatalf("second archive: archived=%v err=%v", archived, err)
 	}
 	writeOutlineSectionWithScenes(t, dir, "section_01", stale.CurrentHashes["section_01"],
 		[]map[string]interface{}{scene(1, "enter"), scene(2, "flee"), scene(3, "return")})
-	if _, archived, err := ArchiveOutlineVersion(dir, []string{"section_01"}); err != nil || !archived {
+	if _, archived, err := ArchiveOutlineVersion(dir, testDomainsDir(t), []string{"section_01"}); err != nil || !archived {
 		t.Fatalf("third archive: archived=%v err=%v", archived, err)
 	}
 

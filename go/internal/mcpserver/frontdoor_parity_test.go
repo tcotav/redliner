@@ -65,6 +65,7 @@ var commandToTool = map[string]string{
 	"outline stale":    "outline_stale",
 	"outline join":     "outline_join",
 	"outline render":   "outline_render",
+	"outline archive":  "outline_archive",
 	"outline versions": "outline_versions",
 }
 
