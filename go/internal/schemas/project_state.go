@@ -208,6 +208,34 @@ type State struct {
 	//
 	// Optional, same reasoning as DraftStage.
 	Passes map[string]int `json:"passes,omitempty"`
+
+	// OutlineVersion is the monotonic counter for the outline layer's own
+	// version archive under .redliner/outline/versions/v<N>/. Deliberately
+	// NOT DevelopmentalRound: the outline runs an order of magnitude more
+	// often than rounds turn over (the author's loop is write a chapter,
+	// outline, write the next, outline -- a loop that need never run
+	// `assess`), so keying versions to the round counter would produce no
+	// history at all for the layer's primary workflow.
+	//
+	// Optional, same reasoning as DraftStage: zero means "no versions
+	// archived yet" and the key stays out of state written before this
+	// existed.
+	OutlineVersion int `json:"outline_version,omitempty"`
+
+	// PublishedThrough names the last section already released to readers
+	// (e.g. "section_11"). Serial fiction has a constraint a novel does
+	// not: once a chapter goes out, it is fixed, so a scene above that
+	// line cannot be moved or cut -- which is the single most load-bearing
+	// fact in a view whose purpose is deciding what to move and what to
+	// cut. Used here only to draw a visible line in Outline.md; see
+	// TODO.md, "The developmental pass doesn't know which chapters are
+	// locked", for the larger use that is deliberately not built yet.
+	//
+	// A section boundary, not a scene one: publication happens per
+	// installment, and there is no such thing as half a chapter being
+	// live. Empty/absent means nothing is published -- correct for
+	// `fiction`, and for a serial being drafted before launch.
+	PublishedThrough string `json:"published_through,omitempty"`
 }
 
 // DomainName defaults an empty/absent domain to DefaultDomain, mirroring

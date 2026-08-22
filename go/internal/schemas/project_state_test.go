@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -220,5 +221,63 @@ func TestNewState_JSONShape(t *testing.T) {
 	}
 	if state.SectionFingerprints == nil {
 		t.Error("SectionFingerprints must be a non-nil empty map, or it marshals as JSON null instead of {}")
+	}
+}
+
+func TestState_OutlineFieldsAreOptional(t *testing.T) {
+	dir := t.TempDir()
+
+	// A state file written before these fields existed must still load,
+	// and must not gain the keys when saved back -- the harness goldens
+	// compare the whole .redliner/ tree.
+	legacy := `{"manuscript_dir":"m","domain":"fiction","phase":"intake",` +
+		`"developmental_round":0,"section_fingerprints":{},"created_at":"x"}`
+	if err := os.MkdirAll(StateDir(dir), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(StatePath(dir), []byte(legacy), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	state, err := LoadState(dir)
+	if err != nil || state == nil {
+		t.Fatalf("legacy state failed to load: %v", err)
+	}
+	if state.OutlineVersion != 0 || state.PublishedThrough != "" {
+		t.Errorf("legacy state gained values: version=%d published=%q", state.OutlineVersion, state.PublishedThrough)
+	}
+
+	if _, err := SaveState(dir, state); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile(StatePath(dir))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, key := range []string{"outline_version", "published_through"} {
+		if strings.Contains(string(raw), key) {
+			t.Errorf("unset %s was written to state.json -- it must be omitempty", key)
+		}
+	}
+}
+
+func TestState_OutlineFieldsRoundTrip(t *testing.T) {
+	dir := t.TempDir()
+	state := NewState(dir, "serial-fiction")
+	state.OutlineVersion = 4
+	state.PublishedThrough = "section_11"
+	if _, err := SaveState(dir, state); err != nil {
+		t.Fatal(err)
+	}
+
+	loaded, err := LoadState(dir)
+	if err != nil || loaded == nil {
+		t.Fatalf("load: %v", err)
+	}
+	if loaded.OutlineVersion != 4 {
+		t.Errorf("OutlineVersion = %d, want 4", loaded.OutlineVersion)
+	}
+	if loaded.PublishedThrough != "section_11" {
+		t.Errorf("PublishedThrough = %q, want section_11", loaded.PublishedThrough)
 	}
 }
