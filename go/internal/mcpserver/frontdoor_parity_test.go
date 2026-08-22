@@ -56,6 +56,7 @@ var commandToTool = map[string]string{
 	"state init":       "state_init",
 	"state stage":      "state_stage",
 	"state pass":       "state_pass",
+	"state published":  "state_published",
 	"rounds archive":   "rounds_archive",
 	"rounds list":      "rounds_list",
 	"decisions apply":  "decisions_apply",

@@ -94,6 +94,8 @@ const descStateStage = `Record the manuscript's draft stage, which gates how sev
 
 const descStatePass = `Record that a pass of the given kind (developmental, line, continuity) completed, so status can report what has actually been run rather than only the current phase.`
 
+const descStatePublished = `Record which installment the serial has shipped through, or "none" to clear it. Everything up to and including that section renders as published in Outline.md, where it reads as no longer movable or cuttable.`
+
 const descCanonBundle = `Return every extracted fact as one compact line, "id | entity | attribute | value", for the continuity joiner to read in a single call. Deliberately omits excerpts and metadata: measured at 86 bytes per fact against 267 for the full JSON, with no loss of join accuracy.`
 
 const descCanonMerge = `Fold the continuity joiner's findings (canon/joined.json) into canon/continuity.json, renumbering the joiner's ids into the cont-5NN range. Deduplicates on the set of facts cited, so re-running after a re-join adds only what is new.`

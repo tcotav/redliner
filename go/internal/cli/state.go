@@ -16,7 +16,8 @@ const stateUsage = `Usage:
   redliner state snapshot <manuscript_dir>            # record current text as assessed
   redliner state phase    <manuscript_dir> <phase>
   redliner state stage    <manuscript_dir> <draft_stage>   # gates severity; see the domain's draft_stages
-  redliner state pass     <manuscript_dir> <developmental|line|continuity>`
+  redliner state pass     <manuscript_dir> <developmental|line|continuity>
+  redliner state published <manuscript_dir> <section_stem|none>`
 
 // RunState mirrors redliner_state.py's main(), reshaped for the
 // `redliner state <subcommand> <dir> ...` argv layout decided in
@@ -65,6 +66,12 @@ func RunState(args []string, stdout io.Writer) int {
 			return 1
 		}
 		return cmdStatePass(manuscriptDir, args[2], stdout)
+	case "published":
+		if len(args) < 3 {
+			fmt.Fprintln(stdout, stateUsage)
+			return 1
+		}
+		return cmdStatePublished(args[1], args[2], stdout)
 	default:
 		fmt.Fprintf(stdout, "Unknown command %s\n", pyReprStr(command))
 		fmt.Fprintln(stdout, stateUsage)
@@ -255,6 +262,62 @@ func cmdStateStage(manuscriptDir, stage string, stdout io.Writer) int {
 	if impl := domain.DraftStageImplication(stage); impl != "" {
 		fmt.Fprintf(stdout, "Severity implication: %s\n", impl)
 	}
+	return 0
+}
+
+// cmdStatePublished records which installments have shipped. Serial
+// fiction has a constraint a novel does not -- once a chapter goes out
+// the author does not revise it -- so a scene above this line cannot be
+// moved or cut, which is the one fact the rendered outline most needs to
+// show.
+//
+// Validated against the manuscript's real sections rather than accepting
+// any string: a typo sets a boundary matching no section, which draws no
+// line at all, and that reads as the feature being broken rather than the
+// input being wrong.
+func cmdStatePublished(manuscriptDir, stem string, stdout io.Writer) int {
+	state, ok := requireState(manuscriptDir, stdout)
+	if !ok {
+		return 1
+	}
+
+	// "none" is how an author says nothing has shipped yet -- a serial
+	// being drafted before launch, and the correct state for any novel.
+	if stem == "none" {
+		state.PublishedThrough = ""
+		if _, err := schemas.SaveState(manuscriptDir, state); err != nil {
+			fmt.Fprintf(stdout, "Error writing state: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "Published boundary cleared -- nothing is marked as shipped.")
+		return 0
+	}
+
+	paths, err := schemas.SectionFiles(manuscriptDir)
+	if err != nil {
+		return reportSectionError(err, stdout)
+	}
+	var stems []string
+	found := false
+	for _, path := range paths {
+		s := stemOfPath(path)
+		stems = append(stems, s)
+		if s == stem {
+			found = true
+		}
+	}
+	if !found {
+		fmt.Fprintf(stdout, "No section %s in %s. Sections are: %s\n",
+			pyReprStr(stem), manuscriptDir, strings.Join(stems, ", "))
+		return 1
+	}
+
+	state.PublishedThrough = stem
+	if _, err := schemas.SaveState(manuscriptDir, state); err != nil {
+		fmt.Fprintf(stdout, "Error writing state: %v\n", err)
+		return 1
+	}
+	fmt.Fprintf(stdout, "Published through %s. Everything up to and including it renders as shipped in Outline.md.\n", stem)
 	return 0
 }
 

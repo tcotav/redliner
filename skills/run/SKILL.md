@@ -650,6 +650,11 @@ developmental pass. It tracks its own staleness per section.
    Telling them only that "the outline is written" is how a run ends
    with the author unable to find its one output.
 
+   If the author mentions that more chapters have gone out since last
+   time, update the boundary with `redliner state published <dir>
+   <section_stem>` before rendering — a stale boundary shows scenes as
+   frozen that are still theirs to change.
+
 ### Why re-running this is cheap
 
 Worth saying to the author once, because "regenerate the outline" sounds

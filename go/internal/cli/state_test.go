@@ -76,3 +76,53 @@ func TestStatePass_CountsPassesNotPhases(t *testing.T) {
 		t.Errorf("continuity passes = %d, want 1", got)
 	}
 }
+
+func TestStatePublished_SetsTheBoundary(t *testing.T) {
+	dir := newOutlineFixture(t, "section_01", "section_02")
+
+	var buf bytes.Buffer
+	if code := RunState([]string{"published", dir, "section_01"}, &buf); code != 0 {
+		t.Fatalf("exit %d: %s", code, buf.String())
+	}
+	state, err := schemas.LoadState(dir)
+	if err != nil || state == nil {
+		t.Fatal(err)
+	}
+	if state.PublishedThrough != "section_01" {
+		t.Errorf("PublishedThrough = %q, want section_01", state.PublishedThrough)
+	}
+}
+
+func TestStatePublished_RejectsAStemThatIsNotASection(t *testing.T) {
+	// A typo here draws no line at all, and the failure looks like the
+	// feature being broken rather than the input being wrong.
+	dir := newOutlineFixture(t, "section_01")
+
+	var buf bytes.Buffer
+	if code := RunState([]string{"published", dir, "section_99"}, &buf); code == 0 {
+		t.Fatal("a stem with no matching section file was accepted")
+	}
+	if !strings.Contains(buf.String(), "section_01") {
+		t.Errorf("rejection should name the sections that DO exist: %s", buf.String())
+	}
+}
+
+func TestStatePublished_NoneClearsIt(t *testing.T) {
+	dir := newOutlineFixture(t, "section_01")
+	var buf bytes.Buffer
+	if code := RunState([]string{"published", dir, "section_01"}, &buf); code != 0 {
+		t.Fatalf("set: %s", buf.String())
+	}
+
+	buf.Reset()
+	if code := RunState([]string{"published", dir, "none"}, &buf); code != 0 {
+		t.Fatalf("clear: %s", buf.String())
+	}
+	state, err := schemas.LoadState(dir)
+	if err != nil || state == nil {
+		t.Fatal(err)
+	}
+	if state.PublishedThrough != "" {
+		t.Errorf("PublishedThrough = %q after clearing, want empty", state.PublishedThrough)
+	}
+}

@@ -55,6 +55,7 @@ func NewServer(domainsDir string) *mcp.Server {
 	mcp.AddTool(srv, &mcp.Tool{Name: "rounds_list", Description: descRoundsList}, s.roundsList)
 	mcp.AddTool(srv, &mcp.Tool{Name: "state_stage", Description: descStateStage}, s.stateStage)
 	mcp.AddTool(srv, &mcp.Tool{Name: "state_pass", Description: descStatePass}, s.statePass)
+	mcp.AddTool(srv, &mcp.Tool{Name: "state_published", Description: descStatePublished}, s.statePublished)
 	mcp.AddTool(srv, &mcp.Tool{Name: "canon_bundle", Description: descCanonBundle}, s.canonBundle)
 	mcp.AddTool(srv, &mcp.Tool{Name: "canon_merge", Description: descCanonMerge}, s.canonMerge)
 	mcp.AddTool(srv, &mcp.Tool{Name: "outline_stale", Description: descOutlineStale}, s.outlineStale)
@@ -389,6 +390,11 @@ type stateStageInput struct {
 	Stage         string `json:"draft_stage"`
 }
 
+type statePublishedInput struct {
+	ManuscriptDir string `json:"manuscript_dir"`
+	Section       string `json:"section"`
+}
+
 type statePassInput struct {
 	ManuscriptDir string `json:"manuscript_dir"`
 	Kind          string `json:"kind"`
@@ -428,6 +434,11 @@ func (s *redlinerServer) stateStage(_ context.Context, _ *mcp.CallToolRequest, i
 
 func (s *redlinerServer) statePass(_ context.Context, _ *mcp.CallToolRequest, in statePassInput) (*mcp.CallToolResult, any, error) {
 	out, err := runCLI(func(a []string, b *bytes.Buffer) int { return cli.RunState(a, b) }, "pass", in.ManuscriptDir, in.Kind)
+	return nil, out, err
+}
+
+func (s *redlinerServer) statePublished(_ context.Context, _ *mcp.CallToolRequest, in statePublishedInput) (*mcp.CallToolResult, any, error) {
+	out, err := runCLI(func(a []string, b *bytes.Buffer) int { return cli.RunState(a, b) }, "published", in.ManuscriptDir, in.Section)
 	return nil, out, err
 }
 

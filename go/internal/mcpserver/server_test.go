@@ -142,6 +142,7 @@ func TestToolNamesAndDescriptions_MatchPython(t *testing.T) {
 		"rounds_list":      true,
 		"state_stage":      true,
 		"state_pass":       true,
+		"state_published":  true,
 		"canon_bundle":     true,
 		"canon_merge":      true,
 		"outline_stale":    true,
