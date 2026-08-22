@@ -2,6 +2,7 @@ package cli
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -13,7 +14,8 @@ import (
 )
 
 const outlineUsage = `Usage:
-  redliner outline stale    <manuscript_dir>   # which sections need re-recording`
+  redliner outline stale    <manuscript_dir>   # which sections need re-recording
+  redliner outline join     <manuscript_dir>   # rebuild outline.json from every section file`
 
 func RunOutline(args []string, stdout, stderr io.Writer) int {
 	if len(args) < 2 {
@@ -30,6 +32,8 @@ func RunOutline(args []string, stdout, stderr io.Writer) int {
 	switch command {
 	case "stale":
 		return cmdOutlineStale(manuscriptDir, stdout)
+	case "join":
+		return cmdOutlineJoin(manuscriptDir, stdout)
 	default:
 		fmt.Fprintf(stdout, "Unknown command %s\n%s\n", pyReprStr(command), outlineUsage)
 		return 1
@@ -163,4 +167,87 @@ func cmdOutlineStale(manuscriptDir string, stdout io.Writer) int {
 		return 1
 	}
 	return printJSON(stdout, result)
+}
+
+func OutlinePath(manuscriptDir string) string {
+	return filepath.Join(OutlineDir(manuscriptDir), "outline.json")
+}
+
+var ErrNoOutlineSections = errors.New("no outline sections recorded")
+
+// ComputeOutlineJoin rebuilds the whole outline from every current
+// per-section file, not only the ones re-recorded this run -- same
+// contract as canon reconcile. Deterministic: no model call, no prose
+// read. That is what makes the render below free enough to run after
+// every chapter.
+func ComputeOutlineJoin(manuscriptDir string) (map[string]interface{}, error) {
+	recorded, err := loadOutlineSections(manuscriptDir)
+	if err != nil {
+		return nil, err
+	}
+	if len(recorded) == 0 {
+		return nil, ErrNoOutlineSections
+	}
+
+	stems := make([]string, 0, len(recorded))
+	for stem := range recorded {
+		stems = append(stems, stem)
+	}
+	// Sorted by stem, which is manuscript order -- never map iteration
+	// order, which would make the join non-deterministic and every
+	// version archive spuriously different from the last.
+	sort.Strings(stems)
+
+	sections := make([]interface{}, 0, len(stems))
+	sceneCount := 0
+	for _, stem := range stems {
+		section := recorded[stem]
+		if scenes, ok := section["scenes"].([]interface{}); ok {
+			sceneCount += len(scenes)
+		}
+		sections = append(sections, section)
+	}
+
+	joined := map[string]interface{}{
+		"sections":    sections,
+		"scene_count": sceneCount,
+	}
+
+	// published_through travels with the joined document so the renderer
+	// (and anything reading outline.json later) doesn't need state too.
+	if state, err := schemas.LoadState(manuscriptDir); err == nil && state != nil && state.PublishedThrough != "" {
+		joined["published_through"] = state.PublishedThrough
+	}
+
+	return joined, nil
+}
+
+func cmdOutlineJoin(manuscriptDir string, stdout io.Writer) int {
+	joined, err := ComputeOutlineJoin(manuscriptDir)
+	if err != nil {
+		if err == ErrNoOutlineSections {
+			fmt.Fprintf(stdout, "No outline sections in %s. Run `redliner outline stale` and record them first.\n", OutlineSectionsDir(manuscriptDir))
+			return 1
+		}
+		fmt.Fprintf(stdout, "Error reading outline sections: %v\n", err)
+		return 1
+	}
+
+	if err := os.MkdirAll(OutlineDir(manuscriptDir), 0o755); err != nil {
+		fmt.Fprintf(stdout, "Error creating %s: %v\n", OutlineDir(manuscriptDir), err)
+		return 1
+	}
+	raw, err := json.MarshalIndent(joined, "", "  ")
+	if err != nil {
+		fmt.Fprintf(stdout, "Error encoding outline: %v\n", err)
+		return 1
+	}
+	if err := os.WriteFile(OutlinePath(manuscriptDir), append(raw, '\n'), 0o644); err != nil {
+		fmt.Fprintf(stdout, "Error writing %s: %v\n", OutlinePath(manuscriptDir), err)
+		return 1
+	}
+
+	fmt.Fprintf(stdout, "Joined %d section(s), %v scene(s) → %s\n",
+		len(joined["sections"].([]interface{})), joined["scene_count"], OutlinePath(manuscriptDir))
+	return 0
 }

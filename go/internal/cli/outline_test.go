@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+
+	"github.com/tcotav/redliner/go/internal/schemas"
 )
 
 // newOutlineFixture builds a manuscript with the given sections and
@@ -162,5 +165,152 @@ func TestRunOutlineStale_PrintsJSON(t *testing.T) {
 	}
 	if len(parsed.NeedsRecording) != 1 {
 		t.Errorf("needs_recording = %v, want one section", parsed.NeedsRecording)
+	}
+}
+
+// writeOutlineSectionWithScenes writes a per-section file carrying real
+// scene rows, for the join and render tests.
+func writeOutlineSectionWithScenes(t *testing.T, dir, stem, hash string, scenes []map[string]interface{}) {
+	t.Helper()
+	if err := os.MkdirAll(OutlineSectionsDir(dir), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	rows := make([]interface{}, len(scenes))
+	for i, s := range scenes {
+		rows[i] = s
+	}
+	body := map[string]interface{}{
+		"section":        stem,
+		"section_sha256": hash,
+		"scenes":         rows,
+	}
+	raw, err := json.MarshalIndent(body, "", "  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(OutlineSectionsDir(dir), stem+".json"), raw, 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func scene(order int, goal string) map[string]interface{} {
+	return map[string]interface{}{
+		"order": float64(order), "pov": "Mira", "anchor": "anchor text " + goal,
+		"goal": goal, "conflict": "opposition", "outcome": "a change",
+	}
+}
+
+func TestComputeOutlineJoin_SectionOrderAndCount(t *testing.T) {
+	dir := newOutlineFixture(t, "section_01", "section_02")
+	stale, err := ComputeOutlineStale(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Written out of order on purpose -- the join must sort, not trust
+	// directory iteration order.
+	writeOutlineSectionWithScenes(t, dir, "section_02", stale.CurrentHashes["section_02"],
+		[]map[string]interface{}{scene(1, "escape")})
+	writeOutlineSectionWithScenes(t, dir, "section_01", stale.CurrentHashes["section_01"],
+		[]map[string]interface{}{scene(1, "enter"), scene(2, "hide")})
+
+	joined, err := ComputeOutlineJoin(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sections := joined["sections"].([]interface{})
+	if len(sections) != 2 {
+		t.Fatalf("joined %d sections, want 2", len(sections))
+	}
+	if got := sections[0].(map[string]interface{})["section"]; got != "section_01" {
+		t.Errorf("first section = %v, want section_01 (manuscript order, not directory order)", got)
+	}
+	if got := joined["scene_count"]; got != 3 {
+		t.Errorf("scene_count = %v, want 3", got)
+	}
+}
+
+func TestComputeOutlineJoin_IncludesEverySectionNotJustStaleOnes(t *testing.T) {
+	dir := newOutlineFixture(t, "section_01", "section_02")
+	stale, err := ComputeOutlineStale(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	writeOutlineSectionWithScenes(t, dir, "section_01", stale.CurrentHashes["section_01"],
+		[]map[string]interface{}{scene(1, "enter")})
+	writeOutlineSectionWithScenes(t, dir, "section_02", stale.CurrentHashes["section_02"],
+		[]map[string]interface{}{scene(1, "escape")})
+
+	joined, err := ComputeOutlineJoin(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(joined["sections"].([]interface{})) != 2 {
+		t.Error("join must rebuild from every current section file, not only re-recorded ones")
+	}
+}
+
+func TestComputeOutlineJoin_CarriesPublishedThrough(t *testing.T) {
+	dir := newOutlineFixture(t, "section_01")
+	stale, _ := ComputeOutlineStale(dir)
+	writeOutlineSectionWithScenes(t, dir, "section_01", stale.CurrentHashes["section_01"],
+		[]map[string]interface{}{scene(1, "enter")})
+
+	joined, err := ComputeOutlineJoin(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, present := joined["published_through"]; present {
+		t.Error("published_through present when state does not set it")
+	}
+
+	state, err := schemas.LoadState(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state.PublishedThrough = "section_01"
+	if _, err := schemas.SaveState(dir, state); err != nil {
+		t.Fatal(err)
+	}
+
+	joined, err = ComputeOutlineJoin(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := joined["published_through"]; got != "section_01" {
+		t.Errorf("published_through = %v, want section_01", got)
+	}
+}
+
+func TestRunOutlineJoin_WritesOutlineJSON(t *testing.T) {
+	dir := newOutlineFixture(t, "section_01")
+	stale, _ := ComputeOutlineStale(dir)
+	writeOutlineSectionWithScenes(t, dir, "section_01", stale.CurrentHashes["section_01"],
+		[]map[string]interface{}{scene(1, "enter")})
+
+	var buf bytes.Buffer
+	if code := RunOutline([]string{"join", dir}, &buf, &buf); code != 0 {
+		t.Fatalf("exit %d: %s", code, buf.String())
+	}
+	raw, err := os.ReadFile(OutlinePath(dir))
+	if err != nil {
+		t.Fatalf("join wrote no outline.json: %v", err)
+	}
+	var parsed map[string]interface{}
+	if err := json.Unmarshal(raw, &parsed); err != nil {
+		t.Fatalf("outline.json is not valid JSON: %v", err)
+	}
+	if parsed["scene_count"] != float64(1) {
+		t.Errorf("scene_count = %v, want 1", parsed["scene_count"])
+	}
+}
+
+func TestRunOutlineJoin_ErrorsWithNoSections(t *testing.T) {
+	dir := newOutlineFixture(t, "section_01")
+	var buf bytes.Buffer
+	if code := RunOutline([]string{"join", dir}, &buf, &buf); code == 0 {
+		t.Error("join with no recorded sections should fail, not write an empty outline")
+	}
+	if !strings.Contains(buf.String(), "outline stale") {
+		t.Errorf("error should point at the command that fixes it, got: %s", buf.String())
 	}
 }
