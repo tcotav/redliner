@@ -268,12 +268,49 @@ outline is a spine the editor reasons *with* — it removes the need to
 re-derive scene structure from prose every round, and makes arc-level
 questions legible.
 
-## Archiving
+## Archiving and version history
 
-The outline is archived per round alongside developmental findings.
-`rounds.go` gains an `outline` archive kind and a case archiving
-`.redliner/outline/outline.json` into
-`.redliner/rounds/outline-round<N>/`.
+The outline is archived on **two independent cadences**, because it is
+read for two different reasons.
+
+### Per outline run — the author's version history
+
+**Every outline run whose join produced different content than the last
+archive writes a new version** to
+`.redliner/outline/versions/v<N>/`, holding both `outline.json` and the
+rendered `Outline.md`. `<N>` is a monotonic counter in state,
+independent of the developmental round. A run that changed nothing
+archives nothing.
+
+This exists because round-keyed archiving alone would produce no history
+at all for the layer's primary workflow. The author's loop is *write a
+chapter, outline, write the next, outline* — a loop that never
+necessarily runs `assess`. Keyed only to the developmental round, every
+one of those runs would overwrite `outline.json` with nothing kept, and
+"what did it look like two chapters ago" would have no answer. The
+outline runs an order of magnitude more often than rounds turn over;
+archiving it at round cadence is a mismatch, not a precedent worth
+following from continuity, which runs about as often as `assess` does.
+
+**The rendered Markdown is archived alongside the JSON, not just the
+JSON.** That is what makes a version readable by a person at all —
+without it, "see version 4" means hand-reading JSON inside a hidden
+directory, which is the exact failure the `Outline.md` placement rule
+exists to prevent. Because the render is deterministic, keeping it costs
+a file copy rather than a model call.
+
+Each version records, in a small `meta.json`: the version number, a
+timestamp, and which sections were re-recorded in the run that produced
+it.
+
+### Per developmental round — alignment with findings
+
+Unchanged from the rest of redliner: `rounds.go` gains an `outline`
+archive kind and a case archiving `.redliner/outline/outline.json` into
+`.redliner/rounds/outline-round<N>/`, numbered by the developmental
+round counter the way `continuity` already is. This is what makes an
+outline line up with the developmental findings it should be read
+beside.
 
 **It archives at both points developmental findings do** — in assess
 step 2 (before the refresh overwrites it) and again in the closing step.
@@ -282,30 +319,41 @@ round, and the step 2 archive is the safety net for a round that ended
 without one. `freeArchiveDir` already suffixes `.2`, `.3` for exactly
 this case.
 
-**`outline` is an archive kind, not a pass kind.** `passKinds` is
-currently shared by `rounds archive` and `state pass`, and that has to
-split: `state pass` records "the author ran this pass," which drives
-`status`. The outline refreshes automatically inside every assess, so
-recording it there would make `status` report "outline: run" permanently
-— a constant, and therefore no signal at all. The informative report is
-the per-section staleness `status` already shows for continuity. So
-`rounds.go` validates against a new `archiveKinds` list (developmental,
-line, continuity, outline) while `state pass` keeps `passKinds`
-unchanged, and `state pass outline` stays deliberately unavailable.
+The two cadences do not conflict. Per-run versions answer "what did this
+look like before"; round archives answer "what did this look like when
+that letter was written."
 
-Archives are numbered by the developmental round counter even though
-the layer is not phase-gated. That is the continuity precedent exactly —
-`continuity` archives under `DevelopmentalRound` too — and it is what
-makes an outline archive line up with the developmental findings it
-should be read beside.
+### `outline` is an archive kind, not a pass kind
 
-`assess` archives the outline where it already archives continuity: in
-the closing step, alongside `rounds archive <dir> developmental` and
-`... continuity`.
+`passKinds` is currently shared by `rounds archive` and `state pass`,
+and that has to split: `state pass` records "the author ran this pass,"
+which drives `status`. The outline refreshes automatically inside every
+assess, so recording it there would make `status` report "outline: run"
+permanently — a constant, and therefore no signal at all. The
+informative report is the per-section staleness `status` already shows
+for continuity. So `rounds.go` validates against a new `archiveKinds`
+list (developmental, line, continuity, outline) while `state pass` keeps
+`passKinds` unchanged, and `state pass outline` stays deliberately
+unavailable.
 
-An outline diff across rounds is the clearest available answer to "what
-did my revision actually change," which is why the archive is worth
-having even before a tool reads it.
+### Seeing the history
+
+`rounds list` today prints directory names and file counts — enough to
+know an archive exists, not enough to read one. For the outline that is
+not sufficient, because version history is a feature the author uses
+directly rather than a recovery mechanism.
+
+**`/redliner:run outline versions`** lists what is kept in human terms:
+version number, date, and which sections changed in that run. Reading a
+version means opening its archived `Outline.md`, whose absolute path the
+listing prints — no new rendering machinery, because the Markdown is
+already there.
+
+This answers "what did it look like two versions ago." It does not
+answer "what changed between them" — that is the deferred diff tool. The
+per-run versions make that tool materially more useful when it is built,
+since it will have the intermediate states to compare rather than only
+round boundaries.
 
 ## Implementation constraints
 
@@ -319,12 +367,19 @@ having even before a tool reads it.
 - `new-domain` generates concrete per-domain agent files (the B1
   decision). It needs a seventh template, plus a regeneration story for
   existing domains.
-- `state.json` gains optional `published_through`; `project_state.go`
+- `state.json` gains a monotonic `outline_version` counter alongside
+  optional `published_through`; `project_state.go`
   and its validator must accept its absence (every existing manuscript,
   and every `fiction` one, lacks it). `intake` asks for it on
   serial-fiction manuscripts only, and a command sets it as chapters
   ship.
-- `run/SKILL.md` needs the new subcommand section, the assess-flow
+- Version archives accumulate faster than round archives do. The same
+  rule applies as for `rounds/`: never delete without asking, don't
+  offer to prune unprompted. An `outline.json` plus a rendered
+  `Outline.md` is small, and a no-op run archives nothing, so the growth
+  is bounded by how often the text actually changes.
+- `run/SKILL.md` needs the new subcommand section (including
+  `outline versions`), the assess-flow
   insertion between steps 2 and 3, and `status` should report whether any
   sections need re-recording — as it already does for continuity.
 - `Outline.md` in the manuscript folder is confirmed safe:
@@ -345,6 +400,10 @@ Open sub-questions it would need to answer: with `order` positional and
 ids non-durable, matching scenes across rounds has to be done by
 content similarity or `anchor`, not by position — a naive positional
 diff would report every scene after an insertion as changed.
+
+The per-run version archive specced above is what makes this tool worth
+building: it has every intermediate state to compare, not only the round
+boundaries.
 
 **Teaching the developmental pass about the locked prefix.** This spec
 adds `published_through` and uses it only to draw a line in
