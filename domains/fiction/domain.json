@@ -40,6 +40,13 @@
       "object"
     ]
   },
+  "outline": {
+    "row_fields": [
+      {"name": "goal", "prompt": "What was the driving character trying to achieve in this scene?"},
+      {"name": "conflict", "prompt": "What opposed them?"},
+      {"name": "outcome", "prompt": "What changed as a result? If nothing changed, say so plainly."}
+    ]
+  },
   "brief_fields": [
     {"name": "logline", "label": "Logline", "prompt": "What's the book, in one or two sentences?"},
     {"name": "release_format", "label": "Release format", "prompt": "Standalone, part of a series, or serialized/episodic (chapters released individually over time, e.g. a web serial)? This changes what counts as a structural gap — a serialized chapter deliberately not resolving everything (a hook or open thread carrying to the next installment) is craft, not a defect, and shouldn't be flagged as one."},

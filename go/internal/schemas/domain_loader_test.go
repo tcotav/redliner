@@ -235,3 +235,52 @@ func TestLoadDomain_OutlineBlockMustBeWellFormedIfPresent(t *testing.T) {
 		})
 	}
 }
+
+// TestRealDomains_OutlineConfiguration pins the shipped domains' actual
+// outline configuration, because the whole layer's per-domain behavior
+// is these three lists and nothing else.
+func TestRealDomains_OutlineConfiguration(t *testing.T) {
+	dir := domainsDir(t)
+
+	fiction, err := LoadDomain(dir, "fiction")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := fiction.OutlineRowFields(), []string{"goal", "conflict", "outcome"}; !equalStrings(got, want) {
+		t.Errorf("fiction row fields = %v, want %v", got, want)
+	}
+	if got := fiction.OutlineSectionFields(); len(got) != 0 {
+		t.Errorf("fiction section fields = %v, want none -- a novel has no installment boundary", got)
+	}
+
+	serial, err := LoadDomain(dir, "serial-fiction")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := serial.OutlineRowFields(), []string{"goal", "conflict", "outcome"}; !equalStrings(got, want) {
+		t.Errorf("serial-fiction row fields = %v, want %v", got, want)
+	}
+	if got, want := serial.OutlineSectionFields(), []string{"leaves_open"}; !equalStrings(got, want) {
+		t.Errorf("serial-fiction section fields = %v, want %v", got, want)
+	}
+
+	designDoc, err := LoadDomain(dir, "design-doc")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if designDoc.HasOutline() {
+		t.Error("design-doc must have no outline block -- it opts out of the layer")
+	}
+}
+
+func equalStrings(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}

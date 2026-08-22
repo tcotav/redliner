@@ -1,7 +1,7 @@
 {
   "cmd": [
     "/opt/homebrew/opt/python@3.14/bin/python3.14",
-    "/Volumes/T7/code/ideas/redliner/go/harness/python-baseline/redliner_domain.py",
+    "/Volumes/T7/code/ideas/redliner/.claude/worktrees/scene-outliner/go/harness/python-baseline/redliner_domain.py",
     "show",
     "fiction"
   ],
@@ -50,6 +50,22 @@
         "naming",
         "relationship",
         "object"
+      ]
+    },
+    "outline": {
+      "row_fields": [
+        {
+          "name": "goal",
+          "prompt": "What was the driving character trying to achieve in this scene?"
+        },
+        {
+          "name": "conflict",
+          "prompt": "What opposed them?"
+        },
+        {
+          "name": "outcome",
+          "prompt": "What changed as a result? If nothing changed, say so plainly."
+        }
       ]
     },
     "brief_fields": [
