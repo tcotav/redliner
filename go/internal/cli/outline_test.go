@@ -51,6 +51,29 @@ func writeOutlineSection(t *testing.T, dir, stem, hash string) {
 	}
 }
 
+// assertSectionCostsNothing asserts stem is absent from all four result
+// slices and has no entry in CurrentHashes. A section whose text hasn't
+// moved must cost nothing -- and "costs nothing" means absent everywhere,
+// not just absent from NeedsRecording.
+func assertSectionCostsNothing(t *testing.T, got OutlineStaleResult, stem string) {
+	t.Helper()
+	for name, list := range map[string][]string{
+		"NeedsRecording":        got.NeedsRecording,
+		"NeverRecorded":         got.NeverRecorded,
+		"ChangedSinceRecording": got.ChangedSinceRecording,
+		"OrphanedSections":      got.OrphanedSections,
+	} {
+		for _, s := range list {
+			if s == stem {
+				t.Errorf("%s contains %q, want absent -- unchanged sections must cost nothing", name, stem)
+			}
+		}
+	}
+	if hash, ok := got.CurrentHashes[stem]; ok {
+		t.Errorf("CurrentHashes[%s] = %q, want no entry -- unchanged sections must cost nothing", stem, hash)
+	}
+}
+
 func TestComputeOutlineStale_NeverRecorded(t *testing.T) {
 	dir := newOutlineFixture(t, "section_01", "section_02")
 
@@ -69,6 +92,9 @@ func TestComputeOutlineStale_NeverRecorded(t *testing.T) {
 			t.Errorf("CurrentHashes[%s] = %q, want a 64-char digest", stem, got.CurrentHashes[stem])
 		}
 	}
+	if len(got.CurrentHashes) != len(got.NeedsRecording) {
+		t.Errorf("CurrentHashes has %d entries, want exactly %d (one per needing section, nothing else)", len(got.CurrentHashes), len(got.NeedsRecording))
+	}
 }
 
 func TestComputeOutlineStale_UnchangedSectionIsSkipped(t *testing.T) {
@@ -86,6 +112,7 @@ func TestComputeOutlineStale_UnchangedSectionIsSkipped(t *testing.T) {
 	if len(got.NeedsRecording) != 0 {
 		t.Errorf("NeedsRecording = %v, want empty -- an unchanged section must never be re-recorded", got.NeedsRecording)
 	}
+	assertSectionCostsNothing(t, got, "section_01")
 }
 
 func TestComputeOutlineStale_ChangedSectionIsFlagged(t *testing.T) {
@@ -115,6 +142,11 @@ func TestComputeOutlineStale_OrphanedSectionIsReported(t *testing.T) {
 	}
 	if len(got.OrphanedSections) != 1 || got.OrphanedSections[0] != "section_99" {
 		t.Errorf("OrphanedSections = %v, want [section_99]", got.OrphanedSections)
+	}
+	for _, stem := range got.NeedsRecording {
+		if stem == "section_99" {
+			t.Errorf("NeedsRecording = %v, must not contain the orphan -- an orphaned section must not double-count as needing recording", got.NeedsRecording)
+		}
 	}
 }
 
