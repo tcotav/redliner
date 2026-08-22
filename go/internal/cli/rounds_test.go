@@ -121,3 +121,56 @@ func TestRoundsArchive_SecondArchiveInOneRoundKeepsTheFirst(t *testing.T) {
 		t.Errorf("the second archive holds the wrong content: %s", second)
 	}
 }
+
+func TestRoundsArchive_OutlineIsAnArchiveKind(t *testing.T) {
+	dir := t.TempDir()
+	stateDir := filepath.Join(dir, ".redliner")
+	if err := os.MkdirAll(filepath.Join(stateDir, "outline"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	state := `{"manuscript_dir":"` + dir + `","domain":"fiction","phase":"developmental",` +
+		`"developmental_round":3,"section_fingerprints":{},"created_at":"x"}`
+	if err := os.WriteFile(filepath.Join(stateDir, "state.json"), []byte(state), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(stateDir, "outline", "outline.json"), []byte(`{"sections":[],"scene_count":0}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	if code := RunRounds([]string{"archive", dir, "outline"}, &buf); code != 0 {
+		t.Fatalf("archive outline: %s", buf.String())
+	}
+	got, err := os.ReadDir(filepath.Join(stateDir, "rounds", "outline-round3"))
+	if err != nil {
+		t.Fatalf("expected outline-round3 archive: %v", err)
+	}
+	if len(got) != 1 || got[0].Name() != "outline.json" {
+		t.Errorf("outline archive holds %v, want [outline.json]", got)
+	}
+}
+
+func TestStatePass_OutlineIsDeliberatelyUnavailable(t *testing.T) {
+	// The outline refreshes automatically inside every assess, so
+	// recording it as a completed pass would make status report
+	// "outline: run" permanently -- a constant, not a signal. Per-section
+	// staleness is the informative report.
+	dir := t.TempDir()
+	stateDir := filepath.Join(dir, ".redliner")
+	if err := os.MkdirAll(stateDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	state := `{"manuscript_dir":"` + dir + `","domain":"fiction","phase":"developmental",` +
+		`"developmental_round":1,"section_fingerprints":{},"created_at":"x"}`
+	if err := os.WriteFile(filepath.Join(stateDir, "state.json"), []byte(state), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	if code := RunState([]string{"pass", dir, "outline"}, &buf); code == 0 {
+		t.Error("`state pass outline` succeeded -- it must stay unavailable")
+	}
+	if !strings.Contains(buf.String(), "continuity") {
+		t.Errorf("rejection should name the kinds that ARE valid: %s", buf.String())
+	}
+}

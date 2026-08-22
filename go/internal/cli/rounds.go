@@ -85,15 +85,25 @@ func freeArchiveDir(roundsRoot, pass string, round int) (string, error) {
 	return "", fmt.Errorf("%s already holds 99 archives for this round", base)
 }
 
+// archiveKinds are the artifact sets `rounds archive` knows how to keep.
+// Deliberately a different list from state.go's passKinds, which governs
+// `state pass`: "outline" is an archive kind but not a pass kind. The
+// outline refreshes automatically inside every assess, so recording it
+// as a completed pass would make status report "outline: run"
+// permanently -- a constant, and therefore no signal at all. What status
+// should report for this layer is per-section staleness, the way it
+// already does for continuity.
+var archiveKinds = []string{"developmental", "line", "continuity", "outline"}
+
 func cmdRoundsArchive(manuscriptDir, pass string, stdout io.Writer) int {
 	valid := false
-	for _, k := range passKinds {
+	for _, k := range archiveKinds {
 		if k == pass {
 			valid = true
 		}
 	}
 	if !valid {
-		fmt.Fprintf(stdout, "Unknown pass %s. Must be one of: %s\n", pyReprStr(pass), strings.Join(passKinds, ", "))
+		fmt.Fprintf(stdout, "Unknown pass %s. Must be one of: %s\n", pyReprStr(pass), strings.Join(archiveKinds, ", "))
 		return 1
 	}
 	state, ok := requireState(manuscriptDir, stdout)
@@ -114,6 +124,8 @@ func cmdRoundsArchive(manuscriptDir, pass string, stdout io.Writer) int {
 		sources, _ = filepath.Glob(filepath.Join(stateDir, "canon", "continuity.json"))
 		more, _ := filepath.Glob(filepath.Join(stateDir, "canon", "collisions.json"))
 		sources = append(sources, more...)
+	case "outline":
+		sources, _ = filepath.Glob(filepath.Join(stateDir, "outline", "outline.json"))
 	}
 	if len(sources) == 0 {
 		fmt.Fprintf(stdout, "Nothing to archive for the %s pass yet.\n", pass)
