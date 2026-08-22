@@ -201,31 +201,56 @@ func scene(order int, goal string) map[string]interface{} {
 }
 
 func TestComputeOutlineJoin_SectionOrderAndCount(t *testing.T) {
-	dir := newOutlineFixture(t, "section_01", "section_02")
+	dir := newOutlineFixture(t, "section_01", "section_02", "section_03", "section_04")
 	stale, err := ComputeOutlineStale(dir)
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Written out of order on purpose -- the join must sort, not trust
-	// directory iteration order.
+	// Written in a scrambled, non-sorted order on purpose, and with
+	// differing scene counts per section, so neither insertion order nor
+	// a coincidental total could stand in for an actual sort. With four
+	// sections there are 4! = 24 possible orderings, so a single call
+	// that happens to come out sorted proves little on its own -- see
+	// the repeated-call loop below.
+	writeOutlineSectionWithScenes(t, dir, "section_04", stale.CurrentHashes["section_04"],
+		[]map[string]interface{}{scene(1, "flee")})
 	writeOutlineSectionWithScenes(t, dir, "section_02", stale.CurrentHashes["section_02"],
 		[]map[string]interface{}{scene(1, "escape")})
+	writeOutlineSectionWithScenes(t, dir, "section_03", stale.CurrentHashes["section_03"],
+		[]map[string]interface{}{scene(1, "confront"), scene(2, "reveal"), scene(3, "decide")})
 	writeOutlineSectionWithScenes(t, dir, "section_01", stale.CurrentHashes["section_01"],
 		[]map[string]interface{}{scene(1, "enter"), scene(2, "hide")})
 
-	joined, err := ComputeOutlineJoin(dir)
-	if err != nil {
-		t.Fatal(err)
-	}
-	sections := joined["sections"].([]interface{})
-	if len(sections) != 2 {
-		t.Fatalf("joined %d sections, want 2", len(sections))
-	}
-	if got := sections[0].(map[string]interface{})["section"]; got != "section_01" {
-		t.Errorf("first section = %v, want section_01 (manuscript order, not directory order)", got)
-	}
-	if got := joined["scene_count"]; got != 3 {
-		t.Errorf("scene_count = %v, want 3", got)
+	want := []string{"section_01", "section_02", "section_03", "section_04"}
+
+	// loadOutlineSections keys its result by a Go map, so section order
+	// out of ComputeOutlineJoin depends on ComputeOutlineJoin actually
+	// sorting rather than on map iteration order, which Go randomizes
+	// per process but can still land in sorted order by chance -- with 4
+	// elements, 1/24 of the time. A single call is not decisive proof of
+	// a sort; calling repeatedly is the only way to drive that chance
+	// down to something a broken implementation can't pass by luck.
+	for i := 0; i < 20; i++ {
+		joined, err := ComputeOutlineJoin(dir)
+		if err != nil {
+			t.Fatal(err)
+		}
+		sections := joined["sections"].([]interface{})
+		if len(sections) != 4 {
+			t.Fatalf("iteration %d: joined %d sections, want 4", i, len(sections))
+		}
+		got := make([]string, len(sections))
+		for j, s := range sections {
+			got[j] = s.(map[string]interface{})["section"].(string)
+		}
+		for j := range want {
+			if got[j] != want[j] {
+				t.Fatalf("iteration %d: section order = %v, want %v (manuscript order, not directory/map order)", i, got, want)
+			}
+		}
+		if gotCount := joined["scene_count"]; gotCount != 7 {
+			t.Errorf("iteration %d: scene_count = %v, want 7", i, gotCount)
+		}
 	}
 }
 
