@@ -86,6 +86,18 @@ The join rebuilds `outline.json` from **every** current per-section
 file, not just the ones re-recorded this run — same as `canon
 reconcile`.
 
+**Both the join and the `Outline.md` render are deterministic commands,
+not agent calls.** `outline.json` is assembled by the same kind of code
+as `canon reconcile`, and `Outline.md` is a straight rendering of it —
+scene rows grouped by section, with the published line drawn where state
+says. Neither reads prose and neither invokes a model.
+
+This is not incidental. If rendering were an agent call it would fire on
+every run whether or not anything changed, making the per-run cost fixed
+rather than proportional to what the author wrote — which would undo the
+cost model below. Keeping the render deterministic is what makes
+"re-run it after every chapter" honest.
+
 ## Schema
 
 Per-section file:
@@ -94,7 +106,7 @@ Per-section file:
 {
   "section": "section_03",
   "section_sha256": "<the hash the recorder was given>",
-  "leaves_open": "Whether the guard reports her. (serial-fiction only)",
+  "leaves_open": "Whether the guard reports her.",
   "scenes": [
     {
       "order": 1,
@@ -108,9 +120,10 @@ Per-section file:
 }
 ```
 
-Domain-configured section-level fields (currently only
-serial-fiction's `leaves_open`) sit at the top level of the file,
-outside the `scenes` array. Domains without them omit the key entirely.
+Domain-configured section-level fields sit at the top level of the file,
+outside the `scenes` array. `leaves_open` above is serial-fiction's and
+appears only there; `fiction` files carry no section-level field at all.
+Domains without them omit the key entirely.
 
 **Rows are scene-level, not section-level.** The unit redliner tracks is
 `section`, but a section usually holds several scenes, and the author's
@@ -335,21 +348,7 @@ diff would report every scene after an insertion as changed.
 
 **Teaching the developmental pass about the locked prefix.** This spec
 adds `published_through` and uses it only to draw a line in
-`Outline.md`. The larger use is that
-`serial-fiction-developmental-editor` currently reasons about
-"everything released so far" — the phrase appears throughout its prompt
-— with no way to know which chapters those are, so it can emit findings
-against text the author cannot change.
-
-The actionable form of a finding about a published chapter is different,
-not absent: not "restructure chapter 4's midpoint" but "chapter 4 left
-this unpaid — pay it in chapter 13." Same observation, forward-directed
-advice.
-
-That implies a mode rather than a filter: **serial mode** (locked
-prefix, findings must be actionable forward) versus **book-version
-re-edit** (nothing locked, restructure anything). Which one applies is a
-fact only the author has.
-
-Scope: the agent prompt, the findings schema's `scope` field, and
-intake. Its own spec, not this one.
+`Outline.md`. The larger use — making developmental findings actionable
+against chapters that have already shipped — is parked in `TODO.md`,
+"The developmental pass doesn't know which chapters are locked". Its own
+spec, not this one.

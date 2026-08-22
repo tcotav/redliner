@@ -2695,3 +2695,22 @@ has published chapters.
 
 Scope: the agent prompt, the findings schema's `scope` field, and
 intake. Wants its own spec. Don't fold it into the outliner work.
+
+## An outline diff tool
+
+**Raised:** 2026-08-22, alongside the scene outliner spec
+(`docs/superpowers/specs/2026-08-22-scene-outliner-design.md`), which
+archives `outline.json` per round specifically so this becomes possible.
+
+Given two archived outlines, show what moved, what was cut, what was
+added, and where a scene's outcome changed. That is the most direct
+answer available to "what did my revision actually change," which is
+why the archive is worth carrying even before anything reads it.
+
+**The hard part, worked out in advance so it isn't rediscovered.** Scene
+`order` is positional and ids are not durable — scene boundaries are the
+recorder's judgment and can shift between runs even on unchanged text.
+So matching scenes across rounds has to go by content similarity or by
+the `anchor` field (the scene's first few words, verbatim), never by
+position. A naive positional diff reports every scene after an insertion
+as changed, which is exactly the noise that would make the tool useless.
