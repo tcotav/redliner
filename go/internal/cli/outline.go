@@ -19,7 +19,29 @@ const outlineUsage = `Usage:
   redliner outline render   <manuscript_dir>   # write the author-readable Outline.md
   redliner outline versions <manuscript_dir>   # list archived outline versions`
 
+// RunOutline resolves its own domainsDir via schemas.FindDomainsDir() --
+// correct for the CLI, where os.Executable() really is this binary.
+// Reused by internal/mcpserver's outline_* tools, which do NOT go
+// through this entry point for that reason (a second FindDomainsDir()
+// call there would search from whatever binary the calling
+// test/process happens to be, not from the domainsDir the MCP server
+// already resolved once) -- see RunOutlineWithDomainsDir below, which
+// takes domainsDir as a parameter instead of rediscovering it. Same
+// split as RunValidate/ValidateManuscript in validate.go.
 func RunOutline(args []string, stdout, stderr io.Writer) int {
+	domainsDir, err := schemas.FindDomainsDir()
+	if err != nil {
+		fmt.Fprintf(stdout, "Domain config error: %v\n", err)
+		return 1
+	}
+	return RunOutlineWithDomainsDir(args, domainsDir, stdout, stderr)
+}
+
+// RunOutlineWithDomainsDir is RunOutline's dispatch with domainsDir
+// taken as a parameter instead of resolved internally -- the piece
+// internal/mcpserver's outline_* tools actually call, passing the same
+// domainsDir every other tool in that server uses.
+func RunOutlineWithDomainsDir(args []string, domainsDir string, stdout, stderr io.Writer) int {
 	if len(args) < 2 {
 		fmt.Fprintln(stdout, outlineUsage)
 		return 1
@@ -37,7 +59,7 @@ func RunOutline(args []string, stdout, stderr io.Writer) int {
 	case "join":
 		return cmdOutlineJoin(manuscriptDir, stdout)
 	case "render":
-		return cmdOutlineRender(manuscriptDir, stdout)
+		return cmdOutlineRender(manuscriptDir, domainsDir, stdout)
 	case "versions":
 		return cmdOutlineVersions(manuscriptDir, stdout)
 	default:
@@ -344,7 +366,7 @@ func RenderOutline(joined map[string]interface{}, rowFields, sectionFields []str
 	return b.String()
 }
 
-func cmdOutlineRender(manuscriptDir string, stdout io.Writer) int {
+func cmdOutlineRender(manuscriptDir, domainsDir string, stdout io.Writer) int {
 	joined, err := ComputeOutlineJoin(manuscriptDir)
 	if err != nil {
 		if err == ErrNoOutlineSections {
@@ -355,7 +377,7 @@ func cmdOutlineRender(manuscriptDir string, stdout io.Writer) int {
 		return 1
 	}
 
-	rowFields, sectionFields, err := outlineFieldsFor(manuscriptDir)
+	rowFields, sectionFields, err := outlineFieldsFor(manuscriptDir, domainsDir)
 	if err != nil {
 		fmt.Fprintf(stdout, "Domain config error: %v\n", err)
 		return 1
@@ -381,11 +403,13 @@ func cmdOutlineRender(manuscriptDir string, stdout io.Writer) int {
 // configured outline fields. A domain with no outline block yields empty
 // lists rather than an error -- the caller has already decided the
 // layer applies.
-func outlineFieldsFor(manuscriptDir string) ([]string, []string, error) {
-	domainsDir, err := schemas.FindDomainsDir()
-	if err != nil {
-		return nil, nil, err
-	}
+//
+// Takes domainsDir as a parameter rather than resolving it via
+// schemas.FindDomainsDir() -- see RunOutline's doc comment. A call to
+// FindDomainsDir() here would search from whatever binary is currently
+// running (the MCP server's process, in that front door) instead of
+// reusing the domainsDir that front door already resolved once.
+func outlineFieldsFor(manuscriptDir, domainsDir string) ([]string, []string, error) {
 	state, _ := schemas.LoadState(manuscriptDir)
 	name := schemas.DefaultDomain
 	if state != nil {
@@ -425,6 +449,12 @@ type OutlineVersionMeta struct {
 // what makes a version readable by a person; without it, "see version 4"
 // means hand-reading JSON inside a hidden directory. It costs a file
 // copy because the render is deterministic.
+//
+// Resolves its own domainsDir via schemas.FindDomainsDir() -- correct
+// here because, unlike cmdOutlineRender, this function has no MCP-facing
+// caller yet (only RunOutline's CLI path and tests call it), so there is
+// no already-resolved domainsDir to reuse. If that changes, thread
+// domainsDir through the same way RunOutlineWithDomainsDir does.
 func ArchiveOutlineVersion(manuscriptDir string, changedSections []string) (string, bool, error) {
 	joined, err := ComputeOutlineJoin(manuscriptDir)
 	if err != nil {
@@ -462,7 +492,11 @@ func ArchiveOutlineVersion(manuscriptDir string, changedSections []string) (stri
 		return "", false, err
 	}
 
-	rowFields, sectionFields, err := outlineFieldsFor(manuscriptDir)
+	domainsDir, err := schemas.FindDomainsDir()
+	if err != nil {
+		return "", false, err
+	}
+	rowFields, sectionFields, err := outlineFieldsFor(manuscriptDir, domainsDir)
 	if err != nil {
 		return "", false, err
 	}

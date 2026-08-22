@@ -2,6 +2,8 @@ package mcpserver
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -10,6 +12,8 @@ import (
 	"testing"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
+	"github.com/tcotav/redliner/go/internal/cli"
 )
 
 func repoRoot(t *testing.T) string {
@@ -472,5 +476,121 @@ func TestOutlineToolsAreRegistered(t *testing.T) {
 		if !tools[name] {
 			t.Errorf("MCP server exposes no %q tool -- the Cowork front door cannot follow the outline skill prose without it", name)
 		}
+	}
+}
+
+// TestOutlineTools_ActuallyWork calls outline_stale and outline_render
+// through a real server and checks their real effects -- not just that
+// the tool names exist (TestOutlineToolsAreRegistered), but that they're
+// wired to the right logic. It would catch a tool registered against
+// the wrong handler, a handler that always errors, or an input schema
+// that doesn't match the field the CLI path expects.
+//
+// Deliberately constructs the server with the repo's real domains/ dir
+// (not a temp dir), so outline_render's domain lookup runs the same
+// path the MCP server always uses -- see runOutlineCommand's doc
+// comment. Under the pre-fix code, outline_render resolved its domain
+// config via schemas.FindDomainsDir() from os.Executable() instead of
+// from the domainsDir passed to NewServer, so this exact call would
+// have failed (or silently used the wrong domain) whenever the test
+// binary wasn't sitting near a domains/ directory.
+func TestOutlineTools_ActuallyWork(t *testing.T) {
+	domainsDir := filepath.Join(repoRoot(t), "domains")
+	session := connect(t, NewServer(domainsDir))
+	ctx := context.Background()
+
+	dir := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(dir, ".redliner"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	state := `{"manuscript_dir":"` + dir + `","domain":"fiction","phase":"developmental",` +
+		`"developmental_round":1,"section_fingerprints":{},"created_at":"x"}`
+	if err := os.WriteFile(filepath.Join(dir, ".redliner", "state.json"), []byte(state), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	sectionText := "section one body text\n"
+	if err := os.WriteFile(filepath.Join(dir, "section_01.txt"), []byte(sectionText), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// outline_stale should report section_01 as never recorded -- a real
+	// answer computed from the fixture, not a canned success.
+	res, err := session.CallTool(ctx, &mcp.CallToolParams{
+		Name:      "outline_stale",
+		Arguments: map[string]any{"manuscript_dir": dir},
+	})
+	if err != nil {
+		t.Fatalf("outline_stale: protocol error: %v", err)
+	}
+	if res.IsError {
+		t.Fatalf("outline_stale: unexpected soft error: %+v", res.StructuredContent)
+	}
+	stale, ok := res.StructuredContent.(map[string]any)
+	if !ok {
+		t.Fatalf("outline_stale: StructuredContent is %T, want map[string]any", res.StructuredContent)
+	}
+	neverRecorded, _ := stale["never_recorded"].([]any)
+	if len(neverRecorded) != 1 || neverRecorded[0] != "section_01" {
+		t.Errorf("outline_stale never_recorded = %v, want [section_01]", stale["never_recorded"])
+	}
+	currentHashes, _ := stale["current_hashes"].(map[string]any)
+	hash, _ := currentHashes["section_01"].(string)
+	if hash == "" {
+		t.Fatalf("outline_stale current_hashes has no section_01 entry: %+v", stale)
+	}
+
+	// Record the section directly (bypassing the outliner agent, which
+	// this test isn't exercising) using the hash outline_stale reported,
+	// then join and render through the server.
+	if err := os.MkdirAll(cli.OutlineSectionsDir(dir), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	sum := sha256.Sum256([]byte(sectionText))
+	if hex.EncodeToString(sum[:]) != hash {
+		t.Fatalf("computed hash %s != outline_stale's reported hash %s", hex.EncodeToString(sum[:]), hash)
+	}
+	sectionRecord, err := json.Marshal(map[string]any{
+		"section":        "section_01",
+		"section_sha256": hash,
+		"scenes":         []any{},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(cli.OutlineSectionsDir(dir), "section_01.json"), sectionRecord, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	res, err = session.CallTool(ctx, &mcp.CallToolParams{
+		Name:      "outline_join",
+		Arguments: map[string]any{"manuscript_dir": dir},
+	})
+	if err != nil {
+		t.Fatalf("outline_join: protocol error: %v", err)
+	}
+	if res.IsError {
+		t.Fatalf("outline_join: unexpected soft error: %+v", res.StructuredContent)
+	}
+
+	// outline_render is the tool whose whole value is the file it writes.
+	// This is the call that depended on domainsDir threading -- see the
+	// doc comment above.
+	res, err = session.CallTool(ctx, &mcp.CallToolParams{
+		Name:      "outline_render",
+		Arguments: map[string]any{"manuscript_dir": dir},
+	})
+	if err != nil {
+		t.Fatalf("outline_render: protocol error: %v", err)
+	}
+	if res.IsError {
+		t.Fatalf("outline_render: unexpected soft error (likely a domain-lookup regression): %+v", res.StructuredContent)
+	}
+	renderedPath := filepath.Join(dir, "Outline.md")
+	body, err := os.ReadFile(renderedPath)
+	if err != nil {
+		t.Fatalf("outline_render did not write %s: %v", renderedPath, err)
+	}
+	if !strings.Contains(string(body), "section_01") {
+		t.Errorf("Outline.md does not mention section_01:\n%s", body)
 	}
 }

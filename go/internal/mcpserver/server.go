@@ -473,20 +473,26 @@ func (s *redlinerServer) outlineStale(_ context.Context, _ *mcp.CallToolRequest,
 }
 
 func (s *redlinerServer) outlineJoin(_ context.Context, _ *mcp.CallToolRequest, in manuscriptDirInput) (*mcp.CallToolResult, any, error) {
-	return runOutlineCommand("join", in.ManuscriptDir)
+	return s.runOutlineCommand("join", in.ManuscriptDir)
 }
 
 func (s *redlinerServer) outlineRender(_ context.Context, _ *mcp.CallToolRequest, in manuscriptDirInput) (*mcp.CallToolResult, any, error) {
-	return runOutlineCommand("render", in.ManuscriptDir)
+	return s.runOutlineCommand("render", in.ManuscriptDir)
 }
 
 func (s *redlinerServer) outlineVersions(_ context.Context, _ *mcp.CallToolRequest, in manuscriptDirInput) (*mcp.CallToolResult, any, error) {
-	return runOutlineCommand("versions", in.ManuscriptDir)
+	return s.runOutlineCommand("versions", in.ManuscriptDir)
 }
 
-func runOutlineCommand(command, manuscriptDir string) (*mcp.CallToolResult, any, error) {
+// runOutlineCommand calls RunOutlineWithDomainsDir, not RunOutline: it
+// takes s.domainsDir directly instead of re-resolving it via
+// schemas.FindDomainsDir(), which would search from this process's own
+// binary rather than reusing the directory this server was constructed
+// with. See internal/cli/outline.go's RunOutline doc comment (same
+// hazard, same fix, as validate_findings's ValidateManuscript).
+func (s *redlinerServer) runOutlineCommand(command, manuscriptDir string) (*mcp.CallToolResult, any, error) {
 	var out bytes.Buffer
-	code := cli.RunOutline([]string{command, manuscriptDir}, &out, &out)
+	code := cli.RunOutlineWithDomainsDir([]string{command, manuscriptDir}, s.domainsDir, &out, &out)
 	if code != 0 {
 		return nil, errorResult("%s", strings.TrimSpace(out.String())), nil
 	}
