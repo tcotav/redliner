@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/tcotav/redliner/go/internal/schemas"
 )
@@ -596,6 +597,18 @@ func TestArchiveOutlineVersion_NoOpRunArchivesNothing(t *testing.T) {
 	if _, archived, err := ArchiveOutlineVersion(dir, []string{"section_01"}); err != nil || !archived {
 		t.Fatalf("first archive: archived=%v err=%v", archived, err)
 	}
+
+	// Deliberate garbage in the working outline.json, unmistakably not the
+	// join of the (untouched) section files. ArchiveOutlineVersion must
+	// recompute the join and compare THAT against v1's archived copy --
+	// not read this file. An implementation that compared against the
+	// working file would see a difference here and archive a spurious v2.
+	// Do not "clean this up": removing it silently restores the blind spot
+	// this test exists to close.
+	if err := os.WriteFile(OutlinePath(dir), []byte(`{"sections":[],"scene_count":999}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
 	_, archived, err := ArchiveOutlineVersion(dir, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -670,6 +683,51 @@ func TestArchiveOutlineVersion_MetaRecordsChangedSections(t *testing.T) {
 	if len(meta.ChangedSections) != 1 || meta.ChangedSections[0] != "section_01" {
 		t.Errorf("meta.ChangedSections = %v, want [section_01]", meta.ChangedSections)
 	}
+	if meta.ArchivedAt == "" {
+		t.Error("meta.ArchivedAt is empty -- the timestamp is half the value of the listing an author reads")
+	} else if _, err := time.Parse(time.RFC3339, meta.ArchivedAt); err != nil {
+		t.Errorf("meta.ArchivedAt = %q is not RFC3339: %v", meta.ArchivedAt, err)
+	}
+}
+
+func TestArchiveOutlineVersion_CounterComesFromStateNotDirectoryCount(t *testing.T) {
+	dir := newOutlineFixture(t, "section_01")
+	stale, _ := ComputeOutlineStale(dir)
+	writeOutlineSectionWithScenes(t, dir, "section_01", stale.CurrentHashes["section_01"],
+		[]map[string]interface{}{scene(1, "enter")})
+
+	// Force divergence between the state counter and what's on disk: no
+	// version directories exist yet, but state already claims 5. A
+	// directory-count-based implementation would produce v1 here and
+	// collide with (overwrite) whatever v1 shows up later; the counter
+	// must come from state.OutlineVersion regardless of what's archived.
+	state, err := schemas.LoadState(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state.OutlineVersion = 5
+	if _, err := schemas.SaveState(dir, state); err != nil {
+		t.Fatal(err)
+	}
+
+	path, archived, err := ArchiveOutlineVersion(dir, []string{"section_01"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !archived {
+		t.Fatal("expected an archive with no version directories on disk yet")
+	}
+	if filepath.Base(path) != "v6" {
+		t.Errorf("version directory = %s, want v6", filepath.Base(path))
+	}
+
+	after, err := schemas.LoadState(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if after.OutlineVersion != 6 {
+		t.Errorf("state.OutlineVersion = %d, want 6", after.OutlineVersion)
+	}
 }
 
 func TestRunOutlineVersions_ListsWhatIsKept(t *testing.T) {
@@ -679,6 +737,21 @@ func TestRunOutlineVersions_ListsWhatIsKept(t *testing.T) {
 		[]map[string]interface{}{scene(1, "enter")})
 	if _, _, err := ArchiveOutlineVersion(dir, []string{"section_01"}); err != nil {
 		t.Fatal(err)
+	}
+
+	// Archive two more versions, changing content each time so each run
+	// actually produces a new one -- this is what exercises the
+	// sort.Slice in cmdOutlineVersions, which a single-version fixture
+	// never touches.
+	writeOutlineSectionWithScenes(t, dir, "section_01", stale.CurrentHashes["section_01"],
+		[]map[string]interface{}{scene(1, "enter"), scene(2, "flee")})
+	if _, archived, err := ArchiveOutlineVersion(dir, []string{"section_01"}); err != nil || !archived {
+		t.Fatalf("second archive: archived=%v err=%v", archived, err)
+	}
+	writeOutlineSectionWithScenes(t, dir, "section_01", stale.CurrentHashes["section_01"],
+		[]map[string]interface{}{scene(1, "enter"), scene(2, "flee"), scene(3, "return")})
+	if _, archived, err := ArchiveOutlineVersion(dir, []string{"section_01"}); err != nil || !archived {
+		t.Fatalf("third archive: archived=%v err=%v", archived, err)
 	}
 
 	var buf bytes.Buffer
@@ -696,6 +769,27 @@ func TestRunOutlineVersions_ListsWhatIsKept(t *testing.T) {
 	// has to be printed.
 	if !strings.Contains(out, filepath.Join("v1", "Outline.md")) {
 		t.Errorf("listing does not print the readable path: %s", out)
+	}
+
+	// Positions must be strictly increasing -- proves the listing is
+	// sorted by version, not directory-read order. Match "v1 " etc.
+	// (trailing space, from "v%-4d") rather than a bare "v1" substring so
+	// this doesn't rot if a v10 is ever archived and "v1" starts matching
+	// inside it.
+	i1 := strings.Index(out, "v1 ")
+	i2 := strings.Index(out, "v2 ")
+	i3 := strings.Index(out, "v3 ")
+	if i1 < 0 {
+		t.Fatalf("listing is missing v1: %s", out)
+	}
+	if i2 < 0 {
+		t.Fatalf("listing is missing v2: %s", out)
+	}
+	if i3 < 0 {
+		t.Fatalf("listing is missing v3: %s", out)
+	}
+	if !(i1 < i2 && i2 < i3) {
+		t.Errorf("versions not listed in ascending order: v1@%d v2@%d v3@%d\n%s", i1, i2, i3, out)
 	}
 }
 
