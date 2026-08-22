@@ -225,8 +225,12 @@ func TestLoadDomain_OutlineBlockMustBeWellFormedIfPresent(t *testing.T) {
 		t.Run(label, func(t *testing.T) {
 			dir := t.TempDir()
 			writeDomain(t, dir, "bad", minimalDomainJSON("bad", outline))
-			if _, err := LoadDomain(dir, "bad"); err == nil {
-				t.Errorf("malformed outline block (%s) loaded without error", label)
+			_, err := LoadDomain(dir, "bad")
+			if err == nil {
+				t.Fatalf("malformed outline block (%s) loaded without error", label)
+			}
+			if !strings.Contains(err.Error(), "outline") {
+				t.Errorf("malformed outline block (%s): error %q does not mention 'outline' -- may be failing for the wrong reason (e.g. a malformed JSON fragment)", label, err.Error())
 			}
 		})
 	}
