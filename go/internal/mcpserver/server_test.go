@@ -132,14 +132,18 @@ func TestToolNamesAndDescriptions_MatchPython(t *testing.T) {
 	// adding a tool stays a deliberate act rather than something that
 	// silently slips past this guard.
 	goOnly := map[string]bool{
-		"context":         true,
-		"decisions_apply": true,
-		"rounds_archive":  true,
-		"rounds_list":     true,
-		"state_stage":     true,
-		"state_pass":      true,
-		"canon_bundle":    true,
-		"canon_merge":     true,
+		"context":          true,
+		"decisions_apply":  true,
+		"rounds_archive":   true,
+		"rounds_list":      true,
+		"state_stage":      true,
+		"state_pass":       true,
+		"canon_bundle":     true,
+		"canon_merge":      true,
+		"outline_stale":    true,
+		"outline_join":     true,
+		"outline_render":   true,
+		"outline_versions": true,
 	}
 
 	// A ported tool that has grown a Go-only parameter needs somewhere to
@@ -455,5 +459,18 @@ func TestMCPTools_ErrorContract(t *testing.T) {
 	out, _ := res.StructuredContent.(map[string]any)
 	if out["error"] == nil {
 		t.Errorf("expected a soft error result, got: %+v", out)
+	}
+}
+
+func TestOutlineToolsAreRegistered(t *testing.T) {
+	srv := NewServer(filepath.Join(repoRootForParity(t), "domains"))
+	tools := map[string]bool{}
+	for _, tl := range listToolsForParity(t, srv) {
+		tools[tl.Name] = true
+	}
+	for _, name := range []string{"outline_stale", "outline_join", "outline_render", "outline_versions"} {
+		if !tools[name] {
+			t.Errorf("MCP server exposes no %q tool -- the Cowork front door cannot follow the outline skill prose without it", name)
+		}
 	}
 }

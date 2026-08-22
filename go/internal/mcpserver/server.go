@@ -57,6 +57,10 @@ func NewServer(domainsDir string) *mcp.Server {
 	mcp.AddTool(srv, &mcp.Tool{Name: "state_pass", Description: descStatePass}, s.statePass)
 	mcp.AddTool(srv, &mcp.Tool{Name: "canon_bundle", Description: descCanonBundle}, s.canonBundle)
 	mcp.AddTool(srv, &mcp.Tool{Name: "canon_merge", Description: descCanonMerge}, s.canonMerge)
+	mcp.AddTool(srv, &mcp.Tool{Name: "outline_stale", Description: descOutlineStale}, s.outlineStale)
+	mcp.AddTool(srv, &mcp.Tool{Name: "outline_join", Description: descOutlineJoin}, s.outlineJoin)
+	mcp.AddTool(srv, &mcp.Tool{Name: "outline_render", Description: descOutlineRender}, s.outlineRender)
+	mcp.AddTool(srv, &mcp.Tool{Name: "outline_versions", Description: descOutlineVersions}, s.outlineVersions)
 
 	return srv
 }
@@ -450,4 +454,41 @@ func (s *redlinerServer) canonMerge(_ context.Context, _ *mcp.CallToolRequest, i
 		return nil, errorResult("Merge failed: %v", err), nil
 	}
 	return nil, map[string]any{"added": added, "already_present": skipped}, nil
+}
+
+// --- outline_* -- the scene outliner layer. outlineStale returns the
+// computed struct directly (like canonStale); the other three run the
+// CLI command and return its human-readable stdout, because their whole
+// value is a written file plus the path to it. ---
+
+func (s *redlinerServer) outlineStale(_ context.Context, _ *mcp.CallToolRequest, in manuscriptDirInput) (*mcp.CallToolResult, any, error) {
+	result, err := cli.ComputeOutlineStale(in.ManuscriptDir)
+	if err != nil {
+		if ce, ok := err.(*schemas.SectionCollisionError); ok {
+			return nil, errorResult("Section file error: %s", ce.Error()), nil
+		}
+		return nil, nil, err
+	}
+	return nil, result, nil
+}
+
+func (s *redlinerServer) outlineJoin(_ context.Context, _ *mcp.CallToolRequest, in manuscriptDirInput) (*mcp.CallToolResult, any, error) {
+	return runOutlineCommand("join", in.ManuscriptDir)
+}
+
+func (s *redlinerServer) outlineRender(_ context.Context, _ *mcp.CallToolRequest, in manuscriptDirInput) (*mcp.CallToolResult, any, error) {
+	return runOutlineCommand("render", in.ManuscriptDir)
+}
+
+func (s *redlinerServer) outlineVersions(_ context.Context, _ *mcp.CallToolRequest, in manuscriptDirInput) (*mcp.CallToolResult, any, error) {
+	return runOutlineCommand("versions", in.ManuscriptDir)
+}
+
+func runOutlineCommand(command, manuscriptDir string) (*mcp.CallToolResult, any, error) {
+	var out bytes.Buffer
+	code := cli.RunOutline([]string{command, manuscriptDir}, &out, &out)
+	if code != 0 {
+		return nil, errorResult("%s", strings.TrimSpace(out.String())), nil
+	}
+	return nil, map[string]any{"output": strings.TrimSpace(out.String())}, nil
 }
