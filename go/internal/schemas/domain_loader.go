@@ -33,6 +33,7 @@ var requiredKeys = []string{
 var requiredContinuityKeys = []string{"entity_types", "sources", "categories"}
 var requiredBriefFieldKeys = []string{"name", "label", "prompt"}
 var requiredDraftStageKeys = []string{"name", "implication"}
+var requiredOutlineFieldKeys = []string{"name", "prompt"}
 
 // FindDomainsDir locates the domains/ directory without assuming a fixed
 // nesting depth relative to the running binary. bin/redliner and
@@ -180,6 +181,49 @@ func LoadDomain(domainsDir, name string) (Domain, error) {
 		}
 	}
 
+	// The outline block is optional -- design-doc has none, and every
+	// manuscript created before the outline layer existed has none. Absent
+	// is valid; present-but-malformed is not, because a domain whose
+	// row_fields are wrong generates a broken agent file and a validator
+	// that accepts the wrong shape, and neither failure is visible until
+	// an author has paid for a pass.
+	if outlineRaw, present := domain["outline"]; present {
+		outline, ok := outlineRaw.(map[string]interface{})
+		if !ok {
+			return nil, &DomainError{Message: fmt.Sprintf("%s: 'outline' must be an object", path)}
+		}
+		rowFields, ok := outline["row_fields"].([]interface{})
+		if !ok || len(rowFields) == 0 {
+			return nil, &DomainError{Message: fmt.Sprintf("%s: 'outline.row_fields' must be a non-empty list", path)}
+		}
+		checkFields := func(key string, entries []interface{}) error {
+			for _, item := range entries {
+				field, ok := item.(map[string]interface{})
+				if !ok {
+					return &DomainError{Message: fmt.Sprintf("%s: outline.%s entry missing keys %s", path, key, pyList(requiredOutlineFieldKeys))}
+				}
+				if missing := missingKeysMap(field, requiredOutlineFieldKeys); len(missing) > 0 {
+					return &DomainError{Message: fmt.Sprintf("%s: outline.%s entry missing keys %s", path, key, pyList(missing))}
+				}
+			}
+			return nil
+		}
+		if err := checkFields("row_fields", rowFields); err != nil {
+			return nil, err
+		}
+		// section_fields is optional within an optional block: fiction has
+		// row fields but no section-level one.
+		if sectionFieldsRaw, present := outline["section_fields"]; present {
+			sectionFields, ok := sectionFieldsRaw.([]interface{})
+			if !ok {
+				return nil, &DomainError{Message: fmt.Sprintf("%s: 'outline.section_fields' must be a list", path)}
+			}
+			if err := checkFields("section_fields", sectionFields); err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	return domain, nil
 }
 
@@ -229,6 +273,52 @@ func (d Domain) StringSet(key string) map[string]bool {
 func (d Domain) Continuity() Domain {
 	c, _ := d["continuity"].(map[string]interface{})
 	return Domain(c)
+}
+
+// Outline returns the nested "outline" object as a Domain, or nil when
+// the domain has none. A nil Domain is safe to call the other accessors
+// on -- map reads on a nil map return zero values -- which is what lets
+// every caller skip an explicit presence check.
+func (d Domain) Outline() Domain {
+	o, _ := d["outline"].(map[string]interface{})
+	return Domain(o)
+}
+
+// HasOutline reports whether this domain configures an outline layer at
+// all. design-doc does not; fiction and serial-fiction do.
+func (d Domain) HasOutline() bool {
+	return len(d.Outline()) > 0
+}
+
+// OutlineRowFields returns the per-scene field names in declaration
+// order. Order is load-bearing: it is the column order of the rendered
+// Outline.md and the field order the generated agent file lists.
+func (d Domain) OutlineRowFields() []string {
+	return d.Outline().namedFields("row_fields")
+}
+
+// OutlineSectionFields returns the per-section field names in
+// declaration order (serial-fiction's "leaves_open"; empty for fiction).
+func (d Domain) OutlineSectionFields() []string {
+	return d.Outline().namedFields("section_fields")
+}
+
+func (d Domain) namedFields(key string) []string {
+	raw, ok := d[key].([]interface{})
+	if !ok {
+		return nil
+	}
+	var out []string
+	for _, entry := range raw {
+		field, ok := entry.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if name, ok := field["name"].(string); ok && name != "" {
+			out = append(out, name)
+		}
+	}
+	return out
 }
 
 // RoundTrackedPhase is the domain's iterative phase (fiction:

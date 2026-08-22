@@ -134,3 +134,100 @@ func mkdirT(t *testing.T, dir string) {
 		t.Fatalf("MkdirAll(%s): %v", dir, err)
 	}
 }
+
+func writeDomain(t *testing.T, domainsDir, name, body string) {
+	t.Helper()
+	dir := filepath.Join(domainsDir, name)
+	mkdirT(t, dir)
+	if err := os.WriteFile(filepath.Join(dir, "domain.json"), []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// minimalDomainJSON builds a domain.json that satisfies every existing
+// required key, with `extra` spliced in as additional top-level JSON
+// (must end with a comma, or be empty).
+func minimalDomainJSON(name, extra string) string {
+	return `{
+		"name": "` + name + `",
+		"display_name": "` + name + `",
+		"round_tracked_phase": "developmental",
+		` + extra + `
+		"developmental_categories": ["a"],
+		"line_categories": ["b"],
+		"continuity": {"entity_types": ["character"], "sources": ["narration"], "categories": ["timeline"]},
+		"brief_fields": [{"name": "logline", "label": "Logline", "prompt": "?"}],
+		"draft_stages": [{"name": "revised", "implication": "both layers"}]
+	}`
+}
+
+func TestLoadDomain_OutlineBlockIsOptional(t *testing.T) {
+	dir := t.TempDir()
+	writeDomain(t, dir, "nooutline", minimalDomainJSON("nooutline", ""))
+
+	d, err := LoadDomain(dir, "nooutline")
+	if err != nil {
+		t.Fatalf("a domain with no outline block must load: %v", err)
+	}
+	if d.HasOutline() {
+		t.Error("HasOutline() true for a domain with no outline block")
+	}
+	if got := d.OutlineRowFields(); len(got) != 0 {
+		t.Errorf("OutlineRowFields() = %v, want empty", got)
+	}
+	if got := d.OutlineSectionFields(); len(got) != 0 {
+		t.Errorf("OutlineSectionFields() = %v, want empty", got)
+	}
+}
+
+func TestLoadDomain_OutlineFieldsInDeclarationOrder(t *testing.T) {
+	dir := t.TempDir()
+	outline := `"outline": {
+		"row_fields": [
+			{"name": "goal", "prompt": "g"},
+			{"name": "conflict", "prompt": "c"},
+			{"name": "outcome", "prompt": "o"}
+		],
+		"section_fields": [{"name": "leaves_open", "prompt": "l"}]
+	},`
+	writeDomain(t, dir, "withoutline", minimalDomainJSON("withoutline", outline))
+
+	d, err := LoadDomain(dir, "withoutline")
+	if err != nil {
+		t.Fatalf("valid outline block rejected: %v", err)
+	}
+	if !d.HasOutline() {
+		t.Fatal("HasOutline() false for a domain that has one")
+	}
+	want := []string{"goal", "conflict", "outcome"}
+	got := d.OutlineRowFields()
+	if len(got) != len(want) {
+		t.Fatalf("OutlineRowFields() = %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("OutlineRowFields()[%d] = %q, want %q (declaration order is load-bearing)", i, got[i], want[i])
+		}
+	}
+	if got := d.OutlineSectionFields(); len(got) != 1 || got[0] != "leaves_open" {
+		t.Errorf("OutlineSectionFields() = %v, want [leaves_open]", got)
+	}
+}
+
+func TestLoadDomain_OutlineBlockMustBeWellFormedIfPresent(t *testing.T) {
+	cases := map[string]string{
+		"not an object":          `"outline": "goal/conflict/outcome",`,
+		"empty row_fields":       `"outline": {"row_fields": []},`,
+		"missing row_fields":     `"outline": {"section_fields": [{"name":"x","prompt":"p"}]},`,
+		"row field missing name": `"outline": {"row_fields": [{"prompt": "p"}]},`,
+	}
+	for label, outline := range cases {
+		t.Run(label, func(t *testing.T) {
+			dir := t.TempDir()
+			writeDomain(t, dir, "bad", minimalDomainJSON("bad", outline))
+			if _, err := LoadDomain(dir, "bad"); err == nil {
+				t.Errorf("malformed outline block (%s) loaded without error", label)
+			}
+		})
+	}
+}
