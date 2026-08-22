@@ -168,7 +168,7 @@ func ValidateManuscript(manuscriptDir, domainsDir string, stdout io.Writer) int 
 	}
 
 	ok := validateCanon(stdout, manuscriptDir, redlinerPath, domain)
-	ok = validateOutline(stdout, redlinerPath, domain) && ok
+	ok = validateOutline(stdout, manuscriptDir, domain) && ok
 
 	findingsPath := filepath.Join(redlinerPath, "findings")
 	if info, err := os.Stat(findingsPath); err != nil || !info.IsDir() {
@@ -230,11 +230,16 @@ func ValidateManuscript(manuscriptDir, domainsDir string, stdout io.Writer) int 
 // accepted, and an invalid outline reaching the developmental editor as
 // its structural spine is exactly the failure that would look like a
 // bad pass rather than a bad file.
-func validateOutline(stdout io.Writer, redlinerPath string, domain schemas.Domain) bool {
+func validateOutline(stdout io.Writer, manuscriptDir string, domain schemas.Domain) bool {
 	if !domain.HasOutline() {
 		return true
 	}
-	sectionsPath := filepath.Join(redlinerPath, "outline", "sections")
+	// Derived from OutlineSectionsDir rather than rebuilt by hand: the
+	// helper is the one source of truth for where outline sections live,
+	// and a hand-copied path here would silently walk a stale directory
+	// (finding nothing, reporting clean) the moment that helper's layout
+	// changed without this function changing to match.
+	sectionsPath := OutlineSectionsDir(manuscriptDir)
 	if info, err := os.Stat(sectionsPath); err != nil || !info.IsDir() {
 		return true
 	}
