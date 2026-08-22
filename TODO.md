@@ -2663,3 +2663,35 @@ agent failure and costs one round of revision-tracking fidelity; the
 alternative is restoring an ordering hazard that was unconditional and
 silent. Revisit only if a real mid-flow failure is observed to have eaten
 a round — not on the strength of this paragraph.
+
+## The developmental pass doesn't know which chapters are locked
+
+**Raised:** 2026-08-22, while designing the scene outliner
+(`docs/superpowers/specs/2026-08-22-scene-outliner-design.md`).
+
+Serial fiction has a constraint the tool doesn't model: once a chapter
+goes out, the author doesn't revise it. `serial-fiction-developmental-
+editor.md` says "everything released so far" in five places, but
+`state.json` has never had a way to say *which* chapters those are — so
+the editor can emit findings against text the author cannot change.
+
+The outliner spec adds `published_through` to state and uses it for one
+thing only: drawing a shipped/unshipped line in `Outline.md`. That is
+deliberately the smallest use of the field.
+
+**The larger use, parked here.** A finding about a published chapter
+isn't unusable, it's *differently phrased*: not "restructure chapter 4's
+midpoint" but "chapter 4 left this unpaid — pay it in chapter 13." Same
+observation, forward-directed advice.
+
+That makes it a mode, not a filter:
+
+- **serial mode** — locked prefix, findings must be actionable forward.
+- **book-version re-edit** — nothing locked, restructure anything.
+
+Which applies is a fact only the author has, so it can't be inferred
+from `published_through` alone — an author re-editing for print still
+has published chapters.
+
+Scope: the agent prompt, the findings schema's `scope` field, and
+intake. Wants its own spec. Don't fold it into the outliner work.
