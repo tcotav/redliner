@@ -368,6 +368,55 @@ func TestRenderOutline_ScenesAndFields(t *testing.T) {
 	}
 }
 
+// TestRenderOutline_RendersRowFieldsInDeclarationOrder guards a
+// load-bearing property: declaration order of row_fields is the column
+// order the author reads and the field order of a generated agent
+// prompt. Two different orderings are asserted, not one -- a single
+// ordering could be satisfied by an implementation that hardcodes
+// goal/conflict/outcome and ignores the rowFields parameter entirely.
+// The second ordering is what proves the parameter actually drives the
+// output.
+func TestRenderOutline_RendersRowFieldsInDeclarationOrder(t *testing.T) {
+	joined := map[string]interface{}{
+		"scene_count": 1,
+		"sections": []interface{}{
+			map[string]interface{}{
+				"section": "section_01",
+				"scenes": []interface{}{
+					map[string]interface{}{
+						"order": float64(1), "pov": "Mira", "anchor": "The gate was already open",
+						"goal":     "GOALTEXTUNIQUE",
+						"conflict": "CONFLICTTEXTUNIQUE",
+						"outcome":  "OUTCOMETEXTUNIQUE",
+					},
+				},
+			},
+		},
+	}
+
+	for _, fields := range [][]string{
+		{"goal", "conflict", "outcome"},
+		{"outcome", "goal", "conflict"},
+	} {
+		got := RenderOutline(joined, fields, nil)
+
+		var indices []int
+		for _, field := range fields {
+			label := titleCaseField(field) + ":"
+			idx := strings.Index(got, label)
+			if idx < 0 {
+				t.Fatalf("field label %q not found for order %v:\n%s", label, fields, got)
+			}
+			indices = append(indices, idx)
+		}
+		for i := 1; i < len(indices); i++ {
+			if indices[i-1] >= indices[i] {
+				t.Errorf("fields not rendered in declared order %v (indices %v):\n%s", fields, indices, got)
+			}
+		}
+	}
+}
+
 func TestRenderOutline_SectionFieldOnlyWhenConfigured(t *testing.T) {
 	joined := map[string]interface{}{
 		"scene_count": 0,
@@ -390,11 +439,11 @@ func TestRenderOutline_SectionFieldOnlyWhenConfigured(t *testing.T) {
 
 func TestRenderOutline_PublishedBoundary(t *testing.T) {
 	joined := map[string]interface{}{
-		"scene_count":       0,
+		"scene_count":       2,
 		"published_through": "section_01",
 		"sections": []interface{}{
-			map[string]interface{}{"section": "section_01", "scenes": []interface{}{}},
-			map[string]interface{}{"section": "section_02", "scenes": []interface{}{}},
+			map[string]interface{}{"section": "section_01", "scenes": []interface{}{scene(1, "enter")}},
+			map[string]interface{}{"section": "section_02", "scenes": []interface{}{scene(1, "escape")}},
 		},
 	}
 	got := RenderOutline(joined, []string{"goal"}, nil)
@@ -402,9 +451,25 @@ func TestRenderOutline_PublishedBoundary(t *testing.T) {
 	if !strings.Contains(got, "published") {
 		t.Fatalf("no published boundary rendered:\n%s", got)
 	}
+	if count := strings.Count(got, "Everything above this line is published"); count != 1 {
+		t.Errorf("boundary text rendered %d times, want exactly 1:\n%s", count, got)
+	}
 	boundary := strings.Index(got, "Everything above this line is published")
 	first := strings.Index(got, "## section_01")
 	second := strings.Index(got, "## section_02")
+	// Guard the comparison below: strings.Index returns -1 for a needle
+	// that isn't present at all, and -1 < -1 is false, so an absent
+	// boundary or heading could otherwise satisfy the range check by
+	// accident instead of failing it.
+	for name, idx := range map[string]int{
+		"published-boundary text": boundary,
+		"## section_01 heading":   first,
+		"## section_02 heading":   second,
+	} {
+		if idx < 0 {
+			t.Fatalf("%s not found in rendered output:\n%s", name, got)
+		}
+	}
 	if boundary < first || boundary > second {
 		t.Errorf("boundary at %d is not between section_01 (%d) and section_02 (%d):\n%s", boundary, first, second, got)
 	}
@@ -466,6 +531,13 @@ func TestRunOutlineRender_OutlineMdIsNotMistakenForASection(t *testing.T) {
 // binary with no domains/ nearby -- REDLINER_DOMAINS_DIR is the escape
 // hatch designed for exactly this, and golden_test.go already relies on
 // it for the same reason.
+//
+// golden_test.go's repoRoot(t) does this same path computation, but it
+// takes a *testing.T for t.Helper()/t.Fatal() and TestMain only has a
+// *testing.M -- there's no T to hand it here. Inlining the two lines is
+// deliberate, not a missed reuse: the alternative is a near-duplicate
+// helper with a different signature, which trades one duplication for
+// another.
 func TestMain(m *testing.M) {
 	if os.Getenv("REDLINER_DOMAINS_DIR") == "" {
 		_, thisFile, _, _ := runtime.Caller(0)
