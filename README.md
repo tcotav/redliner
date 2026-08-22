@@ -207,7 +207,9 @@ redliner/                          (plugin root)
 │   ├── intake/SKILL.md           /redliner:intake
 │   └── new-domain/
 │       ├── SKILL.md              /redliner:new-domain — design + generate a domain
-│       └── reference/templates/  templates for the six agent roles
+│       └── reference/templates/  templates for the six core agent roles,
+│                                  plus outliner.md for domains with an
+│                                  outline layer
 ├── domains/                      vocabulary per kind of document (see below)
 │   ├── fiction/domain.json
 │   ├── design-doc/domain.json
@@ -262,10 +264,12 @@ Three domains exist today: `fiction`, `design-doc` (design docs /
 product proposals), and `serial-fiction` (fiction released in
 installments — a web serial, a Substack/Patreon serial — where a
 chapter is read both on its own and as part of an ongoing whole). Each
-domain also has its own six agent files in `agents/`
+domain also has its own agent files in `agents/` — six core roles
 (`agents/fiction-*.md`, `agents/design-doc-*.md`,
-`agents/serial-fiction-*.md`) — a domain is config plus a matching set
-of generated prompts, not config alone; see "Why this is static, not
+`agents/serial-fiction-*.md`), plus a seventh `-outliner.md` for a
+domain that configures an outline layer (fiction and serial-fiction do;
+design-doc doesn't) — a domain is config plus a matching set of
+generated prompts, not config alone; see "Why this is static, not
 runtime-injected" below.
 
 **To add a domain, run `/redliner:new-domain`.** It interviews you
@@ -274,7 +278,7 @@ continuity layer's entity types/sources/categories, brief fields, draft
 stages), enforces guardrails on the category design (4–7 categories per
 phase, each one a reviewer could plausibly disagree about being
 present, none redundant with severity), writes `domain.json`, generates
-the six agent files, and verifies all of it — including a live check
+the agent files, and verifies all of it — including a live check
 that each generated agent actually registers under its expected name —
 before calling it done.
 
