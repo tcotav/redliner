@@ -33,7 +33,13 @@ func TestValidateOutlineSection_AcceptsValid(t *testing.T) {
 func TestValidateOutlineSection_RejectsJudgmentKeys(t *testing.T) {
 	// The point of the whole schema: the recorder has nowhere to put an
 	// opinion. Same rule canon_schema.go enforces on facts.
-	for _, key := range []string{"note", "severity", "concern", "suggestion"} {
+	//
+	// "rating" and "note2" are included even though they are not judgment
+	// words: the schema is a closed whitelist, not a blacklist of these
+	// four names. Without a non-judgment key in this list, the test would
+	// pass identically against a hardcoded blacklist of exactly these
+	// words instead of the whitelist the implementation actually uses.
+	for _, key := range []string{"note", "severity", "concern", "suggestion", "rating", "note2"} {
 		report := validOutlineSection()
 		report["scenes"].([]interface{})[0].(map[string]interface{})[key] = "this scene is weak"
 		errs := ValidateOutlineSection(report, testRowFields, nil)
