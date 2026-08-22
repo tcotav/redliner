@@ -16,7 +16,8 @@ import (
 const outlineUsage = `Usage:
   redliner outline stale    <manuscript_dir>   # which sections need re-recording
   redliner outline join     <manuscript_dir>   # rebuild outline.json from every section file
-  redliner outline render   <manuscript_dir>   # write the author-readable Outline.md`
+  redliner outline render   <manuscript_dir>   # write the author-readable Outline.md
+  redliner outline versions <manuscript_dir>   # list archived outline versions`
 
 func RunOutline(args []string, stdout, stderr io.Writer) int {
 	if len(args) < 2 {
@@ -37,6 +38,8 @@ func RunOutline(args []string, stdout, stderr io.Writer) int {
 		return cmdOutlineJoin(manuscriptDir, stdout)
 	case "render":
 		return cmdOutlineRender(manuscriptDir, stdout)
+	case "versions":
+		return cmdOutlineVersions(manuscriptDir, stdout)
 	default:
 		fmt.Fprintf(stdout, "Unknown command %s\n%s\n", pyReprStr(command), outlineUsage)
 		return 1
@@ -393,4 +396,149 @@ func outlineFieldsFor(manuscriptDir string) ([]string, []string, error) {
 		return nil, nil, err
 	}
 	return domain.OutlineRowFields(), domain.OutlineSectionFields(), nil
+}
+
+func OutlineVersionsDir(manuscriptDir string) string {
+	return filepath.Join(OutlineDir(manuscriptDir), "versions")
+}
+
+// OutlineVersionMeta is one archived version's small sidecar. Timestamps
+// are RFC3339, same as state's, and are informational only -- version
+// ordering comes from the counter, never from mtime.
+type OutlineVersionMeta struct {
+	Version         int      `json:"version"`
+	ArchivedAt      string   `json:"archived_at"`
+	ChangedSections []string `json:"changed_sections"`
+	SceneCount      int      `json:"scene_count"`
+}
+
+// ArchiveOutlineVersion writes a new version when the joined outline
+// differs from the newest archived one, and does nothing otherwise.
+//
+// This cadence is the point. Keyed to the developmental round the way
+// continuity is, the layer would produce no history at all for its
+// primary workflow -- the author's loop is write a chapter, outline,
+// write the next, outline, a loop that need never run `assess`. Every
+// one of those runs would overwrite outline.json with nothing kept.
+//
+// Both the JSON and the rendered Markdown are archived. The Markdown is
+// what makes a version readable by a person; without it, "see version 4"
+// means hand-reading JSON inside a hidden directory. It costs a file
+// copy because the render is deterministic.
+func ArchiveOutlineVersion(manuscriptDir string, changedSections []string) (string, bool, error) {
+	joined, err := ComputeOutlineJoin(manuscriptDir)
+	if err != nil {
+		return "", false, err
+	}
+	raw, err := json.MarshalIndent(joined, "", "  ")
+	if err != nil {
+		return "", false, err
+	}
+	raw = append(raw, '\n')
+
+	state, err := schemas.LoadState(manuscriptDir)
+	if err != nil {
+		return "", false, err
+	}
+	if state == nil {
+		return "", false, fmt.Errorf("no state in %s", manuscriptDir)
+	}
+
+	// Compare against the newest archived version rather than against
+	// outline.json, which the caller may already have rewritten this run.
+	if state.OutlineVersion > 0 {
+		previous := filepath.Join(OutlineVersionsDir(manuscriptDir), fmt.Sprintf("v%d", state.OutlineVersion), "outline.json")
+		if existing, err := os.ReadFile(previous); err == nil && string(existing) == string(raw) {
+			return "", false, nil
+		}
+	}
+
+	next := state.OutlineVersion + 1
+	dest := filepath.Join(OutlineVersionsDir(manuscriptDir), fmt.Sprintf("v%d", next))
+	if err := os.MkdirAll(dest, 0o755); err != nil {
+		return "", false, err
+	}
+	if err := os.WriteFile(filepath.Join(dest, "outline.json"), raw, 0o644); err != nil {
+		return "", false, err
+	}
+
+	rowFields, sectionFields, err := outlineFieldsFor(manuscriptDir)
+	if err != nil {
+		return "", false, err
+	}
+	rendered := RenderOutline(joined, rowFields, sectionFields)
+	if err := os.WriteFile(filepath.Join(dest, "Outline.md"), []byte(rendered), 0o644); err != nil {
+		return "", false, err
+	}
+
+	sceneCount := 0
+	if n, ok := joined["scene_count"].(int); ok {
+		sceneCount = n
+	}
+	meta := OutlineVersionMeta{
+		Version:         next,
+		ArchivedAt:      schemas.NowISO(),
+		ChangedSections: orEmptyStrings(changedSections),
+		SceneCount:      sceneCount,
+	}
+	metaRaw, err := json.MarshalIndent(meta, "", "  ")
+	if err != nil {
+		return "", false, err
+	}
+	if err := os.WriteFile(filepath.Join(dest, "meta.json"), append(metaRaw, '\n'), 0o644); err != nil {
+		return "", false, err
+	}
+
+	state.OutlineVersion = next
+	if _, err := schemas.SaveState(manuscriptDir, state); err != nil {
+		return "", false, err
+	}
+	return dest, true, nil
+}
+
+func cmdOutlineVersions(manuscriptDir string, stdout io.Writer) int {
+	entries, err := os.ReadDir(OutlineVersionsDir(manuscriptDir))
+	if err != nil || len(entries) == 0 {
+		fmt.Fprintln(stdout, "No outline versions archived yet.")
+		return 0
+	}
+
+	type row struct {
+		meta OutlineVersionMeta
+		path string
+	}
+	var rows []row
+	for _, e := range entries {
+		if !e.IsDir() {
+			continue
+		}
+		dir := filepath.Join(OutlineVersionsDir(manuscriptDir), e.Name())
+		metaRaw, err := os.ReadFile(filepath.Join(dir, "meta.json"))
+		if err != nil {
+			continue
+		}
+		var meta OutlineVersionMeta
+		if err := json.Unmarshal(metaRaw, &meta); err != nil {
+			continue
+		}
+		rows = append(rows, row{meta: meta, path: dir})
+	}
+	if len(rows) == 0 {
+		fmt.Fprintln(stdout, "No outline versions archived yet.")
+		return 0
+	}
+	sort.Slice(rows, func(i, j int) bool { return rows[i].meta.Version < rows[j].meta.Version })
+
+	fmt.Fprintf(stdout, "Archived outline versions (%d):\n", len(rows))
+	for _, r := range rows {
+		changed := "no sections re-recorded"
+		if len(r.meta.ChangedSections) > 0 {
+			changed = "changed: " + strings.Join(r.meta.ChangedSections, ", ")
+		}
+		fmt.Fprintf(stdout, "  v%-4d %s  %d scene(s), %s\n", r.meta.Version, r.meta.ArchivedAt, r.meta.SceneCount, changed)
+		// Print the readable path, not just the version: reading a version
+		// means opening this file.
+		fmt.Fprintf(stdout, "         %s\n", filepath.Join(r.path, "Outline.md"))
+	}
+	return 0
 }

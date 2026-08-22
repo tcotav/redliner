@@ -307,6 +307,11 @@ func nowISO() string {
 	return time.Now().UTC().Format(time.RFC3339Nano)
 }
 
+// NowISO is nowISO exported for callers outside this package that write
+// their own timestamped sidecars (the outline layer's version meta).
+// Same format as state's, so anything reading both sees one convention.
+func NowISO() string { return nowISO() }
+
 // DiffResult is diff_manuscript's returned verdict. See
 // project_state.py's docstring for what each verdict value means.
 type DiffResult struct {

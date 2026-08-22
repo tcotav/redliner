@@ -545,3 +545,167 @@ func TestMain(m *testing.M) {
 	}
 	os.Exit(m.Run())
 }
+
+func TestArchiveOutlineVersion_FirstRunCreatesV1(t *testing.T) {
+	dir := newOutlineFixture(t, "section_01")
+	stale, _ := ComputeOutlineStale(dir)
+	writeOutlineSectionWithScenes(t, dir, "section_01", stale.CurrentHashes["section_01"],
+		[]map[string]interface{}{scene(1, "enter")})
+
+	path, archived, err := ArchiveOutlineVersion(dir, []string{"section_01"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !archived {
+		t.Fatal("first run archived nothing")
+	}
+	if filepath.Base(path) != "v1" {
+		t.Errorf("first version directory = %s, want v1", filepath.Base(path))
+	}
+	for _, name := range []string{"outline.json", "Outline.md", "meta.json"} {
+		if _, err := os.Stat(filepath.Join(path, name)); err != nil {
+			t.Errorf("version is missing %s: %v", name, err)
+		}
+	}
+
+	// The rendered Markdown is what makes a version readable by a person
+	// at all -- JSON alone would mean hand-reading a hidden directory.
+	raw, err := os.ReadFile(filepath.Join(path, "Outline.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(raw), "# Outline") {
+		t.Errorf("archived Outline.md is not the rendered view:\n%s", raw)
+	}
+
+	state, err := schemas.LoadState(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if state.OutlineVersion != 1 {
+		t.Errorf("state.OutlineVersion = %d, want 1", state.OutlineVersion)
+	}
+}
+
+func TestArchiveOutlineVersion_NoOpRunArchivesNothing(t *testing.T) {
+	dir := newOutlineFixture(t, "section_01")
+	stale, _ := ComputeOutlineStale(dir)
+	writeOutlineSectionWithScenes(t, dir, "section_01", stale.CurrentHashes["section_01"],
+		[]map[string]interface{}{scene(1, "enter")})
+
+	if _, archived, err := ArchiveOutlineVersion(dir, []string{"section_01"}); err != nil || !archived {
+		t.Fatalf("first archive: archived=%v err=%v", archived, err)
+	}
+	_, archived, err := ArchiveOutlineVersion(dir, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if archived {
+		t.Error("unchanged content archived a second version -- a no-op run must archive nothing")
+	}
+
+	entries, err := os.ReadDir(OutlineVersionsDir(dir))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 1 {
+		t.Errorf("versions dir holds %d entries, want 1", len(entries))
+	}
+}
+
+func TestArchiveOutlineVersion_ChangedContentCreatesV2(t *testing.T) {
+	dir := newOutlineFixture(t, "section_01")
+	stale, _ := ComputeOutlineStale(dir)
+	writeOutlineSectionWithScenes(t, dir, "section_01", stale.CurrentHashes["section_01"],
+		[]map[string]interface{}{scene(1, "enter")})
+	if _, _, err := ArchiveOutlineVersion(dir, []string{"section_01"}); err != nil {
+		t.Fatal(err)
+	}
+
+	writeOutlineSectionWithScenes(t, dir, "section_01", stale.CurrentHashes["section_01"],
+		[]map[string]interface{}{scene(1, "enter"), scene(2, "flee")})
+	path, archived, err := ArchiveOutlineVersion(dir, []string{"section_01"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !archived || filepath.Base(path) != "v2" {
+		t.Fatalf("second archive: archived=%v path=%s, want v2", archived, path)
+	}
+
+	// v1 must still hold the old content -- that is the entire point.
+	oldRaw, err := os.ReadFile(filepath.Join(OutlineVersionsDir(dir), "v1", "outline.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var old map[string]interface{}
+	if err := json.Unmarshal(oldRaw, &old); err != nil {
+		t.Fatal(err)
+	}
+	if old["scene_count"] != float64(1) {
+		t.Errorf("v1 scene_count = %v, want 1 -- the earlier version was overwritten", old["scene_count"])
+	}
+}
+
+func TestArchiveOutlineVersion_MetaRecordsChangedSections(t *testing.T) {
+	dir := newOutlineFixture(t, "section_01")
+	stale, _ := ComputeOutlineStale(dir)
+	writeOutlineSectionWithScenes(t, dir, "section_01", stale.CurrentHashes["section_01"],
+		[]map[string]interface{}{scene(1, "enter")})
+
+	path, _, err := ArchiveOutlineVersion(dir, []string{"section_01"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile(filepath.Join(path, "meta.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var meta OutlineVersionMeta
+	if err := json.Unmarshal(raw, &meta); err != nil {
+		t.Fatal(err)
+	}
+	if meta.Version != 1 {
+		t.Errorf("meta.Version = %d, want 1", meta.Version)
+	}
+	if len(meta.ChangedSections) != 1 || meta.ChangedSections[0] != "section_01" {
+		t.Errorf("meta.ChangedSections = %v, want [section_01]", meta.ChangedSections)
+	}
+}
+
+func TestRunOutlineVersions_ListsWhatIsKept(t *testing.T) {
+	dir := newOutlineFixture(t, "section_01")
+	stale, _ := ComputeOutlineStale(dir)
+	writeOutlineSectionWithScenes(t, dir, "section_01", stale.CurrentHashes["section_01"],
+		[]map[string]interface{}{scene(1, "enter")})
+	if _, _, err := ArchiveOutlineVersion(dir, []string{"section_01"}); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	if code := RunOutline([]string{"versions", dir}, &buf, &buf); code != 0 {
+		t.Fatalf("exit %d: %s", code, buf.String())
+	}
+	out := buf.String()
+	if !strings.Contains(out, "v1") {
+		t.Errorf("listing does not name the version: %s", out)
+	}
+	if !strings.Contains(out, "section_01") {
+		t.Errorf("listing does not say what changed: %s", out)
+	}
+	// Reading a version means opening its archived Markdown, so the path
+	// has to be printed.
+	if !strings.Contains(out, filepath.Join("v1", "Outline.md")) {
+		t.Errorf("listing does not print the readable path: %s", out)
+	}
+}
+
+func TestRunOutlineVersions_EmptyIsNotAnError(t *testing.T) {
+	dir := newOutlineFixture(t, "section_01")
+	var buf bytes.Buffer
+	if code := RunOutline([]string{"versions", dir}, &buf, &buf); code != 0 {
+		t.Errorf("exit %d for a manuscript with no versions yet: %s", code, buf.String())
+	}
+	if !strings.Contains(buf.String(), "No outline versions") {
+		t.Errorf("unhelpful empty listing: %s", buf.String())
+	}
+}
