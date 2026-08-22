@@ -148,6 +148,13 @@ func TestRoundsArchive_OutlineIsAnArchiveKind(t *testing.T) {
 	if len(got) != 1 || got[0].Name() != "outline.json" {
 		t.Errorf("outline archive holds %v, want [outline.json]", got)
 	}
+	archived, err := os.ReadFile(filepath.Join(stateDir, "rounds", "outline-round3", "outline.json"))
+	if err != nil {
+		t.Fatalf("reading archived outline.json: %v", err)
+	}
+	if string(archived) != `{"sections":[],"scene_count":0}` {
+		t.Errorf("archived outline.json holds %s, want the source outline's content", archived)
+	}
 }
 
 func TestStatePass_OutlineIsDeliberatelyUnavailable(t *testing.T) {
@@ -170,7 +177,24 @@ func TestStatePass_OutlineIsDeliberatelyUnavailable(t *testing.T) {
 	if code := RunState([]string{"pass", dir, "outline"}, &buf); code == 0 {
 		t.Error("`state pass outline` succeeded -- it must stay unavailable")
 	}
-	if !strings.Contains(buf.String(), "continuity") {
+	// The discriminating check: the rejection's enumerated list of valid
+	// kinds must come from passKinds, not archiveKinds. The message also
+	// echoes back the rejected input ("Unknown pass 'outline'"), so a
+	// bare strings.Contains(buf, "outline") would always be true and
+	// prove nothing. Isolating the "Must be one of: ..." list and
+	// checking THAT for "outline" is what actually catches someone later
+	// pointing state pass at archiveKinds: passKinds never lists
+	// "outline", archiveKinds always does. strings.Contains(...,
+	// "continuity") alone would not catch that regression, since both
+	// lists contain "continuity".
+	_, list, found := strings.Cut(buf.String(), "Must be one of: ")
+	if !found {
+		t.Fatalf("rejection message missing the enumerated kind list: %s", buf.String())
+	}
+	if strings.Contains(list, "outline") {
+		t.Errorf("rejection's valid-kind list names 'outline' -- state pass must be validated against passKinds, not archiveKinds: %s", buf.String())
+	}
+	if !strings.Contains(list, "continuity") {
 		t.Errorf("rejection should name the kinds that ARE valid: %s", buf.String())
 	}
 }

@@ -19,7 +19,7 @@ import (
 // the previous round before writing new ones. Archiving at the end of a
 // pass is what makes that clear step safe.
 const roundsUsage = `Usage:
-  redliner rounds archive <manuscript_dir> <developmental|line|continuity>
+  redliner rounds archive <manuscript_dir> <developmental|line|continuity|outline>
   redliner rounds list    <manuscript_dir>`
 
 func roundsDir(manuscriptDir string) string {
@@ -125,7 +125,13 @@ func cmdRoundsArchive(manuscriptDir, pass string, stdout io.Writer) int {
 		more, _ := filepath.Glob(filepath.Join(stateDir, "canon", "collisions.json"))
 		sources = append(sources, more...)
 	case "outline":
-		sources, _ = filepath.Glob(filepath.Join(stateDir, "outline", "outline.json"))
+		// Deliberately routed through OutlinePath (Task 6's source of
+		// truth for where the outline lives) rather than rebuilt as a
+		// literal here, like the cases above. If OutlinePath ever moves,
+		// this glob has to move with it -- otherwise the archive would
+		// silently find nothing and report "Nothing to archive" instead
+		// of failing loudly.
+		sources, _ = filepath.Glob(OutlinePath(manuscriptDir))
 	}
 	if len(sources) == 0 {
 		fmt.Fprintf(stdout, "Nothing to archive for the %s pass yet.\n", pass)
