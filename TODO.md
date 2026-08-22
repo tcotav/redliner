@@ -2714,3 +2714,7 @@ So matching scenes across rounds has to go by content similarity or by
 the `anchor` field (the scene's first few words, verbatim), never by
 position. A naive positional diff reports every scene after an insertion
 as changed, which is exactly the noise that would make the tool useless.
+
+The spec's per-run version archive (`.redliner/outline/versions/v<N>/`)
+exists partly for this: the diff tool gets every intermediate state to
+compare, not only the developmental round boundaries.
