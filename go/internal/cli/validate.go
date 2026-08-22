@@ -168,6 +168,7 @@ func ValidateManuscript(manuscriptDir, domainsDir string, stdout io.Writer) int 
 	}
 
 	ok := validateCanon(stdout, manuscriptDir, redlinerPath, domain)
+	ok = validateOutline(stdout, redlinerPath, domain) && ok
 
 	findingsPath := filepath.Join(redlinerPath, "findings")
 	if info, err := os.Stat(findingsPath); err != nil || !info.IsDir() {
@@ -217,6 +218,40 @@ func ValidateManuscript(manuscriptDir, domainsDir string, stdout io.Writer) int 
 		return 0
 	}
 	return 1
+}
+
+// validateOutline checks every recorded outline section against the
+// domain's configured fields. A domain with no outline block validates
+// nothing here -- design-doc opts out of the layer entirely, and a
+// manuscript created before this layer existed simply has no directory.
+//
+// Wired in because ValidateManuscript walks everything under .redliner/:
+// a new file type with no schema is not "unchecked", it is silently
+// accepted, and an invalid outline reaching the developmental editor as
+// its structural spine is exactly the failure that would look like a
+// bad pass rather than a bad file.
+func validateOutline(stdout io.Writer, redlinerPath string, domain schemas.Domain) bool {
+	if !domain.HasOutline() {
+		return true
+	}
+	sectionsPath := filepath.Join(redlinerPath, "outline", "sections")
+	if info, err := os.Stat(sectionsPath); err != nil || !info.IsDir() {
+		return true
+	}
+
+	rowFields := domain.OutlineRowFields()
+	sectionFields := domain.OutlineSectionFields()
+
+	files, _ := filepath.Glob(filepath.Join(sectionsPath, "*.json"))
+	sort.Strings(files)
+
+	ok := true
+	for _, file := range files {
+		report := loadJSON(file)
+		errs := schemas.ValidateOutlineSection(report, rowFields, sectionFields)
+		ok = checkFile(stdout, file, errs) && ok
+	}
+	return ok
 }
 
 // validateCanon mirrors validate_findings.py's _validate_canon: the
