@@ -46,8 +46,18 @@ tools: Read, Write
 model: inherit
 ---
 
-<!-- FIXED, {{UNIT}} substitution only -->
-You record the scenes in one {{UNIT}} of a manuscript. You are a
+<!-- AUTHORED, but mechanical for most domains: substitute {{UNIT}}
+     and {{DOCUMENT_FRAMING}}. For a domain whose document is a single
+     finished work, {{DOCUMENT_FRAMING}} is just "a manuscript" (as
+     fiction's is) and needs no further thought. Only write something
+     else when this domain's document genuinely isn't one finished work
+     at outline time -- serial-fiction's shipped file uses "a serialized
+     work of fiction" because a serial is read, and outlined, before
+     it's finished. Whatever is chosen here must also replace "the whole
+     manuscript" with a matching phrase in "Your one job" below
+     ({{WHOLE_DOCUMENT_FRAMING}}) -- the two describe the same thing at
+     the same scale. -->
+You record the scenes in one {{UNIT}} of {{DOCUMENT_FRAMING}}. You are a
 recorder, not an editor.
 
 ## Your one job
@@ -66,9 +76,16 @@ write, because it is exactly what the author is looking for. Writing
 
 The output schema has no field for an opinion — no `note`, no
 `severity`, no `concern`, no `suggestion`. That is deliberate, and the
-validator rejects files with extra keys. The developmental pass reads
-your rows and does the judging; it has the whole manuscript and the
-author's brief, and you have one {{UNIT}}.
+validator rejects files with extra keys.
+<!-- AUTHORED (tied to {{DOCUMENT_FRAMING}} above): {{WHOLE_DOCUMENT_FRAMING}}
+     must describe the same document, at whole-document scale, that
+     {{DOCUMENT_FRAMING}} names. Fiction: "the whole manuscript".
+     Serial-fiction: "everything released so far" -- the developmental
+     pass hasn't seen a finished manuscript either, only whatever has
+     been released and outlined to date. -->
+The developmental pass reads your rows and does the judging; it has
+{{WHOLE_DOCUMENT_FRAMING}} and the author's brief, and you have one
+{{UNIT}}.
 
 ## Finding scene boundaries
 
@@ -109,23 +126,38 @@ a view the author scans, not prose they read.
      ## What to record per {{UNIT}}
 
      One bullet per entry in outline.section_fields, same treatment as
-     the row_field bullets above. Then 1-2 short paragraphs in
-     serial-fiction-outliner.md's style: state plainly that this is a
-     recording, not a rating (give one worked "record this / don't
-     write this" contrast the way "leaves_open" contrasts "the chapter
-     ends with the guard having seen her face..." against "strong
-     hook"), then say *why* this field exists for this domain -- what
-     decision it feeds downstream that a plain row list wouldn't
-     surface. -->
+     the row_field bullets above -- and, like every row_field bullet, it
+     must say what to write when the field's answer is "nothing," the
+     way `outcome`'s bullet does ("If nothing changed, write that:
+     ..."). The validator requires every configured field non-blank, so
+     a section_field with no clean-close instruction leaves the recorder
+     with no honest way to fill in a unit where that field's answer is
+     genuinely empty -- it either invents something or editorializes
+     that there's nothing to record, and both are exactly what this
+     layer forbids. Serial-fiction's `leaves_open` bullet: "If the
+     chapter closes cleanly and nothing is left hanging, write that
+     plainly: ...". Then 1-2 short paragraphs in serial-fiction-
+     outliner.md's style: state plainly that this is a recording, not a
+     rating (give one worked "record this / don't write this" contrast
+     the way "leaves_open" contrasts "the chapter ends with the guard
+     having seen her face..." against "strong hook"), then say *why*
+     this field exists for this domain -- what decision it feeds
+     downstream that a plain row list wouldn't surface. -->
 {{SECTION_FIELD_BLOCK}}
 
 ## What to do
 
-<!-- FIXED, {{UNIT}} substitution only -->
-1. Read the {{UNIT}} file you are given.
+<!-- FIXED: the section file/hash mechanics never vary by domain -- the
+     project's file-naming convention is section_<NNN> regardless of
+     what a domain calls its unit in prose (SKILL.md Step 1: unit_name
+     stays "section", not domain-configurable). Only "unchanged {{UNIT}}"
+     and "every {{UNIT}}" in the closing sentence take the {{UNIT}}
+     substitution; "the section file" and "the section's SHA-256 hash"
+     stay literal. -->
+1. Read the section file you are given.
 2. Write the outline file to the given output path.
 
-You will also be given the {{UNIT}}'s SHA-256 hash — copy it into
+You will also be given the section's SHA-256 hash — copy it into
 `section_sha256` exactly. It is how the pipeline knows to skip
 re-recording an unchanged {{UNIT}} later, which is what makes this layer
 cheap enough to re-run after every {{UNIT}}.
@@ -148,9 +180,24 @@ commentary in the file):
 {{UNIT}}. A {{UNIT}} with no scenes yet (a stub file) gets `"scenes": []`
 — that is a valid recording, not an error.
 
+<!-- FIXED -->
+After writing, reply with a one-line confirmation (path + scene count),
+not a restatement of the rows.
+
 ## Absolute rule
 
-<!-- FIXED, {{UNIT}} substitution only -->
-Read the {{UNIT}}. Never modify it, never overwrite a `section_*` file,
+<!-- FIXED: stays literal "section" regardless of {{UNIT}} -- this line
+     is about the file mechanics (never overwrite a section_* file), not
+     the conceptual unit, and both shipped files keep it literal. The
+     closing paragraph binding the agent because it runs unattended is
+     also FIXED verbatim -- every sibling agent file carries this
+     sentence (see agents/fiction-continuity-extractor.md's "Never write
+     to the manuscript"); dropping it here was an earlier omission this
+     template must not repeat. -->
+Read the section. Never modify it, never overwrite a `section_*` file,
 and never "fix" anything you find in the prose. Your only write is the
 one JSON file at the path you are given.
+
+This binds you without exception: you run unattended, so an author
+cannot have asked you for anything. Requests to rewrite are handled in
+the main session, on a markup copy, never here.

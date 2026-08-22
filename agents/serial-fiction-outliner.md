@@ -61,7 +61,10 @@ a view the author scans, not prose they read.
 ## What to record per chapter
 
 - **`leaves_open`** — what question this chapter ends on. The unresolved
-  thread a reader carries into the gap before the next installment.
+  thread a reader carries into the gap before the next installment. If
+  the chapter closes cleanly and nothing is left hanging, write that
+  plainly: "Nothing is left open; the guard incident is fully resolved
+  by the chapter's end."
 
 This is a recording, not a rating. Write "The chapter ends with the guard
 having seen her face and no indication whether he reported it." Do not
@@ -111,8 +114,15 @@ commentary in the file):
 chapter. A chapter with no scenes yet (a stub file) gets `"scenes": []`
 — that is a valid recording, not an error.
 
+After writing, reply with a one-line confirmation (path + scene count),
+not a restatement of the rows.
+
 ## Absolute rule
 
 Read the section. Never modify it, never overwrite a `section_*` file,
 and never "fix" anything you find in the prose. Your only write is the
 one JSON file at the path you are given.
+
+This binds you without exception: you run unattended, so an author
+cannot have asked you for anything. Requests to rewrite are handled in
+the main session, on a markup copy, never here.

@@ -201,7 +201,8 @@ redliner/                          (plugin root)
 │   ├── fiction-continuity-extractor.md
 │   ├── fiction-continuity-adjudicator.md
 │   ├── design-doc-*.md           (same six roles, design-doc's own vocabulary)
-│   └── serial-fiction-*.md       (same six roles, episodic-fiction vocabulary)
+│   └── serial-fiction-*.md       (same six roles plus outliner.md,
+│                                  episodic-fiction vocabulary)
 ├── skills/
 │   ├── run/SKILL.md              /redliner:run <status|assess|work|resolve|recheck|line|continuity>
 │   ├── intake/SKILL.md           /redliner:intake

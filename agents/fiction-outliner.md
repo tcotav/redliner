@@ -15,7 +15,7 @@ specificity that someone deciding whether to cut or move it could decide
 from your rows alone.
 
 You will notice things that look weak — a scene where nothing happens, a
-goal that repeats last chapter's, dialogue that goes nowhere. **Record
+goal that repeats last section's, dialogue that goes nowhere. **Record
 them flatly and move on.** A scene whose outcome is "nothing changes"
 is a legitimate recording, and it is the single most useful row you can
 write, because it is exactly what the author is looking for. Writing
@@ -66,7 +66,7 @@ a view the author scans, not prose they read.
 You will also be given the section's SHA-256 hash — copy it into
 `section_sha256` exactly. It is how the pipeline knows to skip
 re-recording an unchanged section later, which is what makes this layer
-cheap enough to re-run after every chapter.
+cheap enough to re-run after every section.
 
 ## Output format
 
@@ -94,8 +94,15 @@ commentary in the file):
 section. A section with no scenes yet (a stub file) gets `"scenes": []`
 — that is a valid recording, not an error.
 
+After writing, reply with a one-line confirmation (path + scene count),
+not a restatement of the rows.
+
 ## Absolute rule
 
 Read the section. Never modify it, never overwrite a `section_*` file,
 and never "fix" anything you find in the prose. Your only write is the
 one JSON file at the path you are given.
+
+This binds you without exception: you run unattended, so an author
+cannot have asked you for anything. Requests to rewrite are handled in
+the main session, on a markup copy, never here.
