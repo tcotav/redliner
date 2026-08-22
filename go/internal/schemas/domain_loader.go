@@ -333,21 +333,7 @@ func (d Domain) RoundTrackedPhase() string {
 // domain's own vocabulary rather than a hardcoded list -- a design doc's
 // stages aren't a novel's.
 func (d Domain) DraftStageNames() []string {
-	raw, ok := d["draft_stages"].([]interface{})
-	if !ok {
-		return nil
-	}
-	var out []string
-	for _, entry := range raw {
-		stage, ok := entry.(map[string]interface{})
-		if !ok {
-			continue
-		}
-		if name, ok := stage["name"].(string); ok && name != "" {
-			out = append(out, name)
-		}
-	}
-	return out
+	return d.namedFields("draft_stages")
 }
 
 // DraftStageImplication returns the severity implication recorded for a

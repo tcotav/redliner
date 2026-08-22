@@ -71,7 +71,7 @@ func RunState(args []string, stdout io.Writer) int {
 			fmt.Fprintln(stdout, stateUsage)
 			return 1
 		}
-		return cmdStatePublished(args[1], args[2], stdout)
+		return cmdStatePublished(manuscriptDir, args[2], stdout)
 	default:
 		fmt.Fprintf(stdout, "Unknown command %s\n", pyReprStr(command))
 		fmt.Fprintln(stdout, stateUsage)

@@ -156,6 +156,16 @@ scannable. Optionally also design `outline.section_fields` for a fact
 recorded once per unit rather than per scene (serial-fiction's
 `leaves_open`) — most domains won't need one.
 
+If this domain's work is released in installments rather than finished
+and read whole — think a serialized draft, not just serial-fiction by
+name — it may also want a **published boundary**: a machine-read marker
+of how far the audience has already seen, so an outline can flag which
+units are locked and which can still move. `skills/intake/SKILL.md`
+asks for this today only when the domain is literally `serial-fiction`;
+a custom domain with the same shape won't get asked automatically, so
+design it in deliberately if it applies, following how `serial-fiction`
+wires `published_through` through `redliner state published`.
+
 Write `domains/<name>/domain.json` matching
 `domains/fiction/domain.json`'s exact key structure. Then look up the
 full config for the new domain by name (whichever concrete tool this

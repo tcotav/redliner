@@ -1,6 +1,6 @@
 ---
 name: run
-description: Runs layered editing on a manuscript (fiction, design docs, or any domain redliner has been configured for) — developmental assessment, revision support, re-checks, then line editing. Use when the author asks to edit, assess, or review a manuscript, to work or resolve a finding, or types /redliner:run.
+description: Runs layered editing on a manuscript (fiction, design docs, or any domain redliner has been configured for) — developmental assessment, revision support, re-checks, a scene-level outline, then line editing. Use when the author asks to edit, assess, or review a manuscript, to outline a manuscript's scenes, to work or resolve a finding, or types /redliner:run.
 ---
 
 # redliner:run
@@ -15,6 +15,7 @@ Phase-aware editing pipeline. Subcommands:
 | `/redliner:run resolve <id>` | Mark a finding addressed (author's claim) — developmental or line |
 | `/redliner:run wontfix <id>` | Decline a finding, with a reason; it won't be re-raised |
 | `/redliner:run recheck` | Re-read after revision; verify claims, find new issues |
+| `/redliner:run outline` | Scene-level outline of the manuscript — see below |
 | `/redliner:run line` | Line-editing phase (gated — see below) |
 | `/redliner:run continuity` | Extract facts, find collisions, adjudicate — see below |
 
@@ -205,7 +206,9 @@ a domain with an outline, add **one call per section whose outline is
 stale** — up to N more on a first run, near zero once the outline is
 kept current, per "Why re-running this is cheap" above.
 `line` is about **N + 1**; standalone `continuity` about **N + 1**;
-`recheck` varies with how much changed, and is usually smaller.
+`recheck` varies with how much changed, and is usually smaller — though
+on a domain with an outline it also pays the same per-stale-section
+outline cost `assess` does, on the `targeted`/`restructured` verdicts.
 
 Budget **~2–3 minutes per step** as a rough figure. Say it as a range,
 never a countdown — and be honest that it's an estimate. Its basis is a
@@ -336,9 +339,11 @@ invites the author to start reacting to a half-finished picture.
 
    Do **not** run `redliner state pass <dir> outline` — that kind
    deliberately does not exist. The outline refreshes automatically
-   inside every assess, so recording it as a completed pass would make
-   `status` report it as run permanently, which is a constant rather
-   than a signal. What `status` reports for this layer is staleness.
+   inside every assess (and inside `recheck`, on the
+   `targeted`/`restructured` verdicts), so recording it as a completed
+   pass would make `status` report it as run permanently, which is a
+   constant rather than a signal. What `status` reports for this layer
+   is staleness.
 
 Do **not** run line editing here, whatever the author asked for.
 
@@ -496,26 +501,51 @@ forever.
 ## `/redliner:run recheck`
 
 1. Compare the manuscript's current text against the last assessed
-   snapshot, and branch on the verdict — this comparison is
+   snapshot, and determine the verdict — this comparison is
    deterministic, so trust it over any impression of how much changed:
 
    - **`unchanged`** — no section text differs from the last assessment.
-     Any `claimed` findings can't be verified; say so plainly and stop.
-     Something's off: either the revision wasn't saved, or the author
-     marked things resolved without revising.
+     Any `claimed` findings can't be verified; say so plainly and stop
+     here. Something's off: either the revision wasn't saved, or the
+     author marked things resolved without revising.
    - **`targeted`** — specific sections edited, none added or removed,
-     no large swings. Task `redliner:<domain>-developmental-editor` to verify the `claimed`
-     findings against those sections and check whether the edits created
-     new problems. Pass the existing findings file so ids carry forward.
+     no large swings. Fall through to step 2.
    - **`restructured`** — sections added, removed, or heavily rewritten.
-     A full re-read: task `redliner:<domain>-developmental-editor` over the whole
-     manuscript with the prior findings file. Findings the restructure
-     invalidated should come back `stale`, not `addressed` — the author
-     didn't fix them, the text moved. Tell the author which findings went
-     stale and why; that's the case they can't assess themselves.
+     This is the verdict where a stale outline is at its worst, since it
+     fires immediately after the author added, removed, or heavily
+     rewrote sections. Fall through to step 2.
 
-2. Validate.
-3. Run the **continuity** steps below now, passing `--snapshot-after` to
+2. **Archive the outline, then refresh it.** In that order — same as
+   `assess` step 3, and the same reason: refreshing overwrites
+   `outline.json`, and a stale outline handed to the developmental
+   editor produces confident findings reasoned from a structure the
+   prose no longer has, which looks exactly like a good pass. A recheck
+   is the moment right after revision, so this is never a safe skip.
+
+   Archive first: `redliner rounds archive <dir> outline`. Then run the
+   **outline** steps below in full (recording, join, render, version
+   archive).
+
+   **Skip this step entirely on a domain with no `outline` block.**
+3. Task the developmental editor per verdict:
+
+   - **`targeted`** — task `redliner:<domain>-developmental-editor` to
+     verify the `claimed` findings against the edited sections and check
+     whether the edits created new problems. Pass the existing findings
+     file so ids carry forward.
+   - **`restructured`** — a full re-read: task
+     `redliner:<domain>-developmental-editor` over the whole manuscript
+     with the prior findings file. Findings the restructure invalidated
+     should come back `stale`, not `addressed` — the author didn't fix
+     them, the text moved. Tell the author which findings went stale and
+     why; that's the case they can't assess themselves.
+
+   On a domain with an outline, give the editor the path to
+   `.redliner/outline/outline.json` as well, the same as `assess` step
+   4 — a structural spine to read alongside the prose, not instead of
+   it.
+4. Validate.
+5. Run the **continuity** steps below now, passing `--snapshot-after` to
    the reconcile step so the new baseline is recorded in the same call.
    This matters more here than anywhere else: revision is exactly when
    facts get out of sync (an edit in one section not yet propagated to
@@ -530,7 +560,7 @@ forever.
    re-extraction first tells you the real scope; a `targeted`
    developmental verdict usually means continuity only has one or two
    sections to redo, not the whole manuscript.
-4. **Verify line claims too, if there are any.** Structure isn't the only
+6. **Verify line claims too, if there are any.** Structure isn't the only
    layer the author revises against. If `.redliner/findings/line_*.json`
    exist and any finding in them is `claimed`, re-task
    `redliner:<domain>-line-editor` for **each section holding a claimed
@@ -540,11 +570,11 @@ forever.
    is `restructured`: a heavy rewrite makes line findings stale wholesale,
    and re-running the line editor over churning prose spends money
    polishing text that is still moving. Say that's why you skipped it.
-5. Aggregate a fresh developmental letter, show it, then show the
-   continuity summary from step 3. (Step 3 already recorded the new
-   assessed baseline via `--snapshot-after`.) If step 4 ran, aggregate
+7. Aggregate a fresh developmental letter, show it, then show the
+   continuity summary from step 5. (Step 5 already recorded the new
+   assessed baseline via `--snapshot-after`.) If step 6 ran, aggregate
    and show a fresh line letter as well, and record the pass.
-6. Then say plainly whether structure looks settled enough for line
+8. Then say plainly whether structure looks settled enough for line
    editing — count open `major`/`critical` findings and give a real
    recommendation, not a hedge.
 
@@ -601,8 +631,9 @@ trying to achieve, what opposed them, and what changed. It exists to
 answer two questions without rereading the book — can this scene move,
 and can it be cut.
 
-Callable directly, and also the first thing `assess` refreshes (see
-above). This section is the one definition both refer to.
+Callable directly, and also the first thing `assess` and `recheck` (on
+the `targeted`/`restructured` verdicts) refresh (see above). This
+section is the one definition all three refer to.
 
 Like continuity and unlike the two editing phases, this is **not
 phase-gated**: recording is judgment-free, so it is safe any time after

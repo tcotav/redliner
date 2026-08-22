@@ -1,8 +1,9 @@
 # redliner
 
 A layered long-form-editing tool that runs as a Claude Code plugin —
-developmental editing, line editing, and a cross-cutting continuity
-checker, each running as its own subagent against your manuscript.
+developmental editing, a scene-level outline, line editing, and a
+cross-cutting continuity checker, each running as its own subagent
+against your manuscript.
 Built first for fiction, which stays the primary use case, but the
 category vocabulary is domain-driven, so it also works on design docs
 and product proposals today, and on anything else `/redliner:new-domain`
@@ -10,7 +11,7 @@ can be walked through designing.
 
 ## What it does
 
-Three layers, run separately rather than as one pass:
+Four layers, run separately rather than as one pass:
 
 1. **Developmental editing** — reads the *whole* manuscript at once,
    flags whole-document structural issues (for fiction: plot, pacing,
@@ -18,11 +19,18 @@ Three layers, run separately rather than as one pass:
    justification, alternatives considered, risk coverage, scope,
    success criteria, stakeholder impact). Iterative: runs in rounds,
    tracks which findings you've addressed, and re-checks after revision.
-2. **Line editing** — reads *one section at a time*, flags detail-level
+2. **Outline** — a scene-level view of the plot: what each scene's
+   driving character was trying to achieve, what opposed them, and what
+   changed. It exists to answer two questions without rereading the
+   book — can this scene move, and can it be cut. Refreshes
+   automatically as part of `assess` and `recheck`, and is also callable
+   on its own. Only for domains whose `domain.json` declares an `outline`
+   block — `fiction` and `serial-fiction` do, `design-doc` does not.
+3. **Line editing** — reads *one section at a time*, flags detail-level
    issues (for fiction: rhythm, voice, show-vs-tell, dialogue, POV, word
    choice; for a design doc: clarity, jargon, passive voice, redundancy,
    flow). Gated behind developmental work settling — see below.
-3. **Continuity** — cross-cutting, runs alongside either phase. Extracts
+4. **Continuity** — cross-cutting, runs alongside either phase. Extracts
    checkable facts per section, then looks for contradictions two ways,
    because they catch different things and neither subsumes the other:
    - **Mechanically** — same entity, same attribute, different value.
@@ -134,6 +142,7 @@ the full story, including two real bugs this surfaced and fixed.
 /redliner:run work dev-003       # talk through one finding
 /redliner:run resolve dev-003    # mark it addressed (your claim)
 /redliner:run recheck            # verify claims after revision (also re-runs continuity)
+/redliner:run outline            # scene-level outline (domains with an outline block only)
 /redliner:run line               # line-editing phase (soft-gated on open major/critical findings)
 /redliner:run continuity         # extract facts, find collisions, adjudicate — standalone or automatic
 /redliner:run status             # where things stand
@@ -159,12 +168,14 @@ flowchart TD
     A["Author writes section_01.txt,<br/>section_02.txt, ..."] --> B["/redliner:intake<br/>interview: genre, draft stage, deliberate choices"]
     B --> C["brief.md written"]
     C --> D["/redliner:run assess<br/>developmental read + continuity extraction"]
+    D -.-> O["outline refreshed<br/>(domains with an outline block)"]
     D --> E["Editorial letter + findings<br/>(dev-001..dev-009, cont-001)"]
     E --> F{"Open major/critical<br/>findings?"}
     F -->|yes| G["/redliner:run work dev-003<br/>talk it through"]
     G --> H["Author revises the text"]
     H --> I["/redliner:run resolve dev-003<br/>mark it claimed"]
     I --> J["/redliner:run recheck<br/>diff decides targeted vs. full re-read"]
+    J -.-> O
     J --> E
     F -->|"no — structure settled"| K["/redliner:run line<br/>per-section prose pass"]
     K --> L["Line findings per section"]
@@ -180,6 +191,7 @@ flowchart TD
     class C,E,L,N artifact
     class A,H,M human
     class F gate
+    class O artifact
 ```
 
 The loop in the middle (`work` → revise → `resolve` → `recheck`) is the
@@ -187,24 +199,32 @@ point, not an inconvenience — see "Why phases are sequential" above.
 Most manuscripts go around it several times before structure settles
 enough to reach `line`. `/redliner:run continuity` runs alongside
 `assess` and `recheck` rather than as its own step here; its
-contradictions land in the same letter developmental findings do.
+contradictions land in the same letter developmental findings do. So
+does the outline, on domains that have one — `assess` and `recheck`
+each archive and refresh it before tasking the developmental editor;
+`/redliner:run outline` also runs it standalone.
 
 ## Architecture
 
 ```
 redliner/                          (plugin root)
 ├── .claude-plugin/plugin.json
-├── agents/                       five subagents per domain (Task tool targets)
+├── agents/                       six subagents per domain (Task tool targets),
+│                                  seven for a domain with an outline layer
 │   ├── fiction-developmental-editor.md
 │   ├── fiction-line-editor.md
 │   ├── fiction-editorial-aggregator.md
 │   ├── fiction-continuity-extractor.md
 │   ├── fiction-continuity-adjudicator.md
-│   ├── design-doc-*.md           (same six roles, design-doc's own vocabulary)
+│   ├── fiction-continuity-joiner.md
+│   ├── fiction-outliner.md       (fiction has an outline block, too)
+│   ├── design-doc-*.md           (same six roles, design-doc's own
+│                                  vocabulary — no outliner.md, design-doc
+│                                  has no outline block)
 │   └── serial-fiction-*.md       (same six roles plus outliner.md,
 │                                  episodic-fiction vocabulary)
 ├── skills/
-│   ├── run/SKILL.md              /redliner:run <status|assess|work|resolve|recheck|line|continuity>
+│   ├── run/SKILL.md              /redliner:run <status|assess|work|resolve|recheck|outline|line|continuity>
 │   ├── intake/SKILL.md           /redliner:intake
 │   └── new-domain/
 │       ├── SKILL.md              /redliner:new-domain — design + generate a domain

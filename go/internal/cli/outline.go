@@ -327,6 +327,7 @@ func RenderOutline(joined map[string]interface{}, rowFields, sectionFields []str
 	fmt.Fprintf(&b, "%v scene(s) across %d section(s).\n", joined["scene_count"], len(sections))
 
 	publishedThrough, _ := joined["published_through"].(string)
+	boundaryPlaced := false
 
 	for _, sectionRaw := range sections {
 		section, ok := sectionRaw.(map[string]interface{})
@@ -365,10 +366,22 @@ func RenderOutline(joined map[string]interface{}, rowFields, sectionFields []str
 		// it cannot be moved or cut at all, which is the one fact this
 		// whole view exists to serve.
 		if publishedThrough != "" && stem == publishedThrough {
+			boundaryPlaced = true
 			b.WriteString("\n---\n\n")
 			b.WriteString("*Everything above this line is published. Those scenes can't be moved or cut.*\n\n")
 			b.WriteString("---\n")
 		}
+	}
+
+	// A published_through that never matched a rendered section (never
+	// recorded, or orphaned by a rename) must not fail silently: an
+	// author reading a boundary-free outline would otherwise take every
+	// scene as still movable, including ones already published. Say so
+	// plainly instead of just omitting the line.
+	if publishedThrough != "" && !boundaryPlaced {
+		b.WriteString("\n---\n\n")
+		fmt.Fprintf(&b, "*Published boundary could not be placed: no section matches %q. The published-through marker may be stale or the section may have been renamed.*\n", publishedThrough)
+		b.WriteString("\n---\n")
 	}
 
 	return b.String()

@@ -120,7 +120,7 @@ func ValidateOutlineSection(reportRaw interface{}, rowFields, sectionFields []st
 		// Order is 1-based and sequential. It is the row's only identity
 		// within a section, so a gap or a repeat makes the join ambiguous.
 		order, isNumber := scene["order"].(float64)
-		if !isNumber || int(order) != i+1 {
+		if !isNumber || order != float64(i+1) {
 			errors = append(errors, fmt.Sprintf("%s: order %s must be %d (1-based, sequential, matching position)", prefix, pyRepr(scene["order"]), i+1))
 		}
 

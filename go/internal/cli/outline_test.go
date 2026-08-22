@@ -486,6 +486,33 @@ func TestRenderOutline_NoBoundaryWhenNothingPublished(t *testing.T) {
 	}
 }
 
+// TestRenderOutline_UnmatchedBoundaryNotesFailure guards against the
+// boundary silently disappearing when published_through names a section
+// that isn't in sections -- never recorded, or orphaned by a rename. A
+// stale or missing boundary is worse than none: every already-published
+// scene would otherwise read to the author as still movable, with no
+// indication anything went wrong.
+func TestRenderOutline_UnmatchedBoundaryNotesFailure(t *testing.T) {
+	joined := map[string]interface{}{
+		"scene_count":       1,
+		"published_through": "section_02",
+		"sections": []interface{}{
+			map[string]interface{}{"section": "section_01", "scenes": []interface{}{scene(1, "enter")}},
+		},
+	}
+	got := RenderOutline(joined, []string{"goal"}, nil)
+
+	if strings.Contains(got, "Everything above this line is published") {
+		t.Errorf("boundary text rendered even though published_through matched nothing:\n%s", got)
+	}
+	if !strings.Contains(got, "could not be placed") {
+		t.Fatalf("no note about the unplaceable boundary:\n%s", got)
+	}
+	if !strings.Contains(got, "section_02") {
+		t.Errorf("note doesn't name the expected stem section_02:\n%s", got)
+	}
+}
+
 func TestRunOutlineRender_WritesToManuscriptDirNotDotRedliner(t *testing.T) {
 	dir := newOutlineFixture(t, "section_01")
 	stale, _ := ComputeOutlineStale(dir)

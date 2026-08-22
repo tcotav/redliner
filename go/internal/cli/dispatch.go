@@ -9,7 +9,7 @@ const usage = `Usage:
   redliner state init|status|diff|snapshot <manuscript_dir> [domain]
   redliner state phase <manuscript_dir> <phase>
   redliner canon stale|reconcile <manuscript_dir>
-  redliner outline stale|join|render|versions <manuscript_dir>   # scene-level view of the plot
+  redliner outline stale|join|render|archive|versions <manuscript_dir>   # scene-level view of the plot
   redliner domain list
   redliner domain show <name>
   redliner validate <manuscript_dir>

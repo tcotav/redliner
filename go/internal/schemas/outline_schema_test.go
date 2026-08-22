@@ -85,6 +85,19 @@ func TestValidateOutlineSection_OrderMustBeSequentialFromOne(t *testing.T) {
 	}
 }
 
+// TestValidateOutlineSection_RejectsNonIntegralOrder guards against
+// int(order) != i+1 truncating instead of checking integrality: with a
+// truncating comparison, order 1.5 in the first (and only) scene passes
+// because int(1.5) == 1, and the renderer then prints a wrong ordinal.
+func TestValidateOutlineSection_RejectsNonIntegralOrder(t *testing.T) {
+	report := validOutlineSection()
+	report["scenes"].([]interface{})[0].(map[string]interface{})["order"] = 1.5
+	errs := ValidateOutlineSection(report, testRowFields, nil)
+	if len(errs) == 0 {
+		t.Error("non-integral order 1.5 accepted -- order must be a whole number")
+	}
+}
+
 func TestValidateOutlineSection_SectionFieldsRequiredWhenConfigured(t *testing.T) {
 	report := validOutlineSection()
 	errs := ValidateOutlineSection(report, testRowFields, []string{"leaves_open"})
