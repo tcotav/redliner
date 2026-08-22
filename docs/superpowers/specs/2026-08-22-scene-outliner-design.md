@@ -196,6 +196,16 @@ The outline is archived per round alongside developmental findings.
 `.redliner/rounds/outline-round<N>/`. `state pass` accepts the same new
 kind (`passKinds` is shared by both).
 
+Archives are numbered by the developmental round counter even though
+the layer is not phase-gated. That is the continuity precedent exactly —
+`continuity` archives under `DevelopmentalRound` too — and it is what
+makes an outline archive line up with the developmental findings it
+should be read beside.
+
+`assess` archives the outline where it already archives continuity: in
+the closing step, alongside `rounds archive <dir> developmental` and
+`... continuity`.
+
 An outline diff across rounds is the clearest available answer to "what
 did my revision actually change," which is why the archive is worth
 having even before a tool reads it.
