@@ -14,6 +14,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/tcotav/redliner/go/internal/cli"
+	"github.com/tcotav/redliner/go/internal/schemas"
 )
 
 func repoRoot(t *testing.T) string {
@@ -465,6 +466,63 @@ func TestMCPTools_ErrorContract(t *testing.T) {
 	out, _ := res.StructuredContent.(map[string]any)
 	if out["error"] == nil {
 		t.Errorf("expected a soft error result, got: %+v", out)
+	}
+}
+
+// TestStatePublishedTool_ActuallyWorks calls state_published through a
+// real server and checks its real effect on disk -- not just that the
+// tool name exists, but that it is wired to the CLI's "published"
+// subcommand rather than to some other RunState command. The intake
+// skill tells an author's agent to call this tool by name, so a handler
+// wired to the wrong function would otherwise pass every other test in
+// this package while being silently broken end to end.
+func TestStatePublishedTool_ActuallyWorks(t *testing.T) {
+	domainsDir := filepath.Join(repoRoot(t), "domains")
+	session := connect(t, NewServer(domainsDir))
+
+	dir := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(dir, ".redliner"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	state := `{"manuscript_dir":"` + dir + `","domain":"fiction","phase":"developmental",` +
+		`"developmental_round":1,"section_fingerprints":{},"created_at":"x"}`
+	if err := os.WriteFile(filepath.Join(dir, ".redliner", "state.json"), []byte(state), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "section_01.txt"), []byte("section one\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	out, ok := callTool(t, session, "state_published", map[string]any{
+		"manuscript_dir": dir,
+		"section":        "section_01",
+	})
+	if !ok || out["ok"] != true {
+		t.Fatalf("state_published: %+v (ok=%v)", out, ok)
+	}
+
+	loaded, err := schemas.LoadState(dir)
+	if err != nil || loaded == nil {
+		t.Fatalf("load state after state_published: %v", err)
+	}
+	if loaded.PublishedThrough != "section_01" {
+		t.Errorf("PublishedThrough on disk = %q, want section_01 -- the tool did not actually move the boundary", loaded.PublishedThrough)
+	}
+
+	// And clearing it through the same tool.
+	out, ok = callTool(t, session, "state_published", map[string]any{
+		"manuscript_dir": dir,
+		"section":        "none",
+	})
+	if !ok || out["ok"] != true {
+		t.Fatalf("state_published (clear): %+v (ok=%v)", out, ok)
+	}
+	loaded, err = schemas.LoadState(dir)
+	if err != nil || loaded == nil {
+		t.Fatalf("load state after clearing: %v", err)
+	}
+	if loaded.PublishedThrough != "" {
+		t.Errorf("PublishedThrough on disk after clearing = %q, want empty", loaded.PublishedThrough)
 	}
 }
 
