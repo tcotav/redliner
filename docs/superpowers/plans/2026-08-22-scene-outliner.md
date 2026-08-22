@@ -3300,7 +3300,243 @@ git commit -m "Ask serial authors which chapters have shipped"
 
 ---
 
-### Task 15: End-to-end verification on the sample manuscript
+### Task 15: `redliner state published` — move the boundary as chapters ship
+
+**Files:**
+- Modify: `go/internal/cli/state.go` (`RunState`'s switch and usage, ~line 25; add `cmdStatePublished` beside `cmdStateStage`, ~line 215)
+- Modify: `go/internal/mcpserver/server.go`, `go/internal/mcpserver/descriptions.go`, `go/internal/mcpserver/frontdoor_parity_test.go`
+- Test: `go/internal/cli/state_test.go`
+
+**Interfaces:**
+- Consumes: `State.PublishedThrough` from Task 3; `schemas.SectionFiles` (existing).
+- Produces: `redliner state published <manuscript_dir> <section_stem>` and the MCP tool `state_published`.
+
+Intake (Task 14) asks once. This is what keeps the answer true: a serial ships a chapter a week, and a stale boundary is worse than none — it renders scenes as frozen that are still the author's to change.
+
+Validate the stem against the manuscript's actual sections rather than accepting any string. A typo that silently sets `published_through` to a section that does not exist draws no line at all, and that reads as the feature being broken rather than the input being wrong.
+
+- [ ] **Step 1: Write the failing test**
+
+Append to `go/internal/cli/state_test.go`:
+
+```go
+func TestStatePublished_SetsTheBoundary(t *testing.T) {
+	dir := newOutlineFixture(t, "section_01", "section_02")
+
+	var buf bytes.Buffer
+	if code := RunState([]string{"published", dir, "section_01"}, &buf); code != 0 {
+		t.Fatalf("exit %d: %s", code, buf.String())
+	}
+	state, err := schemas.LoadState(dir)
+	if err != nil || state == nil {
+		t.Fatal(err)
+	}
+	if state.PublishedThrough != "section_01" {
+		t.Errorf("PublishedThrough = %q, want section_01", state.PublishedThrough)
+	}
+}
+
+func TestStatePublished_RejectsAStemThatIsNotASection(t *testing.T) {
+	// A typo here draws no line at all, and the failure looks like the
+	// feature being broken rather than the input being wrong.
+	dir := newOutlineFixture(t, "section_01")
+
+	var buf bytes.Buffer
+	if code := RunState([]string{"published", dir, "section_99"}, &buf); code == 0 {
+		t.Fatal("a stem with no matching section file was accepted")
+	}
+	if !strings.Contains(buf.String(), "section_01") {
+		t.Errorf("rejection should name the sections that DO exist: %s", buf.String())
+	}
+}
+
+func TestStatePublished_NoneClearsIt(t *testing.T) {
+	dir := newOutlineFixture(t, "section_01")
+	var buf bytes.Buffer
+	if code := RunState([]string{"published", dir, "section_01"}, &buf); code != 0 {
+		t.Fatalf("set: %s", buf.String())
+	}
+
+	buf.Reset()
+	if code := RunState([]string{"published", dir, "none"}, &buf); code != 0 {
+		t.Fatalf("clear: %s", buf.String())
+	}
+	state, err := schemas.LoadState(dir)
+	if err != nil || state == nil {
+		t.Fatal(err)
+	}
+	if state.PublishedThrough != "" {
+		t.Errorf("PublishedThrough = %q after clearing, want empty", state.PublishedThrough)
+	}
+}
+```
+
+Add `"strings"`, `"bytes"`, and the `schemas` import to that test file if not already present.
+
+- [ ] **Step 2: Run the tests to verify they fail**
+
+Run: `cd go && go test ./internal/cli/ -run TestStatePublished -v`
+Expected: FAIL — `Unknown command 'published'`.
+
+- [ ] **Step 3: Implement the command**
+
+In `go/internal/cli/state.go`, add to the usage string:
+
+```
+  redliner state published <manuscript_dir> <section_stem|none>
+```
+
+add to `RunState`'s switch:
+
+```go
+	case "published":
+		if len(args) < 3 {
+			fmt.Fprintln(stdout, stateUsage)
+			return 1
+		}
+		return cmdStatePublished(args[1], args[2], stdout)
+```
+
+Match the surrounding cases' exact argument-indexing convention — read `state phase`'s case and mirror it rather than assuming this indexing is right.
+
+Then add beside `cmdStateStage`:
+
+```go
+// cmdStatePublished records which installments have shipped. Serial
+// fiction has a constraint a novel does not -- once a chapter goes out
+// the author does not revise it -- so a scene above this line cannot be
+// moved or cut, which is the one fact the rendered outline most needs to
+// show.
+//
+// Validated against the manuscript's real sections rather than accepting
+// any string: a typo sets a boundary matching no section, which draws no
+// line at all, and that reads as the feature being broken rather than the
+// input being wrong.
+func cmdStatePublished(manuscriptDir, stem string, stdout io.Writer) int {
+	state, ok := requireState(manuscriptDir, stdout)
+	if !ok {
+		return 1
+	}
+
+	// "none" is how an author says nothing has shipped yet -- a serial
+	// being drafted before launch, and the correct state for any novel.
+	if stem == "none" {
+		state.PublishedThrough = ""
+		if _, err := schemas.SaveState(manuscriptDir, state); err != nil {
+			fmt.Fprintf(stdout, "Error writing state: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "Published boundary cleared -- nothing is marked as shipped.")
+		return 0
+	}
+
+	paths, err := schemas.SectionFiles(manuscriptDir)
+	if err != nil {
+		return reportSectionError(err, stdout)
+	}
+	var stems []string
+	found := false
+	for _, path := range paths {
+		s := stemOfPath(path)
+		stems = append(stems, s)
+		if s == stem {
+			found = true
+		}
+	}
+	if !found {
+		fmt.Fprintf(stdout, "No section %s in %s. Sections are: %s\n",
+			pyReprStr(stem), manuscriptDir, strings.Join(stems, ", "))
+		return 1
+	}
+
+	state.PublishedThrough = stem
+	if _, err := schemas.SaveState(manuscriptDir, state); err != nil {
+		fmt.Fprintf(stdout, "Error writing state: %v\n", err)
+		return 1
+	}
+	fmt.Fprintf(stdout, "Published through %s. Everything up to and including it renders as shipped in Outline.md.\n", stem)
+	return 0
+}
+```
+
+Add `"strings"` to `state.go`'s imports if it is not already there.
+
+- [ ] **Step 4: Run the tests to verify they pass**
+
+Run: `cd go && go test ./internal/cli/ -run TestStatePublished -v`
+Expected: PASS, all three tests.
+
+- [ ] **Step 5: Add the MCP tool**
+
+In `descriptions.go`:
+
+```go
+const descStatePublished = `Record which installment the serial has shipped through, or "none" to clear it. Everything up to and including that section renders as published in Outline.md, where it reads as no longer movable or cuttable.`
+```
+
+In `server.go`, add the input shape beside the others:
+
+```go
+type statePublishedInput struct {
+	ManuscriptDir string `json:"manuscript_dir"`
+	Section       string `json:"section"`
+}
+```
+
+register it:
+
+```go
+	mcp.AddTool(srv, &mcp.Tool{Name: "state_published", Description: descStatePublished}, s.statePublished)
+```
+
+and add the handler, mirroring the existing `stateStage` handler's shape — read it and match it rather than inventing a second convention:
+
+```go
+func (s *redlinerServer) statePublished(_ context.Context, _ *mcp.CallToolRequest, in statePublishedInput) (*mcp.CallToolResult, any, error) {
+	var out bytes.Buffer
+	code := cli.RunState([]string{"published", in.ManuscriptDir, in.Section}, &out)
+	if code != 0 {
+		return nil, errorResult("%s", strings.TrimSpace(out.String())), nil
+	}
+	return nil, map[string]any{"output": strings.TrimSpace(out.String())}, nil
+}
+```
+
+In `frontdoor_parity_test.go`, add to `commandToTool`:
+
+```go
+	"state published": "state_published",
+```
+
+- [ ] **Step 6: Point intake and the run skill at the command**
+
+In `skills/intake/SKILL.md`, in the section added by Task 14, name the command explicitly so the answer is actually recorded rather than only discussed:
+
+> Record it with `redliner state published <dir> <section_stem>` (or the
+> `state_published` tool), and `... none` if nothing has shipped yet.
+
+In `skills/run/SKILL.md`'s `/redliner:run outline` section, add one line to the reporting step:
+
+> If the author mentions that more chapters have gone out since last
+> time, update the boundary with `redliner state published <dir>
+> <section_stem>` before rendering — a stale boundary shows scenes as
+> frozen that are still theirs to change.
+
+- [ ] **Step 7: Run the whole suite and commit**
+
+Run: `cd go && go test ./...`
+Expected: all `ok`, including `TestEverySkillCommandHasAnMCPTool` — Step 6 wrote `redliner state published` into two skill files, and Step 5 is what keeps that legal.
+
+```bash
+git add go/internal/cli/state.go go/internal/cli/state_test.go go/internal/mcpserver/ \
+        skills/intake/SKILL.md skills/run/SKILL.md
+git commit -m "Add redliner state published so the boundary can move as chapters ship"
+```
+
+---
+
+### Task 16: End-to-end verification on the sample manuscript
+
 
 **Files:**
 - No source changes expected. If this task finds a defect, fix it here with a test that would have caught it.
@@ -3409,9 +3645,10 @@ import json, pathlib
 p = pathlib.Path("/tmp/outline-check/.redliner/state.json")
 s = json.loads(p.read_text())
 s["domain"] = "serial-fiction"
-s["published_through"] = "section_01"
 p.write_text(json.dumps(s, indent=2) + "\n")
 PY
+# The boundary goes through the real command (Task 15).
+REDLINER_DOMAINS_DIR="$PWD/domains" /tmp/redliner state published /tmp/outline-check section_01
 REDLINER_DOMAINS_DIR="$PWD/domains" /tmp/redliner outline render /tmp/outline-check
 cat /tmp/outline-check/Outline.md
 ```
