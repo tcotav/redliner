@@ -15,7 +15,8 @@ import (
 
 const outlineUsage = `Usage:
   redliner outline stale    <manuscript_dir>   # which sections need re-recording
-  redliner outline join     <manuscript_dir>   # rebuild outline.json from every section file`
+  redliner outline join     <manuscript_dir>   # rebuild outline.json from every section file
+  redliner outline render   <manuscript_dir>   # write the author-readable Outline.md`
 
 func RunOutline(args []string, stdout, stderr io.Writer) int {
 	if len(args) < 2 {
@@ -34,6 +35,8 @@ func RunOutline(args []string, stdout, stderr io.Writer) int {
 		return cmdOutlineStale(manuscriptDir, stdout)
 	case "join":
 		return cmdOutlineJoin(manuscriptDir, stdout)
+	case "render":
+		return cmdOutlineRender(manuscriptDir, stdout)
 	default:
 		fmt.Fprintf(stdout, "Unknown command %s\n%s\n", pyReprStr(command), outlineUsage)
 		return 1
@@ -250,4 +253,144 @@ func cmdOutlineJoin(manuscriptDir string, stdout io.Writer) int {
 	fmt.Fprintf(stdout, "Joined %d section(s), %v scene(s) → %s\n",
 		len(joined["sections"].([]interface{})), joined["scene_count"], OutlinePath(manuscriptDir))
 	return 0
+}
+
+// RenderedOutlinePath is deliberately in the manuscript directory, not
+// under .redliner/. Same rule the editorial letters follow: hidden
+// storage for machine state, visible files for anything a human reads.
+// `.redliner` is a dotfile directory Finder hides by default, and an
+// author who cannot find the outline got nothing for the run.
+//
+// Safe to sit beside the chapters: schemas.SectionFiles globs
+// `section_*` with a .txt/.md extension, so nothing named this way is
+// discovered as manuscript text.
+func RenderedOutlinePath(manuscriptDir string) string {
+	return filepath.Join(manuscriptDir, "Outline.md")
+}
+
+// titleCaseField turns a config field name into a display label
+// ("leaves_open" -> "Leaves open"). Deliberately minimal: the field
+// names are authored in domain.json by whoever designs the domain, so
+// they are already readable words.
+func titleCaseField(name string) string {
+	words := strings.Split(name, "_")
+	if len(words) == 0 || words[0] == "" {
+		return name
+	}
+	words[0] = strings.ToUpper(words[0][:1]) + words[0][1:]
+	return strings.Join(words, " ")
+}
+
+// RenderOutline builds the author-facing Markdown. Pure: takes the
+// joined document and the domain's field lists, returns a string. No
+// model call and no file I/O -- keeping this deterministic is what makes
+// the per-run cost proportional to what the author changed rather than
+// fixed, which is the whole argument for re-running after every chapter.
+func RenderOutline(joined map[string]interface{}, rowFields, sectionFields []string) string {
+	var b strings.Builder
+	b.WriteString("# Outline\n\n")
+
+	sections, _ := joined["sections"].([]interface{})
+	fmt.Fprintf(&b, "%v scene(s) across %d section(s).\n", joined["scene_count"], len(sections))
+
+	publishedThrough, _ := joined["published_through"].(string)
+
+	for _, sectionRaw := range sections {
+		section, ok := sectionRaw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		stem, _ := section["section"].(string)
+		fmt.Fprintf(&b, "\n## %s\n", stem)
+
+		for _, field := range sectionFields {
+			if value, ok := section[field].(string); ok && value != "" {
+				fmt.Fprintf(&b, "\n%s: %s\n", titleCaseField(field), value)
+			}
+		}
+
+		scenes, _ := section["scenes"].([]interface{})
+		if len(scenes) == 0 {
+			b.WriteString("\n*No scenes recorded.*\n")
+		}
+		for _, sceneRaw := range scenes {
+			scene, ok := sceneRaw.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			order, _ := scene["order"].(float64)
+			pov, _ := scene["pov"].(string)
+			anchor, _ := scene["anchor"].(string)
+			fmt.Fprintf(&b, "\n%d. **%s** — \"%s\"\n", int(order), pov, anchor)
+			for _, field := range rowFields {
+				value, _ := scene[field].(string)
+				fmt.Fprintf(&b, "   - %s: %s\n", titleCaseField(field), value)
+			}
+		}
+
+		// The line goes *after* the last published section. A scene above
+		// it cannot be moved or cut at all, which is the one fact this
+		// whole view exists to serve.
+		if publishedThrough != "" && stem == publishedThrough {
+			b.WriteString("\n---\n\n")
+			b.WriteString("*Everything above this line is published. Those scenes can't be moved or cut.*\n\n")
+			b.WriteString("---\n")
+		}
+	}
+
+	return b.String()
+}
+
+func cmdOutlineRender(manuscriptDir string, stdout io.Writer) int {
+	joined, err := ComputeOutlineJoin(manuscriptDir)
+	if err != nil {
+		if err == ErrNoOutlineSections {
+			fmt.Fprintf(stdout, "No outline sections in %s. Run `redliner outline stale` and record them first.\n", OutlineSectionsDir(manuscriptDir))
+			return 1
+		}
+		fmt.Fprintf(stdout, "Error reading outline sections: %v\n", err)
+		return 1
+	}
+
+	rowFields, sectionFields, err := outlineFieldsFor(manuscriptDir)
+	if err != nil {
+		fmt.Fprintf(stdout, "Domain config error: %v\n", err)
+		return 1
+	}
+
+	path := RenderedOutlinePath(manuscriptDir)
+	if err := os.WriteFile(path, []byte(RenderOutline(joined, rowFields, sectionFields)), 0o644); err != nil {
+		fmt.Fprintf(stdout, "Error writing %s: %v\n", path, err)
+		return 1
+	}
+	// Print the absolute path: telling an author only that "the outline is
+	// written" is how a run ends with them unable to find its one
+	// deliverable.
+	abs, absErr := filepath.Abs(path)
+	if absErr != nil {
+		abs = path
+	}
+	fmt.Fprintf(stdout, "Wrote %s\n", abs)
+	return 0
+}
+
+// outlineFieldsFor resolves the manuscript's domain and returns its
+// configured outline fields. A domain with no outline block yields empty
+// lists rather than an error -- the caller has already decided the
+// layer applies.
+func outlineFieldsFor(manuscriptDir string) ([]string, []string, error) {
+	domainsDir, err := schemas.FindDomainsDir()
+	if err != nil {
+		return nil, nil, err
+	}
+	state, _ := schemas.LoadState(manuscriptDir)
+	name := schemas.DefaultDomain
+	if state != nil {
+		name = state.DomainName()
+	}
+	domain, err := schemas.LoadDomain(domainsDir, name)
+	if err != nil {
+		return nil, nil, err
+	}
+	return domain.OutlineRowFields(), domain.OutlineSectionFields(), nil
 }

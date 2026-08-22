@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -338,4 +339,137 @@ func TestRunOutlineJoin_ErrorsWithNoSections(t *testing.T) {
 	if !strings.Contains(buf.String(), "outline stale") {
 		t.Errorf("error should point at the command that fixes it, got: %s", buf.String())
 	}
+}
+
+func TestRenderOutline_ScenesAndFields(t *testing.T) {
+	joined := map[string]interface{}{
+		"scene_count": 1,
+		"sections": []interface{}{
+			map[string]interface{}{
+				"section": "section_01",
+				"scenes": []interface{}{
+					map[string]interface{}{
+						"order": float64(1), "pov": "Mira", "anchor": "The gate was already open",
+						"goal": "Get inside.", "conflict": "The rotation ran early.", "outcome": "She is seen.",
+					},
+				},
+			},
+		},
+	}
+	got := RenderOutline(joined, []string{"goal", "conflict", "outcome"}, nil)
+
+	for _, want := range []string{
+		"# Outline", "## section_01", "Mira", "The gate was already open",
+		"Goal: Get inside.", "Conflict: The rotation ran early.", "Outcome: She is seen.",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("rendered outline missing %q:\n%s", want, got)
+		}
+	}
+}
+
+func TestRenderOutline_SectionFieldOnlyWhenConfigured(t *testing.T) {
+	joined := map[string]interface{}{
+		"scene_count": 0,
+		"sections": []interface{}{
+			map[string]interface{}{
+				"section": "section_01", "leaves_open": "Whether the guard reports her.",
+				"scenes": []interface{}{},
+			},
+		},
+	}
+	withField := RenderOutline(joined, []string{"goal"}, []string{"leaves_open"})
+	if !strings.Contains(withField, "Whether the guard reports her.") {
+		t.Errorf("configured section field not rendered:\n%s", withField)
+	}
+	withoutField := RenderOutline(joined, []string{"goal"}, nil)
+	if strings.Contains(withoutField, "Whether the guard reports her.") {
+		t.Errorf("section field rendered for a domain that configures none:\n%s", withoutField)
+	}
+}
+
+func TestRenderOutline_PublishedBoundary(t *testing.T) {
+	joined := map[string]interface{}{
+		"scene_count":       0,
+		"published_through": "section_01",
+		"sections": []interface{}{
+			map[string]interface{}{"section": "section_01", "scenes": []interface{}{}},
+			map[string]interface{}{"section": "section_02", "scenes": []interface{}{}},
+		},
+	}
+	got := RenderOutline(joined, []string{"goal"}, nil)
+
+	if !strings.Contains(got, "published") {
+		t.Fatalf("no published boundary rendered:\n%s", got)
+	}
+	boundary := strings.Index(got, "Everything above this line is published")
+	first := strings.Index(got, "## section_01")
+	second := strings.Index(got, "## section_02")
+	if boundary < first || boundary > second {
+		t.Errorf("boundary at %d is not between section_01 (%d) and section_02 (%d):\n%s", boundary, first, second, got)
+	}
+}
+
+func TestRenderOutline_NoBoundaryWhenNothingPublished(t *testing.T) {
+	joined := map[string]interface{}{
+		"scene_count": 0,
+		"sections":    []interface{}{map[string]interface{}{"section": "section_01", "scenes": []interface{}{}}},
+	}
+	if got := RenderOutline(joined, []string{"goal"}, nil); strings.Contains(got, "published") {
+		t.Errorf("published boundary drawn when nothing is published:\n%s", got)
+	}
+}
+
+func TestRunOutlineRender_WritesToManuscriptDirNotDotRedliner(t *testing.T) {
+	dir := newOutlineFixture(t, "section_01")
+	stale, _ := ComputeOutlineStale(dir)
+	writeOutlineSectionWithScenes(t, dir, "section_01", stale.CurrentHashes["section_01"],
+		[]map[string]interface{}{scene(1, "enter")})
+
+	var buf bytes.Buffer
+	if code := RunOutline([]string{"render", dir}, &buf, &buf); code != 0 {
+		t.Fatalf("exit %d: %s", code, buf.String())
+	}
+
+	// The visible-file rule: an author who cannot find the deliverable
+	// got nothing for the run.
+	if _, err := os.Stat(filepath.Join(dir, "Outline.md")); err != nil {
+		t.Fatalf("Outline.md not in the manuscript directory: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(OutlineDir(dir), "Outline.md")); err == nil {
+		t.Error("Outline.md written under .redliner/ -- human-readable output belongs beside the sections")
+	}
+	if !strings.Contains(buf.String(), filepath.Join(dir, "Outline.md")) {
+		t.Errorf("render did not print the path the author needs: %s", buf.String())
+	}
+}
+
+func TestRunOutlineRender_OutlineMdIsNotMistakenForASection(t *testing.T) {
+	dir := newOutlineFixture(t, "section_01")
+	stale, _ := ComputeOutlineStale(dir)
+	writeOutlineSectionWithScenes(t, dir, "section_01", stale.CurrentHashes["section_01"],
+		[]map[string]interface{}{scene(1, "enter")})
+	var buf bytes.Buffer
+	RunOutline([]string{"render", dir}, &buf, &buf)
+
+	sections, err := schemas.SectionFiles(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(sections) != 1 {
+		t.Errorf("section discovery found %v -- Outline.md must not be picked up as manuscript text", sections)
+	}
+}
+
+// TestMain points FindDomainsDir at the repo's real domains/ for this
+// package's tests. Under `go test` os.Executable() is a throwaway temp
+// binary with no domains/ nearby -- REDLINER_DOMAINS_DIR is the escape
+// hatch designed for exactly this, and golden_test.go already relies on
+// it for the same reason.
+func TestMain(m *testing.M) {
+	if os.Getenv("REDLINER_DOMAINS_DIR") == "" {
+		_, thisFile, _, _ := runtime.Caller(0)
+		os.Setenv("REDLINER_DOMAINS_DIR", filepath.Join(filepath.Dir(thisFile), "..", "..", "..", "domains"))
+	}
+	os.Exit(m.Run())
 }
