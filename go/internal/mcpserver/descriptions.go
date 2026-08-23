@@ -86,7 +86,7 @@ avoided call is a full round trip.`
 
 const descDecisionsApply = `Re-apply the author's recorded resolutions to the findings files, restoring any a pass overwrote. Returns counts and the ids of decisions whose finding no longer exists.`
 
-const descRoundsArchive = `Archive a completed pass's findings under .redliner/rounds/ so the next round has a "before" to diff against. Pass kind: developmental, line, or continuity.`
+const descRoundsArchive = `Archive a completed pass's findings under .redliner/rounds/ so the next round has a "before" to diff against. Pass kind: developmental, line, continuity, or outline.`
 
 const descRoundsList = `List the archived rounds under .redliner/rounds/.`
 
@@ -94,6 +94,18 @@ const descStateStage = `Record the manuscript's draft stage, which gates how sev
 
 const descStatePass = `Record that a pass of the given kind (developmental, line, continuity) completed, so status can report what has actually been run rather than only the current phase.`
 
+const descStatePublished = `Record which installment the serial has shipped through, or "none" to clear it. Everything up to and including that section renders as published in Outline.md, where it reads as no longer movable or cuttable.`
+
 const descCanonBundle = `Return every extracted fact as one compact line, "id | entity | attribute | value", for the continuity joiner to read in a single call. Deliberately omits excerpts and metadata: measured at 86 bytes per fact against 267 for the full JSON, with no loss of join accuracy.`
 
 const descCanonMerge = `Fold the continuity joiner's findings (canon/joined.json) into canon/continuity.json, renumbering the joiner's ids into the cont-5NN range. Deduplicates on the set of facts cited, so re-running after a re-join adds only what is new.`
+
+const descOutlineStale = `Which sections need (re-)recording for the outline, plus their current SHA-256 hashes and any orphaned outline files whose section no longer exists. Cheap and deterministic — call it before recording, and skip any section it does not list.`
+
+const descOutlineJoin = `Rebuild .redliner/outline/outline.json from every current per-section outline file, in manuscript order. Deterministic; no model call.`
+
+const descOutlineRender = `Write the author-readable Outline.md into the manuscript directory (not .redliner/), rendering every recorded scene and the published boundary. Deterministic; no model call.`
+
+const descOutlineArchive = `Save the current joined outline as a new numbered version under .redliner/outline/versions/, so a later question like "what did this look like two chapters ago" has an answer. Pass changed_sections as the stems re-recorded this run, or omit it -- an empty list is valid and still checked, since a run that only deleted an orphaned section still changed the joined outline. A no-op, reported as such rather than as an error, when the joined outline is unchanged since the last archived version: call it after every render without worrying about creating noise.`
+
+const descOutlineVersions = `List the archived outline versions under .redliner/outline/versions/, newest counter last, with the date, what changed, and the path to each version's readable Outline.md.`

@@ -45,23 +45,29 @@ var notCommands = map[string]bool{
 // `state_status`) follows the group_command convention; anything that
 // diverges is listed here.
 var commandToTool = map[string]string{
-	"canon reconcile": "canon_reconcile",
-	"canon stale":     "canon_stale",
-	"canon bundle":    "canon_bundle",
-	"canon merge":     "canon_merge",
-	"state status":    "state_status",
-	"state diff":      "state_diff",
-	"state snapshot":  "state_snapshot",
-	"state phase":     "state_phase",
-	"state init":      "state_init",
-	"state stage":     "state_stage",
-	"state pass":      "state_pass",
-	"rounds archive":  "rounds_archive",
-	"rounds list":     "rounds_list",
-	"decisions apply": "decisions_apply",
-	"decisions list":  "decisions_apply", // read-only view of the same file
-	"domain list":     "domain_list",
-	"domain show":     "domain_show",
+	"canon reconcile":  "canon_reconcile",
+	"canon stale":      "canon_stale",
+	"canon bundle":     "canon_bundle",
+	"canon merge":      "canon_merge",
+	"state status":     "state_status",
+	"state diff":       "state_diff",
+	"state snapshot":   "state_snapshot",
+	"state phase":      "state_phase",
+	"state init":       "state_init",
+	"state stage":      "state_stage",
+	"state pass":       "state_pass",
+	"state published":  "state_published",
+	"rounds archive":   "rounds_archive",
+	"rounds list":      "rounds_list",
+	"decisions apply":  "decisions_apply",
+	"decisions list":   "decisions_apply", // read-only view of the same file
+	"domain list":      "domain_list",
+	"domain show":      "domain_show",
+	"outline stale":    "outline_stale",
+	"outline join":     "outline_join",
+	"outline render":   "outline_render",
+	"outline archive":  "outline_archive",
+	"outline versions": "outline_versions",
 }
 
 func skillFiles(t *testing.T) []string {

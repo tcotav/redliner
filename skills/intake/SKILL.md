@@ -118,14 +118,41 @@ hardcode fiction's fields here even as a fallback.
    nothing. Skipping this leaves the most consequential setting in the
    tool visible only as prose.
 
-7. **Write the brief** to `<manuscript_dir>/.redliner/brief.md` using
+7. **Ask which chapters have already shipped, for serial domains only.**
+   If the domain is `serial-fiction`:
+
+   > Which chapters have already gone out to readers?
+
+   Record the answer in state, not the brief — `published_through` isn't
+   a `brief_fields` entry; it's a machine-read boundary that changes over
+   time as chapters ship, not a fixed statement of intent. Run
+   `redliner state published <manuscript_dir> <section_stem>` (on the
+   CLI; the MCP variant offers the matching `state_published` tool) with
+   the last published section's stem, e.g. `section_11` — it validates
+   the stem against the manuscript's real sections and rejects a typo.
+   Leave it unset (or pass `none` to clear a previous answer) if nothing
+   has been published yet, which is a normal answer for a serial being
+   drafted before launch.
+
+   This draws a visible line in `Outline.md` between what has shipped and
+   what is still movable: once a chapter goes out, the author doesn't
+   revise it, so a scene above that line can't be moved or cut at all.
+   It's a section boundary, not a scene one — publication happens per
+   installment, and there's no such thing as half a chapter being live.
+
+   Tell the author this changes as chapters ship, and that they should
+   say so when it does — re-run the same command with the new stem. A
+   stale boundary is worse than none: it shows scenes as frozen that are
+   still theirs to change.
+
+8. **Write the brief** to `<manuscript_dir>/.redliner/brief.md` using
    `reference/brief_template.md` in this skill directory as the structure
    — it's written generically, looping over whatever `brief_fields` and
    `draft_stages` the domain supplied. Write what the author actually
    said, in their framing — don't editorialize their intent into
    something tidier.
 
-8. **Confirm.** Show the brief and ask whether it reflects their intent.
+9. **Confirm.** Show the brief and ask whether it reflects their intent.
    Fix what's wrong. Then tell them the next step is `/redliner:run assess`.
 
 ## Draft stage gates severity

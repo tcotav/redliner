@@ -40,6 +40,16 @@
       "object"
     ]
   },
+  "outline": {
+    "row_fields": [
+      {"name": "goal", "prompt": "What was the driving character trying to achieve in this scene?"},
+      {"name": "conflict", "prompt": "What opposed them?"},
+      {"name": "outcome", "prompt": "What changed as a result? If nothing changed, say so plainly."}
+    ],
+    "section_fields": [
+      {"name": "leaves_open", "prompt": "What question does this chapter end on? Record the open thread, not a judgment about how strong the hook is."}
+    ]
+  },
   "brief_fields": [
     {"name": "logline", "label": "Logline", "prompt": "What's the serial, in one or two sentences?"},
     {"name": "release_cadence", "label": "Release cadence", "prompt": "How often do new chapters/episodes go out — weekly, biweekly, irregular?"},

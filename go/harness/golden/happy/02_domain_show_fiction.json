@@ -52,6 +52,22 @@
         "object"
       ]
     },
+    "outline": {
+      "row_fields": [
+        {
+          "name": "goal",
+          "prompt": "What was the driving character trying to achieve in this scene?"
+        },
+        {
+          "name": "conflict",
+          "prompt": "What opposed them?"
+        },
+        {
+          "name": "outcome",
+          "prompt": "What changed as a result? If nothing changed, say so plainly."
+        }
+      ]
+    },
     "brief_fields": [
       {
         "name": "logline",

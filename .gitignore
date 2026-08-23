@@ -25,3 +25,9 @@ venv/
 /bin/redliner.version
 /cowork/redliner
 /cowork/redliner.version
+
+# Agent scratch: isolated worktrees and per-plan execution ledgers. Both
+# are regenerable working state, and committing a worktree would commit
+# a whole second copy of the tree.
+/.claude/worktrees/
+/.superpowers/

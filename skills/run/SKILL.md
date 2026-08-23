@@ -1,6 +1,6 @@
 ---
 name: run
-description: Runs layered editing on a manuscript (fiction, design docs, or any domain redliner has been configured for) — developmental assessment, revision support, re-checks, then line editing. Use when the author asks to edit, assess, or review a manuscript, to work or resolve a finding, or types /redliner:run.
+description: Runs layered editing on a manuscript (fiction, design docs, or any domain redliner has been configured for) — developmental assessment, revision support, re-checks, a scene-level outline, then line editing. Use when the author asks to edit, assess, or review a manuscript, to outline a manuscript's scenes, to work or resolve a finding, or types /redliner:run.
 ---
 
 # redliner:run
@@ -15,6 +15,7 @@ Phase-aware editing pipeline. Subcommands:
 | `/redliner:run resolve <id>` | Mark a finding addressed (author's claim) — developmental or line |
 | `/redliner:run wontfix <id>` | Decline a finding, with a reason; it won't be re-raised |
 | `/redliner:run recheck` | Re-read after revision; verify claims, find new issues |
+| `/redliner:run outline` | Scene-level outline of the manuscript — see below |
 | `/redliner:run line` | Line-editing phase (gated — see below) |
 | `/redliner:run continuity` | Extract facts, find collisions, adjudicate — see below |
 
@@ -131,9 +132,13 @@ name. Determine `<domain>` by checking the manuscript's current state
 and substitute it into every `redliner:<role>` reference below. So on a
 `design-doc` manuscript, "Task `redliner:<domain>-developmental-editor`"
 means Task `redliner:design-doc-developmental-editor`. This holds for
-all six roles: `developmental-editor`, `line-editor`,
+all seven roles: `developmental-editor`, `line-editor`,
 `editorial-aggregator`, `continuity-extractor`, `continuity-adjudicator`,
-`continuity-joiner`.
+`continuity-joiner`, `outliner`.
+
+The `outliner` role exists only for domains whose `domain.json` has an
+`outline` block — `fiction` and `serial-fiction` do, `design-doc` does
+not. On a domain without one, skip every outline step below.
 
 ## Why phases are sequential
 
@@ -181,18 +186,29 @@ author, so assume it will catch out a novelist.
 Before step 1, tell them, briefly:
 
 - **The steps this pass will run**, counted for this manuscript — e.g.
-  for `assess` on 12 sections: "one developmental read of the whole
+  for `assess` on 12 sections, on a domain with an outline block and a
+  cold outline (nothing recorded yet): "outline recording on 12
+  sections, then join and render, one developmental read of the whole
   manuscript, continuity extraction on 12 sections, then reconcile,
-  adjudication if collisions are found, and the editorial letter."
+  adjudication if collisions are found, and the editorial letter." On a
+  warm outline (nothing changed since the last recording), drop the
+  per-section outline calls from the list — join and render still run,
+  but they're free.
 - **A rough duration**, computed from the real section count.
 - **That long silent stretches are expected**, and that the timer
   ticking means it's alive.
 
 **Estimating.** `assess` runs roughly **N + 3** model steps for N
-sections (one whole-manuscript developmental read, N continuity
-extractions, adjudication only if a collision is found, one letter).
+sections on a domain with no `outline` block, or with an already-warm
+outline (one whole-manuscript developmental read, N continuity
+extractions, adjudication only if a collision is found, one letter). On
+a domain with an outline, add **one call per section whose outline is
+stale** — up to N more on a first run, near zero once the outline is
+kept current, per "Why re-running this is cheap" above.
 `line` is about **N + 1**; standalone `continuity` about **N + 1**;
-`recheck` varies with how much changed, and is usually smaller.
+`recheck` varies with how much changed, and is usually smaller — though
+on a domain with an outline it also pays the same per-stale-section
+outline cost `assess` does, on the `targeted`/`restructured` verdicts.
 
 Budget **~2–3 minutes per step** as a rough figure. Say it as a range,
 never a countdown — and be honest that it's an estimate. Its basis is a
@@ -230,13 +246,45 @@ invites the author to start reacting to a half-finished picture.
    rewrites findings in place, so clearing without archiving left nothing
    to compare a later round against. Archiving first makes the clear
    safe. Say in one line that you've archived and where.
-3. Task the `redliner:<domain>-developmental-editor` subagent with the manuscript directory,
+3. **Archive the outline, then refresh it.** In that order.
+
+   Archive first: `redliner rounds archive <dir> outline`. Then run the
+   **outline** steps below in full (recording, join, render, version
+   archive).
+
+   The order is load-bearing and the failure is silent. Refreshing
+   overwrites `outline.json`, and unlike `continuity.json` — which is
+   deterministically rebuildable from the per-section observations —
+   the outline is a join of agent output. Overwrite it without archiving
+   and that round's recorded scene structure is gone for good, leaving
+   a hole in the version history the author may later want to look back
+   through. This is the same failure step 2 exists to prevent for
+   findings: *every pass rewrites in place, so clearing without
+   archiving leaves nothing to compare a later round against.*
+
+   Do this even if the author "just ran the outline." It is hash-driven
+   and idempotent, so on an unchanged manuscript it costs almost
+   nothing — and a stale outline handed to the developmental editor
+   produces confident findings reasoned from a structure the prose no
+   longer has, which looks exactly like a good pass. Never treat a
+   fresh outline as a precondition the author is trusted to have met.
+
+   **Skip this step entirely on a domain with no `outline` block.**
+4. Task the `redliner:<domain>-developmental-editor` subagent with the manuscript directory,
    the round number, and output path `.redliner/findings/developmental.json`.
-4. Validate everything currently under `.redliner/` — stop and report
+
+   On a domain with an outline, give the subagent the path to
+   `.redliner/outline/outline.json` as well, and tell it this is a
+   structural spine to read **alongside** the prose, never instead of
+   it. It saves re-deriving scene structure from the text every round
+   and makes arc-level questions legible; it is not a substitute input,
+   and a developmental pass that reads only the outline is not a
+   developmental pass.
+5. Validate everything currently under `.redliner/` — stop and report
    errors rather than aggregating bad data. (This checks the whole
    manuscript directory in one pass, not just the one file you just
    wrote.)
-5. Run the **continuity** steps below now, passing `--snapshot-after` to
+6. Run the **continuity** steps below now, passing `--snapshot-after` to
    the reconcile step. That flag records the current text as the assessed
    baseline in the same call that reconciles — which is what lets a later
    `recheck` tell what changed.
@@ -249,7 +297,7 @@ invites the author to start reacting to a half-finished picture.
    way. One call has no order to get wrong. If you do run them
    separately for some reason, reconcile reports on stderr when it had
    no usable baseline.
-6. Task `redliner:<domain>-editorial-aggregator` for the **developmental**
+7. Task `redliner:<domain>-editorial-aggregator` for the **developmental**
    letter, giving it **both output paths explicitly**:
    - Markdown → `<manuscript_dir>/Developmental Letter - Round <N>.md`
    - JSON → `<manuscript_dir>/.redliner/letters/developmental_round<N>.json`
@@ -270,18 +318,32 @@ invites the author to start reacting to a half-finished picture.
    Sitting beside the chapters is safe: section discovery globs
    `section_*`, so a letter named this way is never mistaken for
    manuscript text.
-7. Validate again, then read and show the developmental letter, then the
-   continuity summary from step 5.
-8. Re-apply author decisions, archive the completed pass, and record it:
+8. Validate again, then read and show the developmental letter, then the
+   continuity summary from step 6.
+9. Re-apply author decisions, archive the completed pass, and record it:
    `redliner decisions apply <dir>`, `redliner rounds archive <dir> developmental`
-   (and `... continuity`), `redliner state pass <dir> developmental`.
-   (and `... continuity`, since step 5 ran one). This is what lets
-   `status` tell the author what has actually been run rather than only
-   what phase they're in. **Print the letter's absolute path**
-   when you show it — the author needs to be able to reopen it later
-   without hunting for it, and telling them only that "the letter is
-   written" is how a pass ends with the author unable to find its one
+   (and `... continuity`, since step 6 ran one, and `... outline`, since
+   step 3 refreshed the outline). Then
+   `redliner state pass <dir> developmental` (and `... continuity`).
+   This is what lets `status` tell the author what has actually been run
+   rather than only what phase they're in. **Print the letter's absolute
+   path** when you show it — the author needs to be able to reopen it
+   later without hunting for it, and telling them only that "the letter
+   is written" is how a pass ends with the author unable to find its one
    deliverable.
+
+   Archiving the outline in both places is not redundant: this one
+   preserves the completed round, and step 3's is the safety net for a
+   round that ended without reaching here. `freeArchiveDir` suffixes
+   `.2`, `.3` for exactly this case.
+
+   Do **not** run `redliner state pass <dir> outline` — that kind
+   deliberately does not exist. The outline refreshes automatically
+   inside every assess (and inside `recheck`, on the
+   `targeted`/`restructured` verdicts), so recording it as a completed
+   pass would make `status` report it as run permanently, which is a
+   constant rather than a signal. What `status` reports for this layer
+   is staleness.
 
 Do **not** run line editing here, whatever the author asked for.
 
@@ -439,26 +501,51 @@ forever.
 ## `/redliner:run recheck`
 
 1. Compare the manuscript's current text against the last assessed
-   snapshot, and branch on the verdict — this comparison is
+   snapshot, and determine the verdict — this comparison is
    deterministic, so trust it over any impression of how much changed:
 
    - **`unchanged`** — no section text differs from the last assessment.
-     Any `claimed` findings can't be verified; say so plainly and stop.
-     Something's off: either the revision wasn't saved, or the author
-     marked things resolved without revising.
+     Any `claimed` findings can't be verified; say so plainly and stop
+     here. Something's off: either the revision wasn't saved, or the
+     author marked things resolved without revising.
    - **`targeted`** — specific sections edited, none added or removed,
-     no large swings. Task `redliner:<domain>-developmental-editor` to verify the `claimed`
-     findings against those sections and check whether the edits created
-     new problems. Pass the existing findings file so ids carry forward.
+     no large swings. Fall through to step 2.
    - **`restructured`** — sections added, removed, or heavily rewritten.
-     A full re-read: task `redliner:<domain>-developmental-editor` over the whole
-     manuscript with the prior findings file. Findings the restructure
-     invalidated should come back `stale`, not `addressed` — the author
-     didn't fix them, the text moved. Tell the author which findings went
-     stale and why; that's the case they can't assess themselves.
+     This is the verdict where a stale outline is at its worst, since it
+     fires immediately after the author added, removed, or heavily
+     rewrote sections. Fall through to step 2.
 
-2. Validate.
-3. Run the **continuity** steps below now, passing `--snapshot-after` to
+2. **Archive the outline, then refresh it.** In that order — same as
+   `assess` step 3, and the same reason: refreshing overwrites
+   `outline.json`, and a stale outline handed to the developmental
+   editor produces confident findings reasoned from a structure the
+   prose no longer has, which looks exactly like a good pass. A recheck
+   is the moment right after revision, so this is never a safe skip.
+
+   Archive first: `redliner rounds archive <dir> outline`. Then run the
+   **outline** steps below in full (recording, join, render, version
+   archive).
+
+   **Skip this step entirely on a domain with no `outline` block.**
+3. Task the developmental editor per verdict:
+
+   - **`targeted`** — task `redliner:<domain>-developmental-editor` to
+     verify the `claimed` findings against the edited sections and check
+     whether the edits created new problems. Pass the existing findings
+     file so ids carry forward.
+   - **`restructured`** — a full re-read: task
+     `redliner:<domain>-developmental-editor` over the whole manuscript
+     with the prior findings file. Findings the restructure invalidated
+     should come back `stale`, not `addressed` — the author didn't fix
+     them, the text moved. Tell the author which findings went stale and
+     why; that's the case they can't assess themselves.
+
+   On a domain with an outline, give the editor the path to
+   `.redliner/outline/outline.json` as well, the same as `assess` step
+   4 — a structural spine to read alongside the prose, not instead of
+   it.
+4. Validate.
+5. Run the **continuity** steps below now, passing `--snapshot-after` to
    the reconcile step so the new baseline is recorded in the same call.
    This matters more here than anywhere else: revision is exactly when
    facts get out of sync (an edit in one section not yet propagated to
@@ -473,7 +560,7 @@ forever.
    re-extraction first tells you the real scope; a `targeted`
    developmental verdict usually means continuity only has one or two
    sections to redo, not the whole manuscript.
-4. **Verify line claims too, if there are any.** Structure isn't the only
+6. **Verify line claims too, if there are any.** Structure isn't the only
    layer the author revises against. If `.redliner/findings/line_*.json`
    exist and any finding in them is `claimed`, re-task
    `redliner:<domain>-line-editor` for **each section holding a claimed
@@ -483,11 +570,11 @@ forever.
    is `restructured`: a heavy rewrite makes line findings stale wholesale,
    and re-running the line editor over churning prose spends money
    polishing text that is still moving. Say that's why you skipped it.
-5. Aggregate a fresh developmental letter, show it, then show the
-   continuity summary from step 3. (Step 3 already recorded the new
-   assessed baseline via `--snapshot-after`.) If step 4 ran, aggregate
+7. Aggregate a fresh developmental letter, show it, then show the
+   continuity summary from step 5. (Step 5 already recorded the new
+   assessed baseline via `--snapshot-after`.) If step 6 ran, aggregate
    and show a fresh line letter as well, and record the pass.
-6. Then say plainly whether structure looks settled enough for line
+8. Then say plainly whether structure looks settled enough for line
    editing — count open `major`/`critical` findings and give a real
    recommendation, not a hedge.
 
@@ -536,6 +623,103 @@ forever.
 8. Re-apply author decisions (`redliner decisions apply <dir>`), archive
    the pass (`redliner rounds archive <dir> line`), then record it
    (`redliner state pass <dir> line`).
+
+## `/redliner:run outline`
+
+A scene-level view of the plot: what each scene's driving character was
+trying to achieve, what opposed them, and what changed. It exists to
+answer two questions without rereading the book — can this scene move,
+and can it be cut.
+
+Callable directly, and also the first thing `assess` and `recheck` (on
+the `targeted`/`restructured` verdicts) refresh (see above). This
+section is the one definition all three refer to.
+
+Like continuity and unlike the two editing phases, this is **not
+phase-gated**: recording is judgment-free, so it is safe any time after
+intake — including on chapter three of a draft nowhere near a
+developmental pass. It tracks its own staleness per section.
+
+**Skip this entirely on a domain with no `outline` block.**
+
+1. Check which sections need re-recording (`redliner outline stale
+   <dir>`, or the `outline_stale` tool). The result drives everything
+   below:
+   - `needs_recording` — sections to (re-)record this run.
+   - `current_hashes` — each of those sections' current SHA-256, keyed by
+     stem. The outliner needs this exact value; don't compute it
+     yourself or reuse a stale one.
+   - `orphaned_sections` — outline files whose section no longer exists.
+     Delete `.redliner/outline/sections/<stem>.json` for each before
+     joining. A cut section's scenes must not still appear in the
+     outline.
+2. If `needs_recording` is empty, skip to step 5 — nothing has changed
+   since the last recording. **Say so in one line rather than silently
+   doing nothing**; an author who just asked for an outline and got no
+   output cannot tell "nothing changed" from "it failed".
+3. For each section in `needs_recording`, Task the
+   `redliner:<domain>-outliner` subagent with: the manuscript directory,
+   that section's file path, its hash from `current_hashes`, and output
+   path `.redliner/outline/sections/<section_stem>.json`. Sections share
+   no state — parallel is fine, sequential keeps the transcript
+   readable.
+4. Validate — stop and report errors rather than joining from bad
+   recordings.
+5. Join (`redliner outline join <dir>`), then render (`redliner outline
+   render <dir>`). Both are deterministic commands, not agent calls.
+   The join rebuilds `outline.json` from **every** current section file,
+   not only the ones just re-recorded.
+6. Archive a version if anything changed: `redliner outline archive
+   <dir> [changed_section...]`, passing the stems re-recorded this run
+   (zero is valid — it still archives if the joined content differs,
+   e.g. an orphan was deleted). A run that changed nothing archives
+   nothing.
+7. Report: the scene count, which sections were re-recorded, and
+   **the absolute path to `Outline.md`**. The rendered outline is the
+   author's deliverable, and it lives in the manuscript folder beside
+   the chapters — not in `.redliner/`, which Finder hides by default.
+   Telling them only that "the outline is written" is how a run ends
+   with the author unable to find its one output.
+
+   If the author mentions that more chapters have gone out since last
+   time, update the boundary with `redliner state published <dir>
+   <section_stem>` before rendering — a stale boundary shows scenes as
+   frozen that are still theirs to change.
+
+### Why re-running this is cheap
+
+Worth saying to the author once, because "regenerate the outline" sounds
+expensive and is not.
+
+A re-run costs a deterministic staleness check (free), **one agent call
+per section whose text actually changed**, then a deterministic join and
+render (free). Writing chapter 12 and re-running is one call — chapters
+1–11 are never opened. So outlining after every chapter and outlining
+after five chapters cost the same in total; they differ only in when the
+author sees the view.
+
+Encourage the frequent version. It is the workflow this layer was built
+for.
+
+### Version history
+
+Every outline run whose content actually changed archives a version to
+`.redliner/outline/versions/v<N>/`, holding the JSON, the rendered
+`Outline.md`, and a small `meta.json` recording the date and which
+sections changed.
+
+`redliner outline versions <dir>` lists them, and reading an old one
+means opening its archived `Outline.md` — whose path the listing prints.
+Use this when the author asks what the outline looked like before.
+
+**Never delete anything under `versions/` without asking the author
+first**, same rule as `rounds/`. A no-op run archives nothing, so the
+growth is bounded by how often the text actually changes.
+
+What this does *not* yet answer is what changed *between* two versions.
+That's a diff tool, deliberately not built yet — see TODO.md. Say that
+plainly rather than hand-diffing two archived files into a summary the
+author might take as authoritative.
 
 ## `/redliner:run continuity`
 
@@ -667,6 +851,11 @@ Also show, because an author cannot otherwise see any of it:
   run now, and for any that can't, say why in one line ("line editing is
   gated at this draft stage; it would return nothing"). An author should
   never discover a gate by paying for an empty pass.
+- **Whether any sections need re-recording for the outline**, the same
+  way continuity staleness is reported, and how many versions are
+  archived. On a domain with no `outline` block, show nothing — not an
+  empty section, which reads as a broken feature rather than an
+  inapplicable one.
 
 End with one concrete recommended next command, and be explicit about
 whether redliner is **waiting on them** (a revision, a decision, a stage

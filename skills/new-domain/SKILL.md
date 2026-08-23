@@ -1,15 +1,17 @@
 ---
 name: new-domain
-description: Walks someone through designing a new redliner domain (a kind of document to edit, beyond fiction) — category vocabulary for both editing phases, the continuity layer's entity types/sources/categories, brief fields, and draft stages — then generates that domain's domain.json and its six agent files. Use when the author wants redliner to work on something that isn't fiction (a design doc, product proposal, or any other long-form document) and no suitable domain exists yet.
+description: Walks someone through designing a new redliner domain (a kind of document to edit, beyond fiction) — category vocabulary for both editing phases, the continuity layer's entity types/sources/categories, brief fields, and draft stages — then generates that domain's domain.json and its agent files. Use when the author wants redliner to work on something that isn't fiction (a design doc, product proposal, or any other long-form document) and no suitable domain exists yet.
 ---
 
 # redliner:new-domain
 
-Produces `domains/<name>/domain.json` and six agent files
+Produces `domains/<name>/domain.json` and its agent files
 (`agents/<name>-developmental-editor.md`, `<name>-line-editor.md`,
 `<name>-editorial-aggregator.md`, `<name>-continuity-extractor.md`,
-`<name>-continuity-adjudicator.md`), following the same shape as
-`domains/fiction/domain.json` and `agents/fiction-*.md`.
+`<name>-continuity-adjudicator.md`, `<name>-continuity-joiner.md`, and
+`<name>-outliner.md` when this domain configures an outline layer),
+following the same shape as `domains/fiction/domain.json` and
+`agents/fiction-*.md`.
 
 Read `domains/fiction/domain.json` and skim `agents/fiction-*.md` before
 starting — they're the worked example throughout this skill, not
@@ -140,6 +142,30 @@ don't contort the example.
 
 ## Step 5: Write and validate `domain.json`
 
+Before writing the file, ask whether this domain wants an outline
+layer: a pass that records each unit's scenes as short structured rows
+(fiction: goal/conflict/outcome) so an author can scan a whole
+manuscript's shape without rereading it. Not every domain needs one —
+skip it for a domain with no scene-like internal structure (design-doc
+has none). If the author wants one, design `outline.row_fields`: each
+entry is a recordable **fact** about a unit, never a rating — "what was
+the driving intention" is a row field, "how well does this scene work"
+is not, for the same reason the outliner's own prompt forbids opinions.
+Three to four fields is the working range; more than that stops being
+scannable. Optionally also design `outline.section_fields` for a fact
+recorded once per unit rather than per scene (serial-fiction's
+`leaves_open`) — most domains won't need one.
+
+If this domain's work is released in installments rather than finished
+and read whole — think a serialized draft, not just serial-fiction by
+name — it may also want a **published boundary**: a machine-read marker
+of how far the audience has already seen, so an outline can flag which
+units are locked and which can still move. `skills/intake/SKILL.md`
+asks for this today only when the domain is literally `serial-fiction`;
+a custom domain with the same shape won't get asked automatically, so
+design it in deliberately if it applies, following how `serial-fiction`
+wires `published_through` through `redliner state published`.
+
 Write `domains/<name>/domain.json` matching
 `domains/fiction/domain.json`'s exact key structure. Then look up the
 full config for the new domain by name (whichever concrete tool this
@@ -152,14 +178,21 @@ config is malformed (missing keys, empty lists); fix it and re-check
 until it comes back clean. Don't hand-verify the shape yourself and skip
 this — the loader's validation is the actual contract, not a formality.
 
-## Step 6: Generate the six agent files
+## Step 6: Generate the agent files
 
-For each of the six roles, use the matching template in
+For each of the six core roles, use the matching template in
 `reference/templates/<role>.md` in this skill directory. Each template
 marks blocks `<!-- FIXED -->` (copy verbatim, substituting only
 `{{...}}` placeholders that come straight from `domain.json` — no
 creative judgment involved) and `<!-- AUTHORED -->` (needs real writing
 for this domain).
+
+Then generate a conditional seventh: **only** when this domain's
+`domain.json` has an `outline` block (Step 3 or Step 5 will have asked
+whether this domain wants one), generate `agents/<name>-outliner.md`
+from `reference/templates/outliner.md`, following the same FIXED/
+AUTHORED convention. A domain with no `outline` block gets no outliner
+file — don't generate one "just in case."
 
 For AUTHORED blocks: read the matching `agents/fiction-*.md` file first
 as the quality bar, then write fresh prose for this domain — role
@@ -191,17 +224,20 @@ that produced a real, previously-shipped bug in this project (renaming
 `name:`, silently kept every reference resolving to the *old* unprefixed
 agent id — the file looked renamed and wasn't).
 
-1. **Frontmatter/filename consistency.** For each of the five files,
-   read its frontmatter `name:` and confirm it equals `<domain>-<role>`
-   matching the filename stem exactly. Any mismatch: stop, fix, recheck.
+1. **Frontmatter/filename consistency.** For each generated file —
+   including `<name>-outliner.md` when this domain has an `outline`
+   block — read its frontmatter `name:` and confirm it equals
+   `<domain>-<role>` matching the filename stem exactly. Any mismatch:
+   stop, fix, recheck.
 2. **Domain config still valid.** Look up the new domain's full config
    again and confirm it still comes back clean.
-3. **Live registration check.** For each of the five generated agents,
-   use the Task tool to invoke `redliner:<name>-<role>` with a trivial
-   prompt: reply with the single word `PONG` and nothing else. Confirm
-   each one responds — an "Agent type not found" error means step 6's
-   naming didn't actually take, whatever the file contents look like.
-   Do this for all five before reporting success on any.
+3. **Live registration check.** For each generated agent — again
+   including the outliner when this domain has one — use the Task tool
+   to invoke `redliner:<name>-<role>` with a trivial prompt: reply with
+   the single word `PONG` and nothing else. Confirm each one responds —
+   an "Agent type not found" error means step 6's naming didn't actually
+   take, whatever the file contents look like. Do this for every
+   generated agent before reporting success on any.
 
 Only after all three checks pass, tell the author the domain is ready.
 
