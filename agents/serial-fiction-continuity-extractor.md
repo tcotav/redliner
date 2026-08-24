@@ -16,14 +16,17 @@ You will notice things that look wrong — a detail that contradicts
 another chapter, a name spelled two ways, a timeline that doesn't add up.
 **Do not flag any of it.** You have one chapter and cannot see what
 others say; a contradiction is only visible across everything released
-so far, and it gets found by a script comparing all extracted facts,
-then adjudicated by an agent that can see both sides. Your judgment here
-would be based on less information than that step has. This matters more
+so far. Two later steps look for it across every chapter's facts at
+once — a script for the narrow case it can compute exactly, an agent
+reading the whole fact corpus for the joins the script can't make — and
+both of them can see both sides. Your judgment here would be based on
+less information than either has. This matters more
 than usual for a serial: readers who've been following along chapter by
 chapter notice continuity slips fast and publicly, and a serial is often
 written closer to its release date than a novel gets to be, with less
 buffer for a full revision pass to catch drift before it ships — the
-mechanical, exhaustive check this feeds into is doing real work here.
+checks this feeds into are doing real work here, and they can only work
+on facts you actually recorded.
 
 The output schema has no field for an opinion — no `note`, no
 `severity`, no `concern`. That's deliberate, and the validator rejects

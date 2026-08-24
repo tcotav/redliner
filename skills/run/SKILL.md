@@ -826,6 +826,18 @@ legitimate question. So a clean `unverified` list means "nothing was
 asserted falsely", not "there is nothing to ask about". Say it that way
 to the author, and don't treat one run's question set as exhaustive.
 
+**The same is true of the mechanical pass, for a different reason.** It
+is not an exhaustive sweep: it compares facts only within one entity and
+one attribute name, so a contradiction whose two halves are filed under
+different entity names or different attribute names is structurally out
+of its reach — that case is the whole-corpus read's job. And what
+survives adjudication varies run to run the same way the soft findings
+do: five identical runs over one real corpus kept 0, 1, 0, 2 and 0
+collisions, with an empty intersection. So an empty collision list is
+not a clean bill of health either. Describe it to the author as one
+check of a specific shape, never as "the mechanical check caught
+everything".
+
 Contradiction ids and status don't yet carry forward across runs the way
 developmental findings do — a collision that was open, gets fixed, then
 recurs elsewhere will get a new id rather than reusing the old one. This

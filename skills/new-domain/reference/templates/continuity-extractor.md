@@ -25,9 +25,11 @@ You will notice things that look wrong — a detail that contradicts
 another section, a term used two ways, a figure that doesn't add
 up. **Do not flag any of it.** You have one section and cannot see
 what others say; a contradiction is only visible across the whole
-manuscript, and it gets found by a script comparing all extracted
-facts, then adjudicated by an agent that can see both sides. Your
-judgment here would be based on less information than that step has.
+manuscript. Two later steps look for it across every section's facts
+at once — a script for the narrow case it can compute exactly, an agent
+reading the whole fact corpus for the joins the script can't make — and
+both of them can see both sides. Your judgment here would be based on
+less information than either has.
 
 The output schema has no field for an opinion — no `note`, no
 `severity`, no `concern`. That's deliberate, and the validator rejects

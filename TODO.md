@@ -2356,7 +2356,7 @@ stands as the next honest one: replay The City's sections in written
 order, run a morning check after each, and see whether it catches
 anything the full pass caught — earlier, and cheaper.
 
-## Is deterministic collision-finding the right architecture? (settled 2026-08-14, not built)
+## Is deterministic collision-finding the right architecture? (narrowed and shipped; keep-or-drop still open — read the 2026-08-23 status subsection first)
 
 **Raised:** 2026-08-14, after the morning-edit result. Nothing decided
 here. This exists because the standing plan — "fix entity matching, then
@@ -2529,6 +2529,71 @@ yet said anywhere.
 corpus, with facts already extracted. A design that trims or partitions
 the bundle changes the input the 4/4 was obtained on, so it needs its own
 pre-registered run rather than inheriting this one's number.
+
+### Status re-read 2026-08-23: option 2 already shipped. Only option 4 is open.
+
+This section reads as four live options. It isn't one — reading the code
+back settles most of it, and the next person should not re-derive that.
+
+**Option 2 is built.** The deterministic layer's job has already been
+changed to the narrow one this section argued for. `linkByAttribute`
+(`go/internal/cli/canon.go:325`) now groups by *exact* attribute name;
+the fuzzy shared-token version, and with it `attrTokens`,
+`tokensIntersect` and `attrStopwords`, is gone. The comment above it
+(`canon.go:296-320`) records the removal and its reasons — the
+`emotional_state`/`physical_state` artifact class, the facts^1.4 curve,
+and that fuzzy matching never bought the recall it was added for, since
+entity partitioning kept the two halves apart regardless. What remains is
+exactly "the same attribute on the same entity, recorded twice with
+different values".
+
+**Option 1 stays dead** and is now dead in a second way: it proposed
+fixing entity matching, and the code has instead committed to *not*
+matching across entities at all. Cross-entity and cross-attribute joining
+is the whole-corpus agent read's job, by design and in writing.
+
+**Entity partitioning is intact and deliberate.** `ComputeReconcile`
+still partitions by `normEntity` (`canon.go:477`) and still links only
+inside a partition. The structural 0/4 is therefore not a defect left
+unfixed — it is the boundary of the job the pass was narrowed to. Say it
+that way; "the mechanical pass misses things" invites someone to try to
+fix it again.
+
+**So the only open question is option 4: keep the narrowed pass, or drop
+it.** Everything above that line is decided. The evidence against keeping
+it is the five-run adjudicator variance (0/1/0/2/0, empty intersection,
+zero new true findings) on one corpus; the evidence that would rescue it
+— a manuscript whose collisions are mostly *real* — has never been
+collected. `bellwether`'s 2-of-4 is n=1 pointing the other way.
+
+Pre-registration for that measurement:
+`go/harness/fixtures/bellwether/KEEP_OR_DROP.md`, alongside the three
+pre-registered rules it follows from.
+
+**The honest-description defect is fixed** (2026-08-23), separately from
+the architecture question, because it was true whichever way option 4
+goes. Six places said or implied the pass was an exhaustive sweep:
+
+- `agents/serial-fiction-continuity-extractor.md` called it "the
+  mechanical, exhaustive check".
+- All three `*-continuity-extractor.md` agents said a contradiction
+  "gets found by a script comparing all extracted facts" — the same
+  overclaim relocated, and worse than the README's because a model reads
+  it at runtime. They now name both later steps and what each reaches.
+- `skills/new-domain/reference/templates/continuity-extractor.md`
+  carried that sentence too, inside a FIXED block, so every future
+  domain would have regenerated it. Fixed at the template, not only in
+  the generated agents.
+- `skills/run/SKILL.md` now says the adjudicator's kept set varies run
+  to run and that the pass is entity/attribute-scoped rather than a
+  sweep.
+- `README.md` no longer claims the two methods "neither subsumes the
+  other" — they reach different classes — and its 0-of-4 line now says
+  that number is the boundary of the pass's job, not a bug in it.
+
+Note for whoever finds the next copy: the grep that catches this is not
+`exhaustive`. The overclaim travels as "all extracted facts", "compares
+all", "every pair". Sweep for the paraphrase, not the word.
 
 ## The orchestration's invariants are prose, and nothing tests them
 

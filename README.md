@@ -32,19 +32,27 @@ Four layers, run separately rather than as one pass:
    flow). Gated behind developmental work settling — see below.
 4. **Continuity** — cross-cutting, runs alongside either phase. Extracts
    checkable facts per section, then looks for contradictions two ways,
-   because they catch different things and neither subsumes the other:
+   because they reach different *classes* of contradiction:
    - **Mechanically** — same entity, same attribute, different value.
-     Computed exactly, not guessed at. An agent then judges only what was
-     found: real error vs. a lying character (or, for a design doc, a
-     summary legitimately simplifying a detail) vs. an edit you made in
-     one section that hasn't propagated to another yet.
+     Computed exactly, not guessed at, and deliberately narrow: it
+     compares facts only within one entity and one attribute name, so
+     anything filed under two different names is out of its reach by
+     construction. An agent then judges only what was found: real error
+     vs. a lying character (or, for a design doc, a summary legitimately
+     simplifying a detail) vs. an edit you made in one section that
+     hasn't propagated to another yet. What survives that judgment is not
+     stable run to run, so an empty result is not proof of a clean
+     manuscript.
    - **By reading the whole fact corpus at once** — which catches the
      contradiction whose two halves are filed under *different names* for
      the same thing, the join a string comparison structurally cannot
-     make. On a blind test manuscript the mechanical pass finds 0 of 4
-     planted contradictions and this one finds 4 of 4; on real prose it
-     asserted nothing false across five runs. Both numbers, and what they
-     don't prove, are in `go/harness/fixtures/bellwether/`.
+     make. On a blind test manuscript this one finds 4 of 4 planted
+     contradictions; the mechanical pass finds 0 of 4, which is the
+     boundary of its job rather than a bug in it — every one of those
+     four needed a join across two different names. On real prose the
+     whole-corpus read asserted nothing false across five runs. Both
+     numbers, and what they don't prove, are in
+     `go/harness/fixtures/bellwether/`.
 
 Which category vocabulary applies comes from the manuscript's **domain**
 — see "Domains" below. Every finding, in any domain, carries an `id`, a
