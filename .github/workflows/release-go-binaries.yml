@@ -8,9 +8,17 @@ name: Release Go binaries
 # download-on-install hooks in hooks/ and cowork/hooks/ fetch exactly
 # what this workflow publishes.
 #
-# Platform scope matches the project's own Phase 6 decision: darwin/arm64
-# only, to start (matches the maintainer's dev machine; expand the
-# matrix below once the download-hook side is proven, not before).
+# Platform scope: Phase 6 said darwin/arm64 only "to start ... revisit
+# once the port itself is proven". Expanded 2026-08-31, the port having
+# been proven -- the 2026-08-31 complexity audit's finding that every
+# novelist not on Apple Silicon was at zero is what prompted it.
+#
+# Windows is deliberately NOT in the matrix. Adding it is not a one-line
+# change: `uname -s` under MSYS/git-bash reports `mingw64_nt-10.0`, not
+# `windows`, so the bootstrap hooks' OS detection would build an asset
+# name no release contains, and Go emits a `.exe` the OUT name below
+# doesn't account for. Ship it when both halves are handled and testable,
+# not by adding a pair to this list.
 
 on:
   push:
@@ -54,9 +62,10 @@ jobs:
           VERSION="${{ steps.version.outputs.version }}"
           mkdir -p dist
           # (GOOS, GOARCH) pairs -- add entries here to expand platform
-          # coverage; see this workflow's header comment for why it's
-          # darwin/arm64-only for now.
-          PLATFORMS="darwin/arm64"
+          # coverage. These four are exactly the ones the bootstrap
+          # hooks' `uname`-based detection can name; see this workflow's
+          # header comment for why Windows is not among them.
+          PLATFORMS="darwin/arm64 darwin/amd64 linux/amd64 linux/arm64"
           cd go
           for platform in $PLATFORMS; do
             GOOS="${platform%/*}"

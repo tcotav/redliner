@@ -57,7 +57,15 @@ case "$RAW_ARCH" in
   arm64|aarch64) ARCH=arm64 ;;
   x86_64|amd64)  ARCH=amd64 ;;
   *)
-    echo "redliner bootstrap: unsupported architecture '$RAW_ARCH' -- only darwin/arm64 has a release build so far (TODO.md's Phase 6 platform scope). The CLI/MCP tools will be unavailable this session; expand the release workflow's build matrix to add a platform." >&2
+    echo "redliner bootstrap: unsupported architecture '$RAW_ARCH'. Releases cover darwin and linux on amd64/arm64; the CLI/MCP tools will be unavailable this session. Add a (GOOS, GOARCH) pair to the release workflow's PLATFORMS list to cover it." >&2
+    exit 1
+    ;;
+esac
+
+case "$OS" in
+  darwin|linux) ;;
+  *)
+    echo "redliner bootstrap: unsupported OS '$OS' -- releases cover darwin and linux only. Windows needs both an asset naming fix and a .exe build; see the release workflow's header comment." >&2
     exit 1
     ;;
 esac
@@ -82,7 +90,14 @@ if [ -z "$EXPECTED" ]; then
   echo "redliner bootstrap: no checksum entry for $ASSET in checksums.txt -- refusing to install an unverified binary" >&2
   exit 1
 fi
-ACTUAL="$(shasum -a 256 "${WORKDIR}/${ASSET}" | awk '{print $1}')"
+if command -v shasum >/dev/null 2>&1; then
+  ACTUAL="$(shasum -a 256 "${WORKDIR}/${ASSET}" | awk '{print $1}')"
+elif command -v sha256sum >/dev/null 2>&1; then
+  ACTUAL="$(sha256sum "${WORKDIR}/${ASSET}" | awk '{print $1}')"
+else
+  echo "redliner bootstrap: neither shasum nor sha256sum found -- refusing to install an unverified binary" >&2
+  exit 1
+fi
 if [ "$ACTUAL" != "$EXPECTED" ]; then
   echo "redliner bootstrap: checksum mismatch for $ASSET (expected $EXPECTED, got $ACTUAL) -- refusing to install" >&2
   exit 1
