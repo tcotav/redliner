@@ -140,7 +140,7 @@ exactly where you got confused, stuck, or had to read source to proceed.
 ## Reading order (TODO.md is ~2,500 lines — do not start there)
 
 1. README.md — what it claims to do
-2. skills/run/SKILL.md — the orchestration, ~618 lines, this drives
+2. skills/run/SKILL.md — the orchestration, ~874 lines, this drives
    everything
 3. One agent file, e.g. agents/fiction-continuity-joiner.md
 4. domains/fiction/domain.json
@@ -154,27 +154,32 @@ exactly where you got confused, stuck, or had to read source to proceed.
 These are the places the maintainers expect a weak defense. Form your own
 view; don't assume they're right that these are the weak spots.
 
-- On 2026-08-14/15 two new subcommands (canon bundle, canon merge), four
-  agent files, and an id-range merge convention were built AROUND a
-  component whose own measurement suggests it may contribute nothing.
-  See TODO.md, "Is deterministic collision-finding the right
-  architecture?" Was building the hybrid the right call, or should the
-  deterministic collision pass simply have been deleted?
+- (updated 2026-08-31) The deterministic collision pass is still shipped,
+  and the machinery built around it — two subcommands (`canon bundle`,
+  `canon merge`), four agent files, an id-range merge convention — with
+  it. Five runs on the real corpus kept 0, 1, 0, 2, 0 collisions,
+  intersection empty, and surfaced nothing the author had not already
+  found and recorded. What is it still there for?
+- (added 2026-08-31) The scene outliner is ~1,700 lines of Go, three
+  agent files, five subcommands and two MCP tools, for a layer that
+  records what each scene wanted, what opposed it, and what changed. The
+  novelist wrote the scenes.
+- (added 2026-08-31) Every outline run archives a full copy of the
+  outline under `.redliner/outline/versions/v<N>/`. The tool that would
+  compare two of them is not built.
 - cont-5NN id offsetting exists to work around a `^cont-\d{3}$` regex.
 - go/harness/python-baseline/ is ~1,500 lines of a dead implementation
   kept alive only to regenerate golden files. It had to be edited to
   make a Go-only change.
-- Six agent roles × three domains = 18 agent files. Every prompt
-  improvement is a 3× edit.
+- Six agent roles × three domains, plus an outliner for the two fiction
+  domains = 20 agent files. Every prompt improvement is a 3× edit.
 - Four pre-registered measurement exercises were run in two days
   (go/harness/fixtures/bellwether/). Is that discipline proportionate,
   or is it ceremony that slowed delivery?
-- The author-facing surface: nine command forms, findings with five
-  statuses, contradictions carrying kind + category + severity, draft
-  stages gating passes.
-- (added 2026-08-15) `canon reconcile --snapshot-after` moves the
-  snapshot into the middle of the continuity flow. Right trade, right
-  shape?
+- (updated 2026-08-31) The author-facing surface: nine `/redliner:run`
+  command forms, eleven CLI subcommand groups, findings with five
+  statuses, contradictions carrying kind + category + severity, outline
+  versions, draft stages gating passes.
 
 ## Already decided — argue against the reasons, don't rediscover them
 
@@ -186,6 +191,18 @@ view; don't assume they're right that these are the weak spots.
   generally, not this one developer.
 - TODO.md's length is a navigability problem, not a delete-it problem.
   The reasoning is the asset. Suggest how to make it navigable.
+- (added 2026-08-31) How the collision pass *matches* is settled. It
+  groups by exact entity and exact attribute; fuzzy token matching is
+  deleted; cross-entity joining belongs to the whole-corpus agent read
+  by design. Its 0-of-4 on `bellwether` is the boundary of that job, not
+  an unfixed bug — don't propose fixing entity matching. Whether the
+  narrowed pass should exist at all is a separate question and is open;
+  see "Press hardest".
+- (added 2026-08-31, decided 2026-08-15) `canon reconcile
+  --snapshot-after` folds reconcile
+  and snapshot into one call so the two cannot be ordered wrongly.
+  Reconcile takes its baseline as a parameter rather than reading
+  ambient state.
 
 ## Output
 
