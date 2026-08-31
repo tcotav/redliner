@@ -2595,6 +2595,59 @@ Note for whoever finds the next copy: the grep that catches this is not
 `exhaustive`. The overclaim travels as "all extracted facts", "compares
 all", "every pair". Sweep for the paraphrase, not the word.
 
+### What dropping the pass would actually cost — traced 2026-08-31
+
+Surfaced by the complexity audit, then read out of the code and
+confirmed. It narrows option 4 rather than settling it.
+
+The framing above assumes the deterministic pass carries the machinery
+built alongside it in 2026-08-14/15. It does not.
+
+`canon bundle` does not depend on `canon reconcile`. `BundleFacts`
+(`go/internal/cli/canon.go:742`) calls `loadObservations` directly — the
+same per-section observation files reconcile reads — and never opens
+`canon.json`, `collisions.json` or `continuity.json`. `canon merge`
+(`canon.go:842`) reads `canon/joined.json` and creates `continuity.json`
+itself when absent (`canon.go:855`); it never reads `collisions.json`
+either. And reconcile never writes `continuity.json` at all — the
+adjudicator does.
+
+So `canon bundle`, `canon merge`, the joiner agent and the `cont-5NN` id
+convention all survive dropping the collision computation untouched.
+What actually dies:
+
+- the **adjudicator agent** — `collisions.json` *is* its work list, so
+  with no collisions it has no input;
+- the baseline diff (`canon.go:421-438`), `ReconcileDiagnostics` and
+  `RevisionDetectionIdle`;
+- `--snapshot-after`'s reason to exist;
+- and **`likely_unpropagated_revision`**.
+
+That last one is the real cost, and **the joiner cannot inherit it**.
+`BundleFacts` emits `id | entity | attribute | value` and nothing else
+(`canon.go:768`) — no section-changed data, no `all_narration`, no
+`any_implied`. The whole-corpus read has never had the input the flag is
+computed from, so "let the agent do it too" is not available without
+changing the bundle format.
+
+So the trade is not "drop the 0-of-4 pass and keep the 4-of-4 one." It is
+**drop the 0-of-4 pass and lose the one signal neither remaining agent
+can reconstruct** — the flag that says an edit in one section hasn't
+propagated to another.
+
+**The cheap measurement that should come first.** The five-run variance
+(0/1/0/2/0) counted *kept contradictions*; nothing separates how many of
+those turned on `likely_unpropagated_revision`, or how often the flag has
+ever fired usefully at all. That number is recoverable from data this
+repo already has, and it is much cheaper than the fresh manuscript corpus
+`KEEP_OR_DROP.md` pre-registers. Get it before spending the corpus.
+
+Ancillary, from the same trace: `collisions.json` has exactly two
+non-agent readers (`context.go:103`, `rounds.go:125`), and both only test
+for the file's existence — so a removal would degrade silently rather
+than erroring. Not a reason to keep it; a reason not to expect the test
+suite to tell you if you get it wrong.
+
 ## The orchestration's invariants are prose, and nothing tests them
 
 **Raised:** 2026-08-14, during a direction review. Not a bug sighting —
@@ -2783,3 +2836,140 @@ as changed, which is exactly the noise that would make the tool useless.
 The spec's per-run version archive (`.redliner/outline/versions/v<N>/`)
 exists partly for this: the diff tool gets every intermediate state to
 compare, not only the developmental round boundaries.
+
+## The first run doesn't work, and the failures are quiet (2026-08-31)
+
+From the complexity audit's v0.6.0 run
+(`evaluation/COMPLEXITY_AUDIT.md`, run log). Every fact below was
+re-verified directly against the code or by running the binary before
+being written here.
+
+The notable thing about this run is *where* the findings came from. The
+top four trace to **no press-hardest lead**. They came from building the
+binary and running it cold on a scratch copy of `sample_manuscript/` and
+on a bare `MyNovel.txt` — which is what the prompt asks for and what the
+2026-08-15 run did not do. The leads produced the weaker half of the
+report. Worth remembering the next time the instrument is refreshed: the
+leads are the part that measures least.
+
+### The shipped binary predated the outliner
+
+`v0.6.0` is tagged at `9210b17`; the outliner merged at `73415e2`,
+**after** it. Since `9eaa9a7` neither plugin ships a binary in the tree —
+both download the release asset matching their own `plugin.json` version
+— so what every install actually runs is a `v0.6.0` binary built before
+the outliner existed, with no `outline` subcommand at all. Meanwhile
+`skills/run/SKILL.md` calls `redliner outline` at assess step 3 of 9 and
+`rounds archive <dir> outline` right after.
+
+Both `plugin.json`s read `0.6.0` and the marker matches, so the
+bootstrap's short-circuit fires and no existing install ever
+re-downloads. A novelist's first `assess` errors mid-pass on the CLI
+plugin; on Cowork the outline tools are simply absent from the roster.
+
+**The correction that matters more than the bug.** This was first written
+up — here and in the audit — as "the *committed* binary is stale." There
+is no committed binary. `.gitignore:24-25` excludes `bin/redliner` and
+`bin/redliner.version`, and `9eaa9a7` ("Un-commit `bin/redliner`, restore
+the CLI download hook") reversed the 2026-08-12 fallback recorded further
+up this file. Anyone reading the "Fallback implemented, 2026-08-12"
+section in isolation will get this wrong the same way; it describes a
+state that lasted hours.
+
+**The coupling: the version bump and the tag are one operation, for both
+plugins.** `hooks/bootstrap-redliner-binary.sh` and its Cowork twin read
+the version out of their own `plugin.json` and fetch
+`releases/download/v<version>/redliner-<version>-darwin-arm64`. There is
+no fallback branch anywhere in either script. So bumping to `0.7.0`
+without cutting `v0.7.0` gives:
+
+- **fresh install, either plugin** — `curl -f` 404s, the script prints
+  its failure to stderr and exits 1, nothing is installed. Cowork's
+  `mcpServers.command` then points at a path that does not exist and
+  every redliner tool disappears;
+- **existing install, either plugin** — the marker no longer matches, so
+  the short-circuit stops firing and the download is retried and fails
+  *every session*. The stale `0.6.0` binary survives only because the
+  download lands in a `mktemp` dir and the `mv` at the end is never
+  reached. It keeps working by accident, not by design.
+
+So a lone version bump is strictly worse than the bug it is meant to fix.
+Commit the bump and push the tag together, or neither.
+
+This is a third instance of the category already recorded twice in this
+file: a change that is correct in the dev tree and wrong in the installed
+cache.
+
+**And the gate that should have caught it exists.** Phase 5's "uninstall
+→ marketplace install → cache inspect → live Cowork query" cycle is
+written down precisely for this, and the 2026-08-12 entry above already
+records it being passed and then invalidated by a later change that
+didn't re-run it. That happened again. The gate is not a one-time
+milestone; it is what a release *is*.
+
+### A directory with no sections reports all-clear
+
+Put a plain `MyNovel.txt` in an empty directory — the single most likely
+thing a novelist actually has — and the whole deterministic layer
+succeeds:
+
+- `state init` → success.
+- `context` → `"sections": []` and `"diff": {"verdict": "unchanged"}`.
+- `validate` → exit 0. `canon stale`, `outline stale` → clean.
+
+Nothing anywhere says *"0 sections found; files must be named
+`section_01.txt`."* The `unchanged` verdict is not merely unhelpful, it
+is wrong: `unchanged` is what tells `recheck` nothing needs re-reading.
+
+Same class as the 0-of-4 and the `rounds archive` overwrite — the failure
+produces nothing, and nothing is indistinguishable from success.
+
+**The fix is small:** warn when the directory holds readable text files
+but matches no `section_*` glob. Deliberately a warning and not an error,
+because an empty manuscript directory is legitimate immediately after
+`state init`.
+
+### There is no path from a novelist's files to `section_NN.txt`
+
+README's flowchart opens at `A["Author writes section_01.txt,
+section_02.txt, ..."]` — as a given. Nothing splits a manuscript, imports
+`.docx`, or reads a Scrivener export. A novelist arrives with one
+document and the entry condition is a hand-built directory of numbered
+plain-text files with a same-stem `.txt`/`.md` exclusivity rule.
+
+This is the actual first blocker, and it sits *before* every concept the
+audit counted. Combined with the finding above, doing it wrong is silent.
+
+Not scoped here. Note that the deliberate non-design against Scrivener
+(recorded in the markdown-support section) still stands — design against
+a real exported sample, not an imagined format. That argues for starting
+with the boring case: one `.txt`/`.md` file split on a heading pattern
+the author confirms, not an importer per tool.
+
+### Prebuilt binaries cover darwin/arm64 only
+
+`.github/workflows/release-go-binaries.yml` sets
+`PLATFORMS="darwin/arm64"`. Every novelist on Windows, Linux, or an Intel
+Mac is at zero, and the bootstrap hook has nothing to install. Go
+cross-compiles from the same ubuntu runner already in use — the
+workflow's own comment says so — so this is a one-line list, not an
+engineering problem. It is currently disclosed once, mid-Setup, in a
+574-line README.
+
+Phase 6 of the Go port called darwin/arm64 "to start … revisit once the
+port itself is proven." The port is proven. This is that revisit.
+
+### What the audit did NOT establish
+
+Recorded so this section can't be cited as more than it is:
+
+- **No live `assess` or `line` pass through real subagents was run** —
+  the same gap as the 2026-08-15 run, now twice. How the orchestrator
+  *behaves* when a subcommand errors mid-pass is inference from exit
+  codes and prose, not observation.
+- The audit's own least-confident finding was that the unbuilt morning
+  edit measured 4/4 while the outliner shipped with no comparable
+  measurement. That rests on "no measurement exists," which is a claim
+  about its search, not a proof. Not independently checked.
+- It read only the fiction agent files, so it has nothing concrete to say
+  about the 3× prompt-edit cost across domains.
