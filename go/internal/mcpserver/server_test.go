@@ -256,10 +256,22 @@ func TestMCPTools_MatchGolden(t *testing.T) {
 		if err != nil || res.IsError {
 			t.Fatalf("domain_list failed: err=%v isError=%v", err, res != nil && res.IsError)
 		}
+		// structuredContent must be a JSON *object*, not a bare array --
+		// MCP requires it, and a real client rejects an array outright.
+		// This tool shipped in 0.7.0 returning `[...]`, and the Go SDK
+		// is permissive enough that the old version of this test (which
+		// unmarshalled into []map[string]any) passed anyway. Assert the
+		// wrapper explicitly so the array shape can't come back.
 		raw, _ := json.Marshal(res.StructuredContent)
-		var domains []map[string]any
-		if err := json.Unmarshal(raw, &domains); err != nil {
-			t.Fatalf("domain_list result not a JSON array: %v", err)
+		var wrapper struct {
+			Domains []map[string]any `json:"domains"`
+		}
+		if err := json.Unmarshal(raw, &wrapper); err != nil {
+			t.Fatalf("domain_list result not a JSON object: %v (raw: %s)", err, raw)
+		}
+		domains := wrapper.Domains
+		if len(domains) == 0 {
+			t.Fatalf("domain_list returned no domains under \"domains\" (raw: %s)", raw)
 		}
 		names := map[string]bool{}
 		for _, d := range domains {

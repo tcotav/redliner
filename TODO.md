@@ -2975,11 +2975,38 @@ Verified directly: `env -u REDLINER_DOMAINS_DIR redliner mcp` exits 1
 with the not-found error, while the installed server answers
 `tools/list` with all 24 tools.
 
-**Still owed: one end-to-end call from inside Cowork.** Everything above
-was measured from the CLI. What hasn't been exercised is the real chat
-surface driving a tool against a real manuscript — `domain_list` as a
-smoke test, then `state_init` + `outline_stale` on a directory with
-`section_NN.txt` files in it.
+**The live Cowork call ran, and it found a bug on the first try.**
+`domain_list` — the cheapest possible smoke test, no manuscript needed —
+failed in Cowork with a malformed-result error. `domainList` returned its
+summaries as a bare JSON array, and MCP requires a tool's
+`structuredContent` to be an object; the client rejected it outright.
+Every domain-independent thing about the install was healthy. The tool
+was just wrong, and had been since it was written.
+
+Two details worth keeping, because they explain how this shipped:
+
+- **The Go test suite was green the whole time.** `server_test.go`'s
+  `domain_list` case unmarshalled the result into `[]map[string]any` and
+  asserted the names were present — so it asserted the *bug*. The Go MCP
+  SDK is permissive where real clients aren't: it passed a bare array
+  through as `structuredContent` without complaint, and declares no
+  `outputSchema` for this tool, so nothing in-process ever checked the
+  spec rule. A passing suite is not evidence a tool works over the wire.
+- **The stated reason for the array shape was parity with a file that no
+  longer exists.** The comment above `domain_list` said the behavior
+  "matches Python's `mcp_server.py` exactly." There is no `mcp_server.py`
+  in this repo. The comment has been rewritten to say so, so the fix
+  doesn't get reverted on parity grounds.
+
+Fixed: `domain_list` now returns `{"domains": [...]}`. The test asserts
+the object shape, and the fix was confirmed over a real
+initialize/tools/call handshake, not just in-process. `domain_list` was
+the only tool returning a slice — every other handler returns a struct or
+a `map[string]any`, so the blast radius is one tool.
+
+Still not exercised from Cowork: `state_init` + `outline_stale` against a
+directory of `section_NN.txt` files. Worth doing, but the fix above has
+to ship first — the cache holds 0.7.0, so Cowork can't see it yet.
 
 **Found: fresh installs get a dead MCP server for the whole first
 session.** Reproduced this session. The Cowork plugin's binary is

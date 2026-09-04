@@ -49,8 +49,8 @@ separate snapshot overwrites exactly that baseline. Doing them as two
 tool calls means one order works and the other silently disables the
 flag. Omit it for a standalone continuity run, which records no baseline.`
 
-const descDomainList = `List every domain config available (name, display name,
-description). Mirrors ` + "`redliner_domain.py list`" + `.`
+const descDomainList = `List every domain config available. Returns {"domains": [...]}, one entry
+per domain with its name, display name, and description.`
 
 const descDomainShow = `Show the full config for one named domain -- categories, continuity
 vocabulary, brief fields, draft stages. Mirrors ` + "`redliner_domain.py\nshow <name>`" + `.`

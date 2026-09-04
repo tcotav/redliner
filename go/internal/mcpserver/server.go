@@ -308,12 +308,19 @@ func (s *redlinerServer) canonReconcile(_ context.Context, _ *mcp.CallToolReques
 	}, nil
 }
 
-// --- domain_* -- mirrors mcp_server.py's domain_* tools, which import
-// schemas.domain_loader directly (not redliner_domain.py's cmd_*
-// functions). Unlike the CLI's `domain list`, a malformed domain config
-// is skipped silently here with no stderr note either -- matches
-// Python's mcp_server.py exactly, which has no equivalent of the CLI's
-// warning print for this tool. ---
+// --- domain_* -- these import schemas.domain_loader directly (not
+// redliner_domain.py's cmd_* functions). Unlike the CLI's `domain list`,
+// a malformed domain config is skipped silently here with no stderr note
+// either: that came from Python's mcp_server.py, which had no equivalent
+// of the CLI's warning print for this tool. That file no longer exists
+// in this repo, so parity with it is no longer a live constraint --
+// don't cite it as a reason to change these back.
+//
+// One place where it *was* cited and was wrong: domainList returned the
+// summaries as a bare JSON array through 0.7.0, matching Python. MCP
+// requires a tool's structuredContent to be an object, and a real client
+// rejects an array outright -- found 2026-09-04 by the first live Cowork
+// call this tool ever got. Hence the "domains" wrapper below. ---
 
 func (s *redlinerServer) domainList(_ context.Context, _ *mcp.CallToolRequest, _ noInput) (*mcp.CallToolResult, any, error) {
 	names := schemas.ListDomains(s.domainsDir)
@@ -329,7 +336,7 @@ func (s *redlinerServer) domainList(_ context.Context, _ *mcp.CallToolRequest, _
 			Description: d.String("description"),
 		})
 	}
-	return nil, summaries, nil
+	return nil, map[string]any{"domains": summaries}, nil
 }
 
 func (s *redlinerServer) domainShow(_ context.Context, _ *mcp.CallToolRequest, in domainShowInput) (*mcp.CallToolResult, any, error) {
