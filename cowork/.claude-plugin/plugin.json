@@ -7,10 +7,11 @@
   },
   "mcpServers": {
     "redliner": {
-      "command": "${CLAUDE_PLUGIN_DATA}/bin/redliner",
+      "command": "${CLAUDE_PLUGIN_ROOT}/hooks/redliner-mcp.sh",
       "args": ["mcp"],
       "env": {
-        "REDLINER_DOMAINS_DIR": "${CLAUDE_PLUGIN_ROOT}/domains"
+        "REDLINER_DOMAINS_DIR": "${CLAUDE_PLUGIN_ROOT}/domains",
+        "REDLINER_BIN": "${CLAUDE_PLUGIN_DATA}/bin/redliner"
       }
     }
   }

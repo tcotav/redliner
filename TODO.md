@@ -3021,10 +3021,38 @@ posix_spawn '/Users/.../data/redliner-cowork-redliner/bin/redliner'
 
 The hook then downloads the binary, so it works from the *next* session
 on and `claude mcp list` (a separate process) looks healthy — which is
-why this has stayed invisible. Shape of a fix: point
-`mcpServers.command` at a small wrapper committed under `PLUGIN_ROOT`
-that ensures-then-`exec`s the binary, so the path always exists at spawn
-time.
+why this has stayed invisible.
+
+Fixed: `mcpServers.command` now points at `cowork/hooks/redliner-mcp.sh`,
+committed inside the plugin, so the spawned path exists the instant the
+plugin is cloned. It runs the bootstrap script and then `exec`s the
+binary, moving the download *inside* the starting process instead of
+racing it. The `SessionStart` hook stays — bootstrap is idempotent and
+returns immediately when the version marker already matches.
+
+Three things the wrapper has to get right, all verified against it
+directly rather than assumed:
+
+- **It cannot write to stdout**, which is the JSON-RPC channel.
+  Bootstrap's output is redirected to stderr.
+- **It must not trust a `${VAR}` to have been substituted.** Only two
+  expansions are actually confirmed on this harness: `${CLAUDE_PLUGIN_DATA}`
+  in `command` and `${CLAUDE_PLUGIN_ROOT}` in `env`. An unsubstituted
+  value arrives as that literal text and would otherwise be used as a
+  path. The wrapper treats any candidate containing `${` as absent and
+  falls through: `REDLINER_BIN` → `$CLAUDE_PLUGIN_DATA/bin/redliner` →
+  `$PLUGIN_ROOT/bin/redliner`. It derives `PLUGIN_ROOT` from its own
+  `$0` rather than trusting the variable, since this fix exists precisely
+  because an assumption about the harness turned out to be wrong.
+- **A failed download must not mean no server.** If bootstrap fails but a
+  binary is already installed, it starts that one with a note on stderr —
+  an offline session keeps working with whatever it has. Only a failure
+  with *no* installed binary exits non-zero.
+
+Verified: cold start with the binary absent downloads and serves
+`initialize` in one process; warm start doesn't re-download (mtime
+unchanged); both fallback rungs serve; and the no-binary failure exits 1
+with a message naming the path.
 
 **Found: the binary cannot report its own version.** `server.go:37`
 hardcodes `Version: "0.1.0"` in the MCP `Implementation`, so a 0.7.0
@@ -3032,10 +3060,22 @@ server introduces itself as 0.1.0, and there is no `redliner version`
 subcommand at all — `--version` is an unknown subcommand. That means the
 only version signal is `bin/redliner.version`, a sidecar written by the
 bootstrap script, which records what the installer *meant* to fetch
-rather than what the file is. Wiring both the subcommand and the
-`Implementation` to one ldflags-injected variable fixes the stale
-`serverInfo`, and makes future runs of this gate checkable against the
-binary instead of against the installer's own claim.
+rather than what the file is.
+
+Fixed: `go/internal/buildinfo` holds one `Version` var, read by both a
+new `version` subcommand (plus the `--version`/`-v` spellings people
+actually type first) and the MCP `serverInfo`. The release workflow
+stamps it with `-ldflags -X`. It sits in its own leaf package because
+`internal/mcpserver` imports `internal/cli`, so anything both need has to
+live below both.
+
+Two details worth keeping. An unknown `-X` target is **not** a link
+error — a typo'd path fails silently and ships a binary reporting `dev`,
+so the workflow now runs `redliner version` on the native build and fails
+the release on a mismatch. And a plain `go build` deliberately leaves it
+`dev` rather than a number: "this did not come from a release" is the
+honest answer for a local build, and it's the one a future gate run needs
+to be able to tell apart from a real install.
 
 ### A directory with no sections reports all-clear
 

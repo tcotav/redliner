@@ -26,6 +26,11 @@ venv/
 /cowork/redliner
 /cowork/redliner.version
 
+# cowork/hooks/redliner-mcp.sh's last-resort install location, used only
+# when neither REDLINER_BIN nor CLAUDE_PLUGIN_DATA reaches it expanded.
+# Same rule as the two above: downloaded, never source.
+/cowork/bin/
+
 # Agent scratch: isolated worktrees and per-plan execution ledgers. Both
 # are regenerable working state, and committing a worktree would commit
 # a whole second copy of the tree.
