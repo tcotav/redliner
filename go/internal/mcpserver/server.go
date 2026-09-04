@@ -24,6 +24,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
+	"github.com/tcotav/redliner/go/internal/buildinfo"
 	"github.com/tcotav/redliner/go/internal/cli"
 	"github.com/tcotav/redliner/go/internal/schemas"
 )
@@ -34,7 +35,12 @@ import (
 // directory in tests.
 func NewServer(domainsDir string) *mcp.Server {
 	s := &redlinerServer{domainsDir: domainsDir}
-	srv := mcp.NewServer(&mcp.Implementation{Name: "redliner", Version: "0.1.0"}, nil)
+	// Version comes from internal/buildinfo, injected at link time by the
+	// release workflow. It was the literal "0.1.0" through v0.7.0 -- so a
+	// 0.7.0 server introduced itself to every client as 0.1.0, and the
+	// only other version signal was a sidecar file the installer wrote
+	// about itself. See internal/buildinfo's doc comment.
+	srv := mcp.NewServer(&mcp.Implementation{Name: "redliner", Version: buildinfo.Version}, nil)
 
 	mcp.AddTool(srv, &mcp.Tool{Name: "state_init", Description: descStateInit}, s.stateInit)
 	mcp.AddTool(srv, &mcp.Tool{Name: "state_status", Description: descStateStatus}, s.stateStatus)

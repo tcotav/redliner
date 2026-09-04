@@ -72,8 +72,28 @@ jobs:
             GOARCH="${platform#*/}"
             OUT="../dist/redliner-${VERSION}-${GOOS}-${GOARCH}"
             echo "Building $OUT"
-            GOOS="$GOOS" GOARCH="$GOARCH" CGO_ENABLED=0 go build -o "$OUT" ./cmd/redliner
+            # -X stamps the version into the binary so it can answer
+            # `redliner version` and report an honest serverInfo over
+            # MCP. Without this the binary defaults to "dev" and the only
+            # version signal is bin/redliner.version, a sidecar the
+            # installer writes about its own intent -- see
+            # internal/buildinfo's doc comment for why that mattered.
+            GOOS="$GOOS" GOARCH="$GOARCH" CGO_ENABLED=0 go build \
+              -ldflags "-X github.com/tcotav/redliner/go/internal/buildinfo.Version=${VERSION}" \
+              -o "$OUT" ./cmd/redliner
           done
+
+          # A release binary that reports "dev" would defeat the point,
+          # and an ldflags path typo fails silently (the linker does not
+          # error on an unknown -X target). Check the native build here,
+          # where a mismatch fails the release instead of shipping.
+          NATIVE="../dist/redliner-${VERSION}-linux-amd64"
+          REPORTED="$("$NATIVE" version)"
+          if [ "$REPORTED" != "$VERSION" ]; then
+            echo "Built binary reports version '$REPORTED', expected '$VERSION' -- the -X path is probably wrong" >&2
+            exit 1
+          fi
+          echo "Version stamp verified: $REPORTED"
 
       - name: Checksums
         run: |

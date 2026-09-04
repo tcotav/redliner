@@ -163,6 +163,7 @@ func TestToolNamesAndDescriptions_MatchPython(t *testing.T) {
 	// list stays a deliberate act.
 	goOnlyAddendum := map[string]bool{
 		"canon_reconcile": true, // snapshot_after, added 2026-08-15
+		"domain_list":     true, // the {"domains": [...]} wrapper, added 2026-09-04
 	}
 
 	got := map[string]string{}

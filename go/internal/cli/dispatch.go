@@ -3,6 +3,8 @@ package cli
 import (
 	"fmt"
 	"io"
+
+	"github.com/tcotav/redliner/go/internal/buildinfo"
 )
 
 const usage = `Usage:
@@ -16,6 +18,7 @@ const usage = `Usage:
   redliner context <manuscript_dir>   # state+domain+sections+diff+canon in one call
   redliner decisions list|apply <manuscript_dir>   # author resolve/wontfix decisions
   redliner rounds archive|list <manuscript_dir> [pass]   # keep completed passes for diffing
+  redliner version   # the release this binary was built from, or "dev"
   redliner mcp   # MCP stdio server (see cmd/redliner/main.go)`
 
 // Dispatch is the binary's top-level subcommand router for every
@@ -47,6 +50,14 @@ func Dispatch(args []string, stdout, stderr io.Writer) int {
 		return RunDecisions(args[1:], stdout)
 	case "rounds":
 		return RunRounds(args[1:], stdout)
+	case "version", "--version", "-v":
+		// The flag spellings are accepted alongside the subcommand
+		// because they are what anyone actually types first -- and
+		// through 0.7.0 `redliner --version` answered "Unknown
+		// subcommand '--version'", which reads like the binary is
+		// broken rather than like the flag is spelled differently.
+		fmt.Fprintln(stdout, buildinfo.Version)
+		return 0
 	default:
 		fmt.Fprintf(stdout, "Unknown subcommand %s\n\n%s\n", pyReprStr(args[0]), usage)
 		return 1

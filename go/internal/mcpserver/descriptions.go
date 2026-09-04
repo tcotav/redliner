@@ -49,8 +49,15 @@ separate snapshot overwrites exactly that baseline. Doing them as two
 tool calls means one order works and the other silently disables the
 flag. Omit it for a standalone continuity run, which records no baseline.`
 
-const descDomainList = `List every domain config available. Returns {"domains": [...]}, one entry
-per domain with its name, display name, and description.`
+// The first two lines are Python's docstring verbatim -- the frozen
+// interface TestToolNamesAndDescriptions_MatchPython guards. The return
+// shape below it is a Go-only addendum: Python returned a bare array,
+// which MCP does not allow for structuredContent (see server.go's
+// domain_* comment), so the Go tool wraps it and has to say so.
+const descDomainList = `List every domain config available (name, display name,
+description). Mirrors ` + "`redliner_domain.py list`" + `.
+
+Returns an object: {"domains": [...]}, one entry per domain.`
 
 const descDomainShow = `Show the full config for one named domain -- categories, continuity
 vocabulary, brief fields, draft stages. Mirrors ` + "`redliner_domain.py\nshow <name>`" + `.`
