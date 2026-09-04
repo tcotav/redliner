@@ -3005,8 +3005,56 @@ the only tool returning a slice — every other handler returns a struct or
 a `map[string]any`, so the blast radius is one tool.
 
 Still not exercised from Cowork: `state_init` + `outline_stale` against a
-directory of `section_NN.txt` files. Worth doing, but the fix above has
-to ship first — the cache holds 0.7.0, so Cowork can't see it yet.
+directory of `section_NN.txt` files.
+
+### v0.7.1, and the gate re-run it owes
+
+All three findings above shipped as v0.7.1 the same day. Four platform
+binaries plus `checksums.txt` are attached to the tag; the workflow's new
+post-build assertion passed (`Version stamp verified: 0.7.1`), and the
+published `darwin-arm64` binary answers `redliner version` with `0.7.1`
+— the first release that can be identified without trusting the
+installer's own sidecar.
+
+**v0.7.1 has to go back through the gate, and this time the gate is the
+only possible test.** The v0.7.0 run changed one tool's response shape,
+which was arguably re-verifiable in isolation. v0.7.1 changes
+`mcpServers.command`, adds a file that must be present *and executable*
+in the published plugin, and changes where the binary is allowed to
+land. That is the "correct in the dev tree, wrong in the installed cache"
+class this file already records three instances of. And the first-install
+race has no other test that exists: a spawn-ordering bug only manifests
+on a real fresh install.
+
+The pass criterion for the race fix is narrower than the one used
+before, and the difference is the whole point:
+
+> **The result is whether the ENOENT appears at session start in the
+> very first session after installing.** Not whether `claude mcp list`
+> reports connected. That command runs as a separate, later process, and
+> it looking healthy is exactly what hid this bug for three releases.
+
+So: uninstall both plugins, reinstall from the GitHub-source marketplace,
+start a fresh session, and the *absence* of a
+`plugin:redliner-cowork:redliner (ENOENT)` notice is the finding. Then,
+in that same first session, one `domain_list` call (confirming the
+`{"domains": [...]}` object), and the `state_init` + `outline_stale` pair
+still owed from v0.7.0.
+
+One `ls` afterwards retires an assumption this code currently guesses at:
+
+```
+ls ~/.claude/plugins/data/redliner-cowork-redliner/bin/ \
+   ~/.claude/plugins/cache/redliner/redliner-cowork/0.7.1/bin/
+```
+
+Whichever holds the binary says which rung of the wrapper's fallback
+chain fired. `data/` means `${CLAUDE_PLUGIN_DATA}` expands in `env` and
+rung 1 works. The cache's `bin/` means it doesn't, rung 3 fired, and the
+claim in `redliner-mcp.sh` that the top-level-`bin/` restriction "applies
+to published plugin content, not to a directory created at runtime" has
+been tested rather than assumed. Either answer is worth writing down; the
+fallback chain means neither breaks anything.
 
 **Found: fresh installs get a dead MCP server for the whole first
 session.** Reproduced this session. The Cowork plugin's binary is
