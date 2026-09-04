@@ -2962,16 +2962,24 @@ cache), the Cowork plugin's to `${CLAUDE_PLUGIN_DATA}/bin/redliner`
 `REDLINER_DOMAINS_DIR` pointing back at `PLUGIN_ROOT`). Checking one
 variant says nothing about the other.
 
-**Still owed: the live Cowork query.** `claude mcp list` connecting only
-proves `initialize` succeeded, and `initialize` touches nothing
-domain-related. The thing that could still be wrong is whether the
-harness expands `${CLAUDE_PLUGIN_ROOT}` inside `mcpServers.env` — it
-demonstrably expands `${CLAUDE_PLUGIN_DATA}` in `command`, but that is a
-different field, and if `env` doesn't expand, every domain-dependent tool
-call dies with `no domains/ directory found`. Verifying that by hand with
-the env var pre-set (which is what was done here) proves nothing about
-the installed path. One real MCP tool call that reads a domain closes
-this.
+**Env expansion in `mcpServers.env` is confirmed, and `mcp list` is
+enough to confirm it.** The open worry was that the harness might expand
+`${CLAUDE_PLUGIN_DATA}` in `command` (it demonstrably does — `claude mcp
+list` prints the resolved absolute path) but *not* `${CLAUDE_PLUGIN_ROOT}`
+in `env`, which would leave every domain-dependent tool call dying with
+`no domains/ directory found`. It doesn't fail that way, and the reason
+`mcp list` settles it is worth writing down: the server resolves its
+domains dir at *startup*, not per call, and exits 1 before serving if it
+can't find one. So `initialize` succeeding is proof the env var arrived.
+Verified directly: `env -u REDLINER_DOMAINS_DIR redliner mcp` exits 1
+with the not-found error, while the installed server answers
+`tools/list` with all 24 tools.
+
+**Still owed: one end-to-end call from inside Cowork.** Everything above
+was measured from the CLI. What hasn't been exercised is the real chat
+surface driving a tool against a real manuscript — `domain_list` as a
+smoke test, then `state_init` + `outline_stale` on a directory with
+`section_NN.txt` files in it.
 
 **Found: fresh installs get a dead MCP server for the whole first
 session.** Reproduced this session. The Cowork plugin's binary is
