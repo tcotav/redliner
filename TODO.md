@@ -2907,7 +2907,9 @@ records it being passed and then invalidated by a later change that
 didn't re-run it. That happened again. The gate is not a one-time
 milestone; it is what a release *is*.
 
-**Open: v0.7.0 has not been through that gate.** The release was cut
+**Open: v0.7.0 has not been through that gate.** (Written 2026-08-31;
+the gate was run 2026-09-04 — see "v0.7.0 gate run" below for what
+passed and what it turned up.) The release was cut
 2026-08-31 and verified by downloading the published
 `redliner-0.7.0-darwin-arm64`, checking its SHA-256 against
 `checksums.txt`, and running `outline stale` (real JSON, exit 0) and
@@ -2933,6 +2935,72 @@ State when this was written, for whoever picks it up: Cowork's data
 binary was still `0.6.0` (no `outline`), and the cache copies were
 `0.1.0` — which is also why `claude plugin list` reported 0.1.0 for both
 plugins.
+
+### v0.7.0 gate run, 2026-09-04
+
+The `redliner` marketplace was re-added from the GitHub source
+(`tcotav/redliner`, not the Directory source), both plugins uninstalled
+and reinstalled, and the session restarted. What that produced:
+
+**Passed.** `claude plugin list` reports `redliner@redliner` and
+`redliner-cowork@redliner` both at 0.7.0. The clone-into-cache step ran
+for real: `~/.claude/plugins/cache/redliner/{redliner,redliner-cowork}/0.7.0/`.
+The repo's own `bin/` was empty beforehand, so nothing local could mask a
+failed download. Both installed binaries hash to
+`2eff100eeebcab8545c12ccc92bacb1bdd0e8c438f5d8370adcaf9f1fbb54a7c`, which
+is the `redliner-0.7.0-darwin-arm64` line in the release's
+`checksums.txt` — the shipped artifact, not a rebuild. The CLI variant
+resolves on PATH the way SKILL.md assumes it does (`command -v redliner`
+→ the cache copy) and `outline stale` on the installed
+`sample_manuscript` returns real JSON. `claude mcp list` reports
+`plugin:redliner-cowork:redliner` connected.
+
+Note the two variants land their binaries in *different* places: the CLI
+plugin's hook writes to `${CLAUDE_PLUGIN_ROOT}/bin/redliner` (inside the
+cache), the Cowork plugin's to `${CLAUDE_PLUGIN_DATA}/bin/redliner`
+(`data/redliner-cowork-redliner/bin/`, with `domains` supplied by
+`REDLINER_DOMAINS_DIR` pointing back at `PLUGIN_ROOT`). Checking one
+variant says nothing about the other.
+
+**Still owed: the live Cowork query.** `claude mcp list` connecting only
+proves `initialize` succeeded, and `initialize` touches nothing
+domain-related. The thing that could still be wrong is whether the
+harness expands `${CLAUDE_PLUGIN_ROOT}` inside `mcpServers.env` — it
+demonstrably expands `${CLAUDE_PLUGIN_DATA}` in `command`, but that is a
+different field, and if `env` doesn't expand, every domain-dependent tool
+call dies with `no domains/ directory found`. Verifying that by hand with
+the env var pre-set (which is what was done here) proves nothing about
+the installed path. One real MCP tool call that reads a domain closes
+this.
+
+**Found: fresh installs get a dead MCP server for the whole first
+session.** Reproduced this session. The Cowork plugin's binary is
+downloaded by a `SessionStart` hook into `${CLAUDE_PLUGIN_DATA}/bin/`,
+but the MCP server is spawned from that same path — and the spawn beats
+the hook. First session after install:
+
+```
+plugin:redliner-cowork:redliner (ENOENT): no such file or directory,
+posix_spawn '/Users/.../data/redliner-cowork-redliner/bin/redliner'
+```
+
+The hook then downloads the binary, so it works from the *next* session
+on and `claude mcp list` (a separate process) looks healthy — which is
+why this has stayed invisible. Shape of a fix: point
+`mcpServers.command` at a small wrapper committed under `PLUGIN_ROOT`
+that ensures-then-`exec`s the binary, so the path always exists at spawn
+time.
+
+**Found: the binary cannot report its own version.** `server.go:37`
+hardcodes `Version: "0.1.0"` in the MCP `Implementation`, so a 0.7.0
+server introduces itself as 0.1.0, and there is no `redliner version`
+subcommand at all — `--version` is an unknown subcommand. That means the
+only version signal is `bin/redliner.version`, a sidecar written by the
+bootstrap script, which records what the installer *meant* to fetch
+rather than what the file is. Wiring both the subcommand and the
+`Implementation` to one ldflags-injected variable fixes the stale
+`serverInfo`, and makes future runs of this gate checkable against the
+binary instead of against the installer's own claim.
 
 ### A directory with no sections reports all-clear
 
