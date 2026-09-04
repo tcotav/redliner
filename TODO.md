@@ -2907,6 +2907,33 @@ records it being passed and then invalidated by a later change that
 didn't re-run it. That happened again. The gate is not a one-time
 milestone; it is what a release *is*.
 
+**Open: v0.7.0 has not been through that gate.** The release was cut
+2026-08-31 and verified by downloading the published
+`redliner-0.7.0-darwin-arm64`, checking its SHA-256 against
+`checksums.txt`, and running `outline stale` (real JSON, exit 0) and
+`rounds archive <dir> outline` (accepted; `bogus` still rejected) — but
+that ran the binary *standalone*, which is precisely the check this
+project has twice found insufficient. Not yet done: uninstall both
+plugins, reinstall, restart, and confirm `claude mcp list` reports
+`redliner-cowork` connected and the CLI plugin's binary reports
+`outline`.
+
+**Do it against the GitHub-hosted marketplace, not the local directory.**
+The dev machine has `redliner` installed from a *Directory* source
+(`/Volumes/T7/code/ideas/redliner`), for which `${CLAUDE_PLUGIN_ROOT}`
+resolves to the live working repo — so the CLI plugin's hook writes its
+binary into `bin/` of the source tree, and `command -v redliner` resolves
+there. That install path skips the clone-into-cache step entirely and
+tests nothing a real user experiences. Same trap as the 2026-08-12
+hook-size spike, which is recorded above and still caught this session
+out. Add the marketplace as `tcotav/redliner` for the real check; the two
+cannot coexist, since both are named `redliner`.
+
+State when this was written, for whoever picks it up: Cowork's data
+binary was still `0.6.0` (no `outline`), and the cache copies were
+`0.1.0` — which is also why `claude plugin list` reported 0.1.0 for both
+plugins.
+
 ### A directory with no sections reports all-clear
 
 Put a plain `MyNovel.txt` in an empty directory — the single most likely
