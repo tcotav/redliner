@@ -2210,6 +2210,70 @@ Constraints decided up front:
   `origin` field distinguishing manuscript-derived from vault-derived
   facts.
 
+## Splitting a single-file manuscript into sections
+
+**Raised:** 2026-10-03
+
+Section discovery only sees `section_*.{txt,md}` files, but a book an
+author already has usually exists as **one file** with its chapter
+headings inline. Run on that file as-is, redliner either finds no
+sections or treats the whole book as a single section. A single-section
+outline is one outliner call over the whole book, with no per-chapter
+labels and no per-chapter staleness, which throws away most of what the
+outline layer is for.
+
+First hit on 2026-09-24, outlining an author's already-published book so
+they could use it as reference for a sequel. The split was an ad-hoc
+regex script outside the tool. It worked: every section validated, the
+join and render were clean, and the author called the result great. But
+nothing in redliner offers this step, and a novelist can't write the
+script.
+
+What the real file looked like (patterns only, per the rule above):
+
+- **Chapter markers were not on their own line about a third of the
+  time.** The marker was glued onto the end of the previous paragraph
+  with no newline (`...last sentence.Chapter N`). A line-anchored
+  `^Chapter \d+$` match would have silently merged those chapters into
+  their predecessors.
+- **Some markers were indented** with tabs or spaces.
+- **There was front matter before chapter 1**: a title page and
+  copyright notice, then a prose introduction. The title page isn't
+  manuscript text and shouldn't become a section. The introduction
+  arguably should, as `section_00`.
+
+What made the ad-hoc split trustworthy, and what a built-in version
+should keep:
+
+- **Match the marker wherever it appears**, not only at the start of a
+  line.
+- **Assert that the sequence is exactly 1..N, in order, with no gaps or
+  repeats**, and refuse to write anything otherwise. That one check is
+  what turns "probably right" into "verified". A glued marker the regex
+  missed shows up as a gap.
+- **Never touch the source.** Write sections to a separate working
+  folder. The source here was in a synced notes vault, and the same
+  read-only rule as "Obsidian vault integration" above applies.
+- **Report each section's word count and last few words** so the author
+  can eyeball the boundaries without opening every file.
+
+Open questions:
+
+- **Where it lives.** A deterministic `redliner split <file> <out_dir>`
+  subcommand (plus an MCP tool) fits how the other deterministic steps
+  work. Intake would be the natural place to offer it when the folder
+  holds no `section_*` files.
+- **Marker vocabulary.** "Chapter N" covers this case. Real books also
+  use `# Chapter N` headings, roman numerals, spelled-out numbers
+  ("Chapter Twelve"), or bare numbers. Start with a configurable pattern
+  and the sequence check, not a guesser.
+- **Front matter.** Detecting where the title page ends is a heuristic.
+  Asking the author ("is everything before chapter 1 a section?") is
+  probably better than guessing.
+- **Round-tripping.** Once split, the working copy and the source can
+  drift if the author keeps editing the original. For a published book
+  that doesn't matter. For a draft it does, and it isn't solved here.
+
 ## Permission-allowlist doesn't travel with the plugin
 
 **Raised:** 2026-08-08
